@@ -22,7 +22,9 @@
 | **Štítek** | Segmentační nálepka na Firmě/Osobě (malý šedý chip). | Konfigurovatelný Seznam. |
 | **Seznam** | Konfigurovatelný číselník (Katalog služeb, Štítky, Stavy, Kategorie úkolů, Fáze obchodu…). | Spravuje se v Administraci. |
 | **Role** | Pojmenovaná sada práv (Admin, Moderátor, Člen, Zákazník). | Osoba může mít víc rolí. |
-| **Nástěnka** | Úvodní stránka po přihlášení: pozdrav, naposledy zobrazené, aktivita, úkoly (Po termínu / Dnes), kalendář. | Nahrazuje v1 stránku „Dnes". |
+| **Nástěnka** | Úvodní stránka po přihlášení: pozdrav, naposledy zobrazené, aktivita, úkoly (Po termínu / Dnes), kalendář. | Nahrazuje v1 stránku „Dnes". Není modul — je vždy. |
+| **Organizace** | Společnost, která CRM používá (prostor, ve kterém pracuje tým — pro nás Conviu). Zakládá ji první uživatel (stává se adminem), kolegové se do ní zvou. | **Nezaměňovat s Firmou** (= zákazník). |
+| **Modul** | Zapínatelná část aplikace (Zákazníci, Úkoly, Zakázky, Obchod…). Admin v Administraci určuje, které moduly jsou zapnuté — platí pro celou Organizaci. | Nástěnka a Administrace nejsou moduly. |
 
 ## Pravidla modelu
 

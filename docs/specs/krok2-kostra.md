@@ -1,56 +1,70 @@
-# Specifikace: Krok 2 — Kostra aplikace
+# Specifikace: Krok 2 — Kostra aplikace (se zapínatelnými moduly)
 
-> Stav: **ke schválení**. Žádné moduly ani funkce — jen běžící prázdná aplikace
-> ve vzhledu design systému, na kterou se budou moduly postupně věšet.
+> Stav: **schváleno + rozšířeno Petrem** (zapínatelné moduly, založení Organizace,
+> výběr modulů při prvním spuštění). Žádné moduly se nestaví — jen kostra, na kterou se věší.
 
 ## 1. Účel
 
-Mít spustitelnou aplikaci (lokálně, jedním klikem) s přihlášením a horní lištou podle
-katalogu komponent. Vše ostatní (Zákazníci, Úkoly, …) přijde v dalších krocích — tady
-vzniká jen „prázdný dům" se základy: databáze, přihlášení, vzhled, spouštění.
+Spustitelná aplikace s přihlášením a horní lištou podle katalogu. Nově navíc **obecný
+základ pro více organizací a zapínatelné moduly**: uživatel si při prvním spuštění založí
+**Organizaci** (svou společnost), stane se jejím **adminem**, vybere si **moduly** — a jen ty
+se pak zobrazují všem uživatelům v Organizaci. Admini mohou moduly kdykoli zapnout/vypnout
+v Administraci.
 
-## 2. Obrazovky
+## 2. Pojmy (doplňuje slovník)
+
+- **Organizace** = společnost, která CRM používá (prostor týmu). Nezaměňovat s **Firmou**
+  (= zákazník). Zakládá ji první uživatel, který se tím stává adminem; další admini jdou
+  přidat později. Kolegové se do Organizace zvou (pozvánky = součást modulu Administrace, Krok 5).
+- **Modul** = zapínatelná část aplikace. Přednastavené: **Zákazníci, Úkoly, Zakázky, Obchod**
+  (registr je rozšiřitelný). **Nástěnka** a **Administrace** nejsou moduly — Nástěnka je vždy,
+  Administrace vždy pro adminy.
+
+## 3. Obrazovky
 
 | Obrazovka | Obsah |
 |---|---|
-| **/login** | Vycentrovaná karta: „Conviu CRM" + podtitulek, pole E-mail a Heslo (dle katalogu §16), tlačítko „Přihlásit se" (primární). Chybové hlášení lidsky: „Neplatný e-mail nebo heslo." |
-| **/** (Nástěnka — zatím kostra) | Horní lišta (katalog §17) + datum a pozdrav „Dobré ráno/odpoledne/večer, Petře" + prázdný stav: „Nástěnka se plní s každým dalším modulem. Začneme Zákazníky." (bez akce — moduly ještě nejsou). |
-| Horní lišta | Ikonová navigace: Nástěnka (aktivní) · Zákazníci · Úkoly · Zakázky · Obchod · Administrace — **neaktivní položky ukazují title „Připravujeme"** a nikam nevedou. Vyhledávání = zatím jen vzhled (funkce v Kroku 8). „Přidat +" = zatím neaktivní. Vpravo avatar + jméno + menu s jedinou položkou „Odhlásit". |
+| **/zalozeni** (jen při prázdné DB) | Průvodce prvním spuštěním, jedna stránka: ① Název organizace · ② Účet správce (jméno, e-mail, heslo) · ③ **Výběr modulů** (checkboxy s popisem, vše předvybrané) · „Založit a vstoupit". Po odeslání rovnou přihlášen na Nástěnku. |
+| **/login** | Vycentrovaná karta (katalog §16): e-mail + heslo, chyba lidsky: „Neplatný e-mail nebo heslo." |
+| **/** Nástěnka (kostra) | Pozdrav dle denní doby + oslovení („Dobré ráno, Petře"), datum, prázdný stav: „Nástěnka se plní s každým zapnutým modulem." |
+| **/administrace** | Zatím jediná karta **Moduly**: checkbox + název + popis pro každý modul z registru, Uložit. Jen pro adminy (ostatním se nezobrazuje ikona ani stránka). |
+| Horní lišta | Nástěnka (vždy) · **jen zapnuté moduly** · Administrace (jen admin). Zapnuté, ale dosud nepostavené moduly: šedé s popiskem „Připravujeme". Vyhledávání a „Přidat +" zatím jen vzhled. Vpravo uživatel → menu „Odhlásit". |
 
-## 3. Technický základ (bez UI)
+## 4. Technický základ
 
-- **Stack:** TypeScript přes `tsx` (bez build kroku), **Hono** + server-side JSX,
-  **SQLite** (`better-sqlite3` ≥ 12) přes **Kysely**, **htmx** (lokálně v `public/`).
-- **Bez Bootstrapu.** Mockupy prokázaly, že vlastní `theme.css` stačí → `mockupy/styl.css`
-  se zkopíruje do `public/theme.css` (jediný zdroj vzhledu). Drobné chování (rozbalení
-  user menu) = pár řádků vlastního JS v `public/app.js`. Méně závislostí.
-- **Databáze (jen základ):** tabulky `tenants`, `persons`, `sessions` (zbytek přidají moduly
-  svými migracemi). Seed: tenant Conviu + kolegové s přihlášením:
-  `admin@conviu.com`/`admin123` (dev), `petr.beloch@conviu.com`, `jana@conviu.com`,
-  `tomas@conviu.com` (vše `conviu123`). DB soubor `data/crm.db`, vzniká a seeduje se sám.
-- **Přihlášení:** scrypt (vestavěné Node crypto) + httpOnly cookie session (vzor z v1).
-- **Struktura:** `src/config.ts · db/ (schema, migrate, seed) · auth/ · web/ (layout, login, dashboard) · server.ts · index.ts`.
-- **Repo náležitosti:** `package.json` (s `packageManager` kvůli CI), `tsconfig.json`,
-  `.env.example`, CI workflow (install + typecheck), `start-crm.bat` (CRLF) + **zástupce
-  „Conviu CRM" na ploše** (spustí server a otevře prohlížeč na http://localhost:3000).
+- **Stack:** TypeScript (`tsx`, bez buildu), **Hono** + server-side JSX, **SQLite**
+  (`better-sqlite3` ≥ 12) přes **Kysely**, **htmx** připravené v `public/`. **Bez Bootstrapu** —
+  `public/theme.css` = kopie `mockupy/styl.css` (jediný zdroj vzhledu) + `public/app.js`
+  (pár řádků: rozbalovací menu).
+- **Registr modulů v kódu** (`src/modules.ts`): klíč, název, popis, ikona, cesta, `built`
+  (zda už je modul postavený). Zapnuté moduly per Organizace v tabulce `tenant_modules`.
+- **Databáze (jen základ):** `tenants` (Organizace), `tenant_modules`, `persons`
+  (jméno, login e-mail, heslo-hash, `is_admin` — dočasné, v Kroku 5 nahradí RBAC role),
+  `sessions`. **Žádný seed uživatelů** — vše vytvoří průvodce založením. DB `data/crm.db`.
+- **Tok přístupu:** prázdná DB → vše přesměruje na `/zalozeni` · existuje Organizace →
+  `/zalozeni` přesměruje pryč · nepřihlášený → `/login` · přihlášený na `/login` → Nástěnka.
+- **Přihlášení:** scrypt + httpOnly cookie session (vzor v1).
+- **Repo náležitosti:** `package.json` (`packageManager`), `tsconfig.json`, `.env.example`,
+  CI (install + typecheck), `start-crm.bat` (CRLF) + zástupce „Conviu CRM" na ploše.
 
-## 4. Pravidla
+## 5. Pravidla
 
-- Vzhled **výhradně z katalogu komponent** (`docs/KOMPONENTY.md`) — kostra nezavádí žádný nový prvek.
-- Texty lidsky česky, `aria-label` u ikon, viditelný focus (je v theme.css).
-- Hesla nikdy v plaintextu; `.env` a `data/` v `.gitignore`.
+- Vzhled výhradně z katalogu komponent; průvodce a stránka Modulů skládají jen existující prvky.
+- Multi-tenant připravenost dle datového modelu (`tenant_id` všude); zakládání **druhé a další**
+  Organizace v jedné instalaci je záměrně vypnuté (přijde až s případným SaaS režimem).
+- Texty lidsky, `aria-label` u ikon, hesla nikdy v plaintextu, `.env`/`data/` mimo git.
 
-## 5. Mimo rozsah (přijde později)
+## 6. Mimo rozsah
 
-Moduly Zákazníci/Úkoly/Zakázky/Obchod/Administrace · funkční vyhledávání a „Přidat +" ·
-RBAC (zatím se po přihlášení smí vše; práva přijdou s Administrací) · htmx interakce
-(knihovna se jen připraví do `public/`).
+Funkční moduly · pozvánky kolegů (Krok 5 — Administrace) · RBAC (Krok 5) · funkční hledání
+a „Přidat +" (Krok 8) · více Organizací v jedné instalaci.
 
-## 6. Hotovo, když…
+## 7. Hotovo, když…
 
-- [ ] `pnpm install && pnpm dev` → běží na http://localhost:3000
-- [ ] dvojklik na zástupce na ploše → server + prohlížeč se otevřou samy
-- [ ] přihlášení admin@conviu.com / admin123 funguje; špatné heslo ukáže lidskou chybu; odhlášení funguje
-- [ ] nepřihlášený je vždy přesměrován na /login
-- [ ] Nástěnka ukazuje pozdrav dle denní doby + prázdný stav; lišta odpovídá katalogu
-- [ ] `pnpm typecheck` zelený lokálně i v CI; commit + push na GitHub
+- [ ] `pnpm dev` → prázdná DB přesměruje na /zalozeni; průvodce založí Organizaci + admina + moduly a rovnou přihlásí
+- [ ] lišta ukazuje jen zapnuté moduly („Připravujeme"), Administraci jen adminovi
+- [ ] /administrace umí moduly zapnout/vypnout a lišta to hned odráží
+- [ ] login/logout funguje, špatné heslo ukáže lidskou chybu, nepřihlášený se nikam nedostane
+- [ ] Nástěnka: pozdrav dle denní doby + datum + prázdný stav
+- [ ] dvojklik na zástupce na ploše spustí vše jedním klikem
+- [ ] `pnpm typecheck` zelený lokálně i v CI; push na GitHub

@@ -1,0 +1,4 @@
+# Nativní balíčky, kterým povolujeme spustit build skript (pnpm v11).
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true

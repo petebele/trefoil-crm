@@ -13,7 +13,7 @@ Vizuální reference: `docs/UI-ZASADY.md` + `/mockupy`. Datový základ: `docs/D
 
 | Krok | Obsah | Pozn. |
 |---|---|---|
-| **2 — Kostra** | package.json, tsconfig, DB+migrace+seed základ, auth (login), layout dle Capsule (horní ikonová lišta, theme.css z mockupů), launcher na plochu | bez modulů; běžící prázdná appka |
+| **2 — Kostra** | DB základ, auth (login), layout dle Capsule (theme.css z mockupů), **založení Organizace průvodcem** (admin + výběr modulů), **zapínatelné moduly** (Administrace → Moduly), launcher na plochu | bez funkčních modulů; běžící prázdná appka |
 | **3 — Jádro: Zákazníci** | Firmy + Osoby (+kontaktní údaje, vazby), přehled s filtrem a quick-view, detail = 3sloupcový hub, štítky | dle mockupů `zakaznici` + `zakaznik-detail` |
 | **4 — Komunikace + Úkoly + Nástěnka** | Timeline aktivit (typy), úkoly s kategoriemi (barevné chipy), Nástěnka (pozdrav, naposledy zobrazené, stat dlaždice, Po termínu/Dnes) | dle mockupu `nastenka` |
 | **5 — Služby + Seznamy + Administrace** | Katalog služeb, aktivní služby u klienta, správa Seznamů, tým + role/práva (RBAC) | |

@@ -232,6 +232,20 @@ Otevírá se kliknutím na řádek seznamu; celá stránka detailu až druhým k
 ```
 
 Label malý šedý NAD polem, povinné `<span class="req">*</span>`. Modální obal: `.modal-card`.
+Chyba formuláře: `<div class="form-error">Neplatný e-mail nebo heslo.</div>` (nad poli, lidský text).
+
+## 16b. Rozbalovací menu `.menu`
+
+```html
+<div class="menu" id="userMenu">
+  <button class="btn btn-sm" data-menu-toggle="userMenu" aria-haspopup="true">Petr Běloch ▾</button>
+  <div class="menu-list" role="menu">
+    <button class="menu-item" role="menuitem">Odhlásit</button>
+  </div>
+</div>
+```
+
+Otevírání řeší `public/app.js` (klik na `[data-menu-toggle]` přepne `.open`, klik mimo zavře).
 
 ## 17. Horní lišta `.topbar`
 
