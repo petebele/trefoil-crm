@@ -61,6 +61,7 @@ export async function migrate(): Promise<void> {
     .addColumn('ico', 'text')
     .addColumn('dic', 'text')
     .addColumn('website', 'text')
+    .addColumn('address', 'text')
     .addColumn('status', 'text', (c) => c.notNull().defaultTo('lead'))
     .addColumn('owner_id', 'text', (c) => c.references('persons.id'))
     .addColumn('note', 'text')
@@ -69,6 +70,8 @@ export async function migrate(): Promise<void> {
     .addColumn('deleted_at', 'text')
     .execute();
   await db.schema.createIndex('clients_tenant').ifNotExists().on('clients').columns(['tenant_id']).execute();
+  // starší DB bez sloupce address (idempotentně)
+  await sql`ALTER TABLE clients ADD COLUMN address text`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('person_clients')

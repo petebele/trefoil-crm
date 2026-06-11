@@ -42,6 +42,7 @@ export async function createClient(
       ico: data.ico ?? null,
       dic: data.dic ?? null,
       website: data.website ?? null,
+      address: null,
       status: data.status ?? 'lead',
       owner_id: data.ownerId ?? null,
       note: data.note ?? null,
@@ -53,9 +54,9 @@ export async function createClient(
   return id;
 }
 
-export type EditableClientField = 'name' | 'website' | 'ico' | 'dic' | 'status' | 'note';
+export type EditableClientField = 'name' | 'website' | 'ico' | 'dic' | 'address' | 'status' | 'note';
 export function isEditableClientField(f: string): f is EditableClientField {
-  return ['name', 'website', 'ico', 'dic', 'status', 'note'].includes(f);
+  return ['name', 'website', 'ico', 'dic', 'address', 'status', 'note'].includes(f);
 }
 
 export async function updateClientField(
@@ -70,6 +71,7 @@ export async function updateClientField(
     case 'website': patch.website = value; break;
     case 'ico': patch.ico = value; break;
     case 'dic': patch.dic = value; break;
+    case 'address': patch.address = value; break;
     case 'status': patch.status = value ?? 'lead'; break;
     case 'note': patch.note = value; break;
   }

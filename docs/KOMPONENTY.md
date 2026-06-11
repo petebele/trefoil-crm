@@ -290,14 +290,18 @@ Pro výběrové hodnoty (stav, osoba) NEpoužívej select v editaci — použij 
 Otevírání řeší `data-menu-toggle` (app.js), `[data-filter-list]` filtruje `.opt` položky psaním.
 Jednoduché výběry (stav, osoba) aplikují volbu hned klikem na položku — bez Použít.
 
-## 20. Kontextové akce na řádcích + rychlé přidání
+## 20. Kontextové akce na řádcích + skrytý vzor přidávání
 
 - **Hodnoty jsou text**; akční ikonky (`.icon-btn` ✎ ✕) jsou v `.row-actions` a ukážou se až
   najetím na `.hover-row` (nebo fokusem). Vždy s `aria-label`.
-- **Rychlé přidání** (např. kontaktů): řádek malých ikonek `.quick-add` (telefon/e-mail/web/+)
-  dole v sekci — každá otevře dropdown panel s minimálním formulářem pro daný typ.
-- **Prázdná hodnota = kontextový odkaz** (`.subtle-action`): „Přiřadit odpovědnou osobu",
-  „+ štítek" — klik otevře panel. Žádné trvale viditelné selecty mimo filtry/řazení přehledů.
+- **Skrytý vzor přidávání (default):** i akce „+ něco" (štítek, kontakt, osoba…) jsou ve
+  vyplněné sekci **skryté a objeví se až najetím** na sekci — viditelné zůstávají hlavní,
+  vyplněné údaje. Technicky: sekce = `.hover-row`, přidávací akce v `.row-actions`.
+- **Výjimka — prázdná sekce:** když v sekci nic není, přidávací akce je **viditelná rovnou**
+  (jinak by ji nikdo nenašel) — „Přiřadit odpovědnou osobu", „+ štítek", ikonky kontaktů.
+- **Dotyková zařízení** (bez hoveru): `.row-actions` jsou vždy viditelné (media `hover: none`).
+- **Rychlé přidání kontaktů:** řádek ikonek `.quick-add` (telefon/e-mail/web/+), každá otevře
+  dropdown panel s minimálním formulářem. Žádné trvale viditelné selecty mimo filtry/řazení.
 
 ## 17. Horní lišta `.topbar`
 

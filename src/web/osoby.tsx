@@ -214,10 +214,10 @@ osobyRoutes.get('/osoby/:id', async (c) => {
             <FieldDisplay base={base} field="name" label="Jméno" value={p.name} kind="title" />
           </div>
           <div style="margin:.6rem 0 1rem">
-            <TagsSection base={base} tags={tags} allTags={allTags} />
+            <TagsSection base={base} tags={tags} />
           </div>
 
-          <ContactsSection base={base} contacts={contacts} labels={labels} />
+          <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
 
           <div class="side-section">
             <h4>Firmy</h4>
@@ -332,8 +332,8 @@ osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
 // ---------- štítky ----------
 
 async function tagsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, personId: string) {
-  const [tags, allTags] = await Promise.all([listEntityTags(tenantId, 'person', personId), itemsByKey(tenantId, 'client_tags')]);
-  return c.html(<TagsSection base={`/osoby/${personId}`} tags={tags} allTags={allTags} />);
+  const tags = await listEntityTags(tenantId, 'person', personId);
+  return c.html(<TagsSection base={`/osoby/${personId}`} tags={tags} />);
 }
 
 osobyRoutes.post('/osoby/:id/stitek', async (c) => {
@@ -359,8 +359,15 @@ osobyRoutes.post('/osoby/:id/stitek/:itemId/smazat', async (c) => {
 // ---------- kontakty ----------
 
 async function contactsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, personId: string) {
-  const [contacts, labels] = await Promise.all([listContacts(tenantId, 'person', personId), itemsByKey(tenantId, 'contact_labels')]);
-  return c.html(<ContactsSection base={`/osoby/${personId}`} contacts={contacts} labels={labels} />);
+  const [contacts, labels, allTags, assignedTags] = await Promise.all([
+    listContacts(tenantId, 'person', personId),
+    itemsByKey(tenantId, 'contact_labels'),
+    itemsByKey(tenantId, 'client_tags'),
+    listEntityTags(tenantId, 'person', personId),
+  ]);
+  return c.html(
+    <ContactsSection base={`/osoby/${personId}`} contacts={contacts} labels={labels} allTags={allTags} assignedTags={assignedTags} />,
+  );
 }
 
 osobyRoutes.post('/osoby/:id/kontakt', async (c) => {

@@ -334,6 +334,15 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 .icon-btn:hover { background: #f0f1f4; color: var(--ink); }
 .hover-row .row-actions { opacity: 0; transition: opacity .12s ease; }
 .hover-row:hover .row-actions, .hover-row:focus-within .row-actions { opacity: 1; }
+/* sekční varianta (skryté přidávání): nezasahuje do řádkových akcí uvnitř */
+.hover-area > .area-actions, .hover-area .chips > .area-actions { opacity: 0; transition: opacity .12s ease; }
+.hover-area:hover .area-actions, .hover-area:focus-within .area-actions { opacity: 1; }
+/* otevřený panel uvnitř akcí drží akce viditelné */
+.row-actions:has(.menu.open), .area-actions:has(.menu.open) { opacity: 1 !important; }
+/* dotyková zařízení bez hoveru: akce vždy viditelné */
+@media (hover: none) {
+  .hover-row .row-actions, .hover-area .area-actions { opacity: 1; }
+}
 .quick-add { display: flex; gap: .25rem; margin-top: .5rem; }
 
 /* Nenápadný akční odkaz (kontextové „Přiřadit…", „+ štítek") */

@@ -11,6 +11,15 @@ document.addEventListener('click', function (e) {
   }
 });
 
+// Po úspěšné akci spuštěné zevnitř panelu panel zavři.
+document.body.addEventListener('htmx:afterRequest', function (e) {
+  var src = e.detail && e.detail.elt;
+  if (src && src.closest) {
+    var menu = src.closest('.menu.open');
+    if (menu) menu.classList.remove('open');
+  }
+});
+
 // Dropdown panel: psaní v [data-filter-list] filtruje .opt položky panelu.
 document.addEventListener('input', function (e) {
   var inp = e.target.closest('[data-filter-list]');

@@ -128,6 +128,13 @@ export const IconGlobe = (p: IconProps = {}) => (
   </Svg>
 );
 
+export const IconTag = (p: IconProps = {}) => (
+  <Svg size={p.size ?? 15}>
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
+  </Svg>
+);
+
 export const IconPencil = (p: IconProps = {}) => (
   <Svg size={p.size ?? 14}>
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

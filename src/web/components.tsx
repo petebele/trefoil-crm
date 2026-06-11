@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
-import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil } from './icons';
+import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil, IconTag } from './icons';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
 
@@ -146,10 +146,9 @@ export function StatusBox(props: {
   items: Array<{ value: string; label: string; color: string | null }>;
 }) {
   return (
-    <div class="field-wrap" id="f-status">
-      <div class="sub" style="font-size:.73rem">Stav</div>
-      <div style="display:flex;align-items:center;gap:.5rem">
-        <StatusChip value={props.value} items={props.items} />
+    <div class="hover-row" id="f-status" style="display:flex;align-items:center;gap:.4rem">
+      <StatusChip value={props.value} items={props.items} />
+      <span class="row-actions">
         <Picker id="statusPicker" trigger="změnit" triggerLabel="Změnit stav">
           <div class="opt-group">Stav</div>
           {props.items.map((s) => (
@@ -166,7 +165,7 @@ export function StatusBox(props: {
             </button>
           ))}
         </Picker>
-      </div>
+      </span>
     </div>
   );
 }
@@ -235,10 +234,7 @@ export function OwnerBox(props: {
 export function TagsSection(props: {
   base: string;
   tags: Array<{ id: string; label: string }>;
-  allTags: Array<{ label: string }>;
 }) {
-  const assigned = new Set(props.tags.map((t) => t.label));
-  const available = props.allTags.filter((t) => !assigned.has(t.label));
   return (
     <div id="tags">
       <div class="chips" style="align-items:center">
@@ -258,27 +254,6 @@ export function TagsSection(props: {
             </button>
           </span>
         ))}
-        <Picker id="tagPicker" trigger="+ štítek" triggerLabel="Přidat štítek">
-          <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
-            <input class="input" name="label" data-filter-list placeholder="Najít nebo vytvořit…" autocomplete="off" aria-label="Název štítku" />
-            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">
-              Přidat napsaný štítek
-            </button>
-          </form>
-          {available.length ? <div class="opt-group">Existující štítky</div> : null}
-          {available.map((t) => (
-            <button
-              type="button"
-              class="opt"
-              hx-post={`${props.base}/stitek`}
-              hx-vals={JSON.stringify({ label: t.label })}
-              hx-target="#tags"
-              hx-swap="outerHTML"
-            >
-              {t.label}
-            </button>
-          ))}
-        </Picker>
       </div>
     </div>
   );
@@ -317,15 +292,20 @@ export function ContactsSection(props: {
   base: string;
   contacts: PersonContactsTable[];
   labels: Array<{ label: string }>;
+  allTags: Array<{ label: string }>;
+  assignedTags?: Array<{ label: string }>;
 }) {
+  const assigned = new Set((props.assignedTags ?? []).map((t) => t.label));
+  const availableTags = props.allTags.filter((t) => !assigned.has(t.label));
   const groups: Array<{ type: PersonContactsTable['type']; rows: PersonContactsTable[] }> = (
     ['phone', 'email', 'web', 'other'] as const
   )
     .map((t) => ({ type: t, rows: props.contacts.filter((c) => c.type === t) }))
     .filter((g) => g.rows.length > 0);
 
+  const hasContacts = props.contacts.length > 0;
   return (
-    <div id="contacts">
+    <div id="contacts" class={hasContacts ? 'hover-area' : ''}>
       {groups.map((g) => (
         <div class="fact">
           <span class="lbl" style="margin-bottom:.15rem">{CONTACT_TYPE_LABELS[g.type]}</span>
@@ -370,11 +350,33 @@ export function ContactsSection(props: {
       ))}
       {props.contacts.length === 0 ? <p class="sub m0" style="padding:.3rem 0">Zatím žádný kontakt.</p> : null}
 
-      <div class="quick-add" role="group" aria-label="Rychlé přidání kontaktu">
+      <div class={`quick-add ${hasContacts ? 'area-actions' : ''}`} role="group" aria-label="Rychlé přidání kontaktu nebo štítku">
         <QuickAddPanel base={props.base} type="phone" labels={props.labels} />
         <QuickAddPanel base={props.base} type="email" labels={props.labels} />
         <QuickAddPanel base={props.base} type="web" labels={props.labels} />
         <QuickAddPanel base={props.base} type="other" labels={props.labels} />
+        <Picker id="addTag" trigger={<IconTag />} triggerClass="icon-btn" triggerLabel="Přidat štítek">
+          <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
+            <div class="opt-group" style="padding-left:0">Štítek</div>
+            <input class="input" name="label" data-filter-list placeholder="Najít nebo vytvořit…" autocomplete="off" aria-label="Název štítku" />
+            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">
+              Přidat napsaný štítek
+            </button>
+          </form>
+          {availableTags.length ? <div class="opt-group">Existující štítky</div> : null}
+          {availableTags.map((t) => (
+            <button
+              type="button"
+              class="opt"
+              hx-post={`${props.base}/stitek`}
+              hx-vals={JSON.stringify({ label: t.label })}
+              hx-target="#tags"
+              hx-swap="outerHTML"
+            >
+              {t.label}
+            </button>
+          ))}
+        </Picker>
       </div>
       <datalist id="contactLabels">
         {props.labels.map((l) => (

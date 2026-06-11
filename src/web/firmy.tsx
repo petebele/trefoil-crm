@@ -49,6 +49,7 @@ const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
   website: { label: 'Web', kind: 'text' },
   ico: { label: 'IČO', kind: 'text' },
   dic: { label: 'DIČ', kind: 'text' },
+  address: { label: 'Adresa', kind: 'textarea' },
   note: { label: 'Poznámka', kind: 'textarea' },
 };
 
@@ -108,10 +109,8 @@ firmyRoutes.get('/firmy/nova', async (c) => {
             <input class="input" name="name" required autofocus />
           </div>
           <div class="field"><label>Web</label><input class="input" name="website" placeholder="https://…" /></div>
-          <div style="display:flex;gap:.75rem">
-            <div class="field" style="flex:1"><label>IČO</label><input class="input" name="ico" /></div>
-            <div class="field" style="flex:1"><label>DIČ</label><input class="input" name="dic" /></div>
-          </div>
+          <div class="field"><label>IČO</label><input class="input" name="ico" /></div>
+          <div class="field"><label>DIČ</label><input class="input" name="dic" /></div>
           <div class="field">
             <label>Stav</label>
             <select class="input" name="status">
@@ -244,23 +243,25 @@ firmyRoutes.get('/firmy/:id', async (c) => {
       <div class="detail-grid">
         {/* A) Levý panel */}
         <aside class="card">
-          <span class={`av av-lg ${avColor(client.name)}`}>{initials(client.name)}</span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem">
+            <span class={`av av-lg ${avColor(client.name)}`}>{initials(client.name)}</span>
+            <StatusBox base={base} value={client.status} items={statusItems} />
+          </div>
           <div style="margin-top:.7rem">
             <FieldDisplay base={base} field="name" label="Název" value={client.name} kind="title" />
           </div>
           <div style="margin:.6rem 0 1rem">
-            <TagsSection base={base} tags={tags} allTags={allTags} />
+            <TagsSection base={base} tags={tags} />
           </div>
 
-          <ContactsSection base={base} contacts={contacts} labels={labels} />
+          <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
 
           <div class="side-section">
+            <h4>Firemní údaje</h4>
             <FieldDisplay base={base} field="website" label="Web" value={client.website} kind="text" />
-            <div style="display:flex;gap:1.2rem">
-              <FieldDisplay base={base} field="ico" label="IČO" value={client.ico} kind="text" />
-              <FieldDisplay base={base} field="dic" label="DIČ" value={client.dic} kind="text" />
-            </div>
-            <StatusBox base={base} value={client.status} items={statusItems} />
+            <FieldDisplay base={base} field="ico" label="IČO" value={client.ico} kind="text" />
+            <FieldDisplay base={base} field="dic" label="DIČ" value={client.dic} kind="text" />
+            <FieldDisplay base={base} field="address" label="Adresa" value={client.address} kind="textarea" />
           </div>
 
           <OwnerBox
@@ -454,8 +455,8 @@ firmyRoutes.post('/firmy/:id/owner', async (c) => {
 // ---------- štítky ----------
 
 async function tagsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, clientId: string) {
-  const [tags, allTags] = await Promise.all([listEntityTags(tenantId, 'client', clientId), itemsByKey(tenantId, 'client_tags')]);
-  return c.html(<TagsSection base={`/firmy/${clientId}`} tags={tags} allTags={allTags} />);
+  const tags = await listEntityTags(tenantId, 'client', clientId);
+  return c.html(<TagsSection base={`/firmy/${clientId}`} tags={tags} />);
 }
 
 firmyRoutes.post('/firmy/:id/stitek', async (c) => {
@@ -481,8 +482,15 @@ firmyRoutes.post('/firmy/:id/stitek/:itemId/smazat', async (c) => {
 // ---------- kontakty ----------
 
 async function contactsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, clientId: string) {
-  const [contacts, labels] = await Promise.all([listContacts(tenantId, 'client', clientId), itemsByKey(tenantId, 'contact_labels')]);
-  return c.html(<ContactsSection base={`/firmy/${clientId}`} contacts={contacts} labels={labels} />);
+  const [contacts, labels, allTags, assignedTags] = await Promise.all([
+    listContacts(tenantId, 'client', clientId),
+    itemsByKey(tenantId, 'contact_labels'),
+    itemsByKey(tenantId, 'client_tags'),
+    listEntityTags(tenantId, 'client', clientId),
+  ]);
+  return c.html(
+    <ContactsSection base={`/firmy/${clientId}`} contacts={contacts} labels={labels} allTags={allTags} assignedTags={assignedTags} />,
+  );
 }
 
 firmyRoutes.post('/firmy/:id/kontakt', async (c) => {

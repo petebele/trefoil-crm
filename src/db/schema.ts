@@ -53,6 +53,7 @@ export interface ClientsTable {
   ico: string | null;
   dic: string | null;
   website: string | null;
+  address: string | null;
   status: string; // hodnota ze Seznamu client_statuses
   owner_id: string | null; // odpovědná osoba (kolega)
   note: string | null;
