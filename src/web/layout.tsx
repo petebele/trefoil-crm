@@ -4,7 +4,7 @@ import { MODULES } from '../modules';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
 
 /** Verze statických souborů — zvednout při změně theme.css/app.js (cache-busting). */
-const ASSET_V = '4';
+const ASSET_V = '5';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);

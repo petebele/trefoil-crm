@@ -43,6 +43,19 @@ const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
   note: { label: 'Poznámka', kind: 'textarea' },
 };
 
+/** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
+function noteBox(base: string, value: string | null) {
+  return value ? (
+    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" />
+  ) : (
+    <div class="field-wrap" id="f-note">
+      <button type="button" class="subtle-action" hx-get={`${base}/pole/note/edit`} hx-target="#f-note" hx-swap="outerHTML">
+        Přidat poznámku
+      </button>
+    </div>
+  );
+}
+
 // ---------- nová osoba ----------
 
 osobyRoutes.get('/osoby/nova', async (c) => {
@@ -235,9 +248,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
             ) : null}
           </div>
 
-          <div class="side-section">
-            <FieldDisplay base={base} field="note" label="Poznámka" value={p.note} kind="textarea" />
-          </div>
+          <div class="side-section">{noteBox(base, p.note)}</div>
 
           <div class="side-section" style="border-top-style:dashed">
             <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto osobu?')">
@@ -298,6 +309,7 @@ osobyRoutes.get('/osoby/:id/pole/:field', async (c) => {
   if (!isEditablePersonField(field)) return c.notFound();
   const p = await getCustomerPerson(person.tenant_id, c.req.param('id'));
   if (!p) return c.notFound();
+  if (field === 'note') return c.html(noteBox(`/osoby/${p.id}`, p.note));
   const meta = FIELD_META[field]!;
   return c.html(<FieldDisplay base={`/osoby/${p.id}`} field={field} label={meta.label} value={p[field]} kind={meta.kind} />);
 });
@@ -326,6 +338,7 @@ osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
   await updatePersonField(t, id, field, value);
   const meta = FIELD_META[field]!;
   await logEvent(t, 'person', id, person.id, `${meta.label}: ${value ?? '—'}`);
+  if (field === 'note') return c.html(noteBox(`/osoby/${id}`, value));
   return c.html(<FieldDisplay base={`/osoby/${id}`} field={field} label={meta.label} value={value} kind={meta.kind} />);
 });
 

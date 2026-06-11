@@ -214,6 +214,53 @@ firmyRoutes.post('/firmy', async (c) => {
   return c.redirect(`/firmy/${id}`);
 });
 
+/** Firemní údaje: vyplněná pole inline-editovatelná; prázdná skrytá za „Vyplnit údaje". */
+function FirmFieldsSection(props: { base: string; client: { website: string | null; ico: string | null; dic: string | null; address: string | null } }) {
+  const defs = [
+    ['website', 'Web', 'text', props.client.website],
+    ['ico', 'IČO', 'text', props.client.ico],
+    ['dic', 'DIČ', 'text', props.client.dic],
+    ['address', 'Adresa', 'textarea', props.client.address],
+  ] as const;
+  const filled = defs.filter(([, , , v]) => v);
+  const missing = defs.filter(([, , , v]) => !v);
+  return (
+    <div class="side-section">
+      <h4>
+        Firemní údaje
+        {missing.length ? (
+          <button type="button" class="subtle-action" data-reveal="missingFirmFields" style="font-weight:400">
+            Vyplnit údaje
+          </button>
+        ) : null}
+      </h4>
+      {filled.map(([f, label, kind, v]) => (
+        <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
+      ))}
+      {missing.length ? (
+        <div id="missingFirmFields" class="hidden">
+          {missing.map(([f, label, kind, v]) => (
+            <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
+function noteBox(base: string, value: string | null) {
+  return value ? (
+    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" />
+  ) : (
+    <div class="field-wrap" id="f-note">
+      <button type="button" class="subtle-action" hx-get={`${base}/pole/note/edit`} hx-target="#f-note" hx-swap="outerHTML">
+        Přidat poznámku
+      </button>
+    </div>
+  );
+}
+
 // ---------- detail firmy ----------
 
 firmyRoutes.get('/firmy/:id', async (c) => {
@@ -256,13 +303,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
 
           <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
 
-          <div class="side-section">
-            <h4>Firemní údaje</h4>
-            <FieldDisplay base={base} field="website" label="Web" value={client.website} kind="text" />
-            <FieldDisplay base={base} field="ico" label="IČO" value={client.ico} kind="text" />
-            <FieldDisplay base={base} field="dic" label="DIČ" value={client.dic} kind="text" />
-            <FieldDisplay base={base} field="address" label="Adresa" value={client.address} kind="textarea" />
-          </div>
+          <FirmFieldsSection base={base} client={client} />
 
           <OwnerBox
             base={base}
@@ -270,7 +311,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             coworkers={coworkers}
           />
 
-          <div class="side-section">
+          <div class="side-section hover-area">
             <h4>Lidé</h4>
             {people.map((p) => (
               <div class="person-row">
@@ -284,10 +325,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
                 </form>
               </div>
             ))}
-            {people.length === 0 ? <p class="sub m0" style="padding:.2rem 0 .5rem">Zatím žádná osoba.</p> : null}
-
-            <details style="margin-top:.4rem">
-              <summary class="sub" style="cursor:pointer">+ Přidat osobu</summary>
+            <details style="margin-top:.4rem" class={people.length > 0 ? 'area-actions' : ''}>
+              <summary class="subtle-action" style="cursor:pointer;list-style-position:inside">Přidat osobu</summary>
               <form method="post" action={`${base}/osoba`} style="margin-top:.6rem">
                 <div class="field" style="margin-bottom:.6rem">
                   <label>Existující osoba</label>
@@ -320,9 +359,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             </details>
           </div>
 
-          <div class="side-section">
-            <FieldDisplay base={base} field="note" label="Poznámka" value={client.note} kind="textarea" />
-          </div>
+          <div class="side-section">{noteBox(base, client.note)}</div>
 
           <div class="side-section" style="border-top-style:dashed">
             <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')">
@@ -391,6 +428,7 @@ firmyRoutes.get('/firmy/:id/pole/:field', async (c) => {
     const items = await itemsByKey(person.tenant_id, 'client_statuses');
     return c.html(<StatusBox base={`/firmy/${client.id}`} value={client.status} items={items} />);
   }
+  if (field === 'note') return c.html(noteBox(`/firmy/${client.id}`, client.note));
   const meta = FIELD_META[field];
   if (!meta) return c.notFound();
   return c.html(<FieldDisplay base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} />);
@@ -433,6 +471,7 @@ firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {
   if (!meta) return c.notFound();
   await updateClientField(t, id, field, value);
   await logEvent(t, 'client', id, person.id, `${meta.label}: ${value ?? '—'}`);
+  if (field === 'note') return c.html(noteBox(`/firmy/${id}`, value));
   return c.html(<FieldDisplay base={`/firmy/${id}`} field={field} label={meta.label} value={value} kind={meta.kind} />);
 });
 

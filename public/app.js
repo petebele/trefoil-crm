@@ -32,6 +32,14 @@ document.addEventListener('input', function (e) {
   });
 });
 
+// Odkrytí skrytých polí: [data-reveal="idCile"] přepne .hidden (např. „Vyplnit údaje").
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-reveal]');
+  if (!t) return;
+  var el = document.getElementById(t.getAttribute('data-reveal'));
+  if (el) el.classList.toggle('hidden');
+});
+
 // Formuláře: tlačítko [data-add-row="idTemplate"] přidá další řádek (např. kontakt).
 document.addEventListener('click', function (e) {
   var btn = e.target.closest('[data-add-row]');

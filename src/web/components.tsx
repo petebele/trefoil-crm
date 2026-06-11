@@ -92,11 +92,12 @@ export function FieldDisplay(props: {
   const { base, field, label, value, kind } = props;
   return (
     <div class="field-wrap" id={`f-${field}`}>
-      <div class="sub" style="font-size:.73rem">{label}</div>
+      {kind === 'title' ? null : <div class="sub" style="font-size:.73rem">{label}</div>}
       <div
         class="editable"
         role="button"
         tabindex={0}
+        aria-label={`${label} — upravit`}
         hx-get={`${base}/pole/${field}/edit`}
         hx-target={`#f-${field}`}
         hx-swap="outerHTML"
