@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Nástěnka — Conviu CRM v2</title>
+<link rel="stylesheet" href="styl.css">
+</head>
+<body>
+
+<header class="topbar">
+  <nav class="nav-icons" aria-label="Hlavní navigace">
+    <a class="nico active" href="nastenka.html" title="Nástěnka" aria-label="Nástěnka">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <a class="nico" href="zakaznici.html" title="Zákazníci" aria-label="Zákazníci">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </a>
+    <a class="nico" href="#" title="Úkoly" aria-label="Úkoly">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </a>
+    <a class="nico" href="#" title="Zakázky" aria-label="Zakázky">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    </a>
+    <a class="nico" href="#" title="Obchod" aria-label="Obchod">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    </a>
+    <a class="nico" href="#" title="Administrace" aria-label="Administrace">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    </a>
+  </nav>
+
+  <div class="search" role="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Hledat firmu, osobu, zakázku…</span>
+    <kbd>/</kbd>
+  </div>
+
+  <div class="top-right">
+    <button class="btn" type="button">Přidat
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div class="user">
+      <span class="av av-i">PB</span>
+      <span class="uname">Petr Běloch<small>Conviu</small></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="dash-grid">
+
+    <!-- Hlavní sloupec -->
+    <section>
+      <div class="date-line">čtvrtek 11. června 2026</div>
+      <h1>Dobré ráno, Petře</h1>
+
+      <nav class="tabs" aria-label="Pohledy nástěnky">
+        <a class="tab active" href="#">Můj přehled</a>
+        <a class="tab" href="#">Nedávná aktivita</a>
+        <a class="tab" href="#">Nedávné komentáře</a>
+      </nav>
+
+      <h3 class="section-title">Naposledy zobrazené</h3>
+      <div class="recent">
+        <a class="recent-chip" href="zakaznik-detail.html">
+          <span class="av av-b">BE</span>
+          <span class="nm">Borovec-elektro.cz<span class="sub">Firma</span></span>
+        </a>
+        <a class="recent-chip" href="#">
+          <span class="av av-y">LG</span>
+          <span class="nm">Li-go.cz<span class="sub">Firma</span></span>
+        </a>
+        <a class="recent-chip" href="#">
+          <span class="av av-g">JB</span>
+          <span class="nm">Jan Borovec<span class="sub">Borovec-elektro.cz</span></span>
+        </a>
+        <a class="recent-chip" href="#">
+          <span class="av av-p">DE</span>
+          <span class="nm">Derma.cz<span class="sub">Firma</span></span>
+        </a>
+        <a class="recent-chip" href="#">
+          <span class="av av-g">SP</span>
+          <span class="nm">Srdce přírody<span class="sub">Firma</span></span>
+        </a>
+      </div>
+
+      <h3 class="section-title">Aktivita <span class="sub" style="font-weight:400">· tvoje aktivita, úkoly a události</span></h3>
+      <div class="stats">
+        <div class="stat"><b>24</b><span>aktivit tento týden</span></div>
+        <div class="stat"><b>12</b><span>splněných úkolů</span></div>
+        <div class="stat"><b>8</b><span>odeslaných e-mailů</span></div>
+        <div class="stat"><b>3</b><span>nové příležitosti</span></div>
+      </div>
+
+      <h3 class="section-title">Co se děje u zákazníků</h3>
+      <div class="card">
+        <div class="tl-item" style="border-top:none;padding-top:.25rem">
+          <div class="tl-ico">📝</div>
+          <div>
+            <div class="tl-head"><b>Poznámka od Jany Marketérové</b> <span class="when">· dnes 8:40 · <a href="zakaznik-detail.html">Borovec-elektro.cz</a></span></div>
+            <div class="tl-body">Feed je nasazený, čekáme na schválení klientem. Pak spustíme bidding.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-ico">📞</div>
+          <div>
+            <div class="tl-head"><b>Hovor od Tomáše Specialisty</b> <span class="when">· včera 16:10 · <a href="#">Li-go.cz</a></span></div>
+            <div class="tl-body">Domluvené rozšíření správy feedů o Glami a Favi od července.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-ico">👥</div>
+          <div>
+            <div class="tl-head"><b>Schůzka od Petra Bělocha</b> <span class="when">· včera 10:00 · <a href="#">Derma.cz</a></span></div>
+            <div class="tl-body">Onboarding recenzního programu — odsouhlasený postup, štítky vzorků pošle klient.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pravý sloupec -->
+    <aside>
+      <div class="card">
+        <div class="card-head">
+          <h3>Kalendář</h3>
+          <button class="btn btn-sm" type="button">Přidat událost</button>
+        </div>
+        <div class="empty">
+          <span class="big">✓</span>
+          Dnes žádné události
+          <div class="hint">V kalendáři pro dnešek nic není.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Úkoly</h3>
+          <button class="btn btn-sm" type="button">Přidat úkol</button>
+        </div>
+
+        <div class="task-group overdue">● Po termínu</div>
+        <div class="task-item">
+          <input type="checkbox" aria-label="Označit jako hotové">
+          <div class="task-txt">
+            <span class="cat cat-teal">Hovor</span> Zavolat ohledně rozpočtu PPC
+            <span class="when">út 9. 6. · pro <a href="zakaznik-detail.html">Borovec-elektro.cz</a></span>
+          </div>
+        </div>
+        <div class="task-item">
+          <input type="checkbox" aria-label="Označit jako hotové">
+          <div class="task-txt">
+            <span class="cat cat-orange">Follow-up</span> Připomenout nabídku rozšíření feedů
+            <span class="when">st 10. 6. · pro <a href="#">Li-go.cz</a></span>
+          </div>
+        </div>
+
+        <div class="task-group">Dnes</div>
+        <div class="task-item">
+          <input type="checkbox" aria-label="Označit jako hotové">
+          <div class="task-txt">
+            <span class="cat cat-red">Schůzka</span> Onboarding recenzního programu
+            <span class="when">dnes 14:00 · pro <a href="#">Derma.cz</a></span>
+          </div>
+        </div>
+        <div class="task-item">
+          <input type="checkbox" aria-label="Označit jako hotové">
+          <div class="task-txt">
+            <span class="cat cat-pink">E-mail</span> Poslat měsíční report SEO
+            <span class="when">dnes · pro <a href="#">Srdce přírody</a></span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+</body>
+</html>

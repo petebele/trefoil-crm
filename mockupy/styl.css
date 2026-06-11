@@ -1,0 +1,278 @@
+/* ============================================================
+   Conviu CRM v2 — mockup theme (replika vizuálu Capsule CRM)
+   Tokeny a komponenty dle docs/UI-ZASADY.md
+   ============================================================ */
+
+:root {
+  --ink: #1e2235;
+  --muted: #6b7280;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --line: #e7e9ee;
+  --accent: #635df5;
+  --accent-hover: #5246e0;
+  --accent-soft: #eceafd;
+  --teal: #0aa789;
+  --teal-soft: #e0f5f0;
+  --red: #e5484d;
+  --red-soft: #fdebec;
+  --orange: #f59e0b;
+  --pink: #ec5b78;
+  --radius: 12px;
+  --radius-sm: 8px;
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 0.875rem;            /* 14px tělo */
+  line-height: 1.5;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+svg { display: block; }
+
+/* ---------- Horní lišta ---------- */
+.topbar {
+  display: flex; align-items: center; gap: 1.25rem;
+  background: var(--card); border-bottom: 1px solid var(--line);
+  padding: 0 1.25rem; height: 60px;
+  position: sticky; top: 0; z-index: 50;
+}
+.nav-icons { display: flex; gap: .25rem; }
+.nico {
+  display: grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 10px;
+  color: var(--muted);
+}
+.nico:hover { background: var(--bg); color: var(--ink); text-decoration: none; }
+.nico.active { background: #f0f1f4; color: var(--ink); }
+.search {
+  flex: 1; max-width: 560px; margin: 0 auto;
+  display: flex; align-items: center; gap: .6rem;
+  background: #f1f2f5; border-radius: 10px;
+  padding: 0 .9rem; height: 38px; color: var(--muted); cursor: text;
+}
+.search kbd {
+  margin-left: auto; background: var(--card); border: 1px solid var(--line);
+  border-radius: 5px; padding: 0 .45rem; font-size: .75rem; color: var(--muted);
+  font-family: inherit;
+}
+.top-right { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+.user { display: flex; align-items: center; gap: .6rem; cursor: pointer; }
+.uname { display: flex; flex-direction: column; line-height: 1.2; font-weight: 600; font-size: .8125rem; }
+.uname small { font-weight: 400; color: var(--muted); font-size: .75rem; }
+
+/* ---------- Stránka ---------- */
+.page { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.page-actions { display: flex; gap: .6rem; align-items: center; }
+.date-line { color: var(--muted); font-size: .8125rem; margin-bottom: .35rem; }
+
+h2.record-name { font-size: 1.4rem; font-weight: 700; margin: .75rem 0 .25rem; letter-spacing: -.01em; }
+.section-title { font-size: .975rem; font-weight: 650; margin: 1.75rem 0 .75rem; }
+.sub { color: var(--muted); font-size: .8125rem; }
+
+/* ---------- Tlačítka ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: .45rem;
+  background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px;
+  height: 36px; padding: 0 .95rem;
+  font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer;
+}
+.btn:hover { background: #f7f7f9; text-decoration: none; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-sm { height: 30px; padding: 0 .7rem; font-size: .8125rem; border-radius: 8px; }
+.btn-ghost { border: none; background: none; color: var(--accent); padding: 0 .3rem; }
+.btn-split { border-left: 1px solid var(--line); margin-left: .55rem; padding-left: .55rem; color: var(--muted); }
+.btn-primary .btn-split { border-color: rgba(255,255,255,.4); color: #fff; }
+
+/* ---------- Taby ---------- */
+.tabs { display: flex; gap: 1.4rem; border-bottom: 1px solid var(--line); margin: 1rem 0 1.25rem; }
+.tab {
+  display: inline-flex; align-items: center; gap: .45rem;
+  color: var(--muted); font-weight: 500; padding: .55rem 0; margin-bottom: -1px;
+  border-bottom: 3px solid transparent;
+}
+.tab:hover { color: var(--ink); text-decoration: none; }
+.tab.active { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.tab .cnt { color: var(--muted); font-size: .75rem; }
+
+/* ---------- Filtr pilulky ---------- */
+.frow { display: flex; gap: .6rem; flex-wrap: wrap; margin: .25rem 0 1.25rem; }
+.fpill {
+  display: inline-flex; align-items: center; gap: .45rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  height: 34px; padding: 0 .9rem; font-size: .8125rem; cursor: pointer;
+}
+.fpill b { font-weight: 600; }
+.fpill .chev { color: var(--muted); }
+
+/* ---------- Karty ---------- */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 1.1rem 1.25rem;
+}
+.card + .card { margin-top: 1rem; }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .9rem; }
+.card-head h3 { font-size: .95rem; font-weight: 650; margin: 0; }
+
+/* ---------- Chipy ---------- */
+.chip {
+  display: inline-flex; align-items: center;
+  background: #eef0f3; color: var(--ink);
+  border-radius: 999px; padding: .1rem .6rem;
+  font-size: .75rem; font-weight: 500; white-space: nowrap;
+}
+.chip-soft-teal { background: var(--teal-soft); color: #067a64; }
+.chip-soft-gray { background: #eef0f3; color: var(--muted); }
+.cat {
+  display: inline-flex; align-items: center;
+  border-radius: 6px; padding: .08rem .5rem;
+  font-size: .72rem; font-weight: 600; color: #fff; white-space: nowrap;
+}
+.cat-teal { background: var(--teal); }
+.cat-pink { background: var(--pink); }
+.cat-red { background: var(--red); }
+.cat-orange { background: var(--orange); }
+.cat-indigo { background: var(--accent); }
+.chips { display: flex; gap: .35rem; flex-wrap: wrap; }
+
+/* ---------- Avatary ---------- */
+.av {
+  display: inline-grid; place-items: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: .8rem; font-weight: 650; flex: none;
+}
+.av-sm { width: 26px; height: 26px; font-size: .65rem; }
+.av-lg { width: 72px; height: 72px; font-size: 1.5rem; }
+.av-g { background: #d9f0e5; color: #1e7a52; }
+.av-p { background: #fde4ec; color: #b0387a; }
+.av-b { background: #dde9fd; color: #2b5fb8; }
+.av-y { background: #fdf0d4; color: #9a6b08; }
+.av-i { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- Tabulka ---------- */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  text-align: left; font-size: .8125rem; font-weight: 650;
+  padding: .8rem 1rem; border-bottom: 1px solid var(--line);
+}
+.tbl td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: #fafbfc; }
+.cell-name { display: flex; align-items: center; gap: .75rem; }
+.cell-name .nm { font-weight: 600; }
+.cell-name .sub { display: block; }
+.meta-lbl { color: var(--muted); font-size: .75rem; margin-left: .4rem; }
+.tbl .check { width: 34px; }
+.tbl input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.card-table { padding: 0; overflow: hidden; }
+.list-meta { display: flex; align-items: center; justify-content: space-between; margin: .25rem 0 .75rem; color: var(--muted); font-size: .8125rem; }
+.list-meta .bulk { display: flex; gap: .5rem; }
+
+/* ---------- Stat dlaždice ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .9rem; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: .9rem 1.1rem; }
+.stat b { display: block; font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; }
+.stat span { color: var(--muted); font-size: .78rem; }
+
+/* ---------- Fakta (levý sloupec detailu) ---------- */
+.fact { padding: .45rem 0; }
+.fact .val { font-weight: 500; }
+.fact .lbl { display: block; color: var(--muted); font-size: .73rem; margin-top: .1rem; }
+.side-section { border-top: 1px solid var(--line); margin-top: 1.1rem; padding-top: 1rem; }
+.side-section h4 { font-size: .85rem; font-weight: 650; margin: 0 0 .7rem; display: flex; justify-content: space-between; align-items: center; }
+.person-row { display: flex; align-items: center; gap: .7rem; padding: .35rem 0; }
+.person-row .nm { font-weight: 600; font-size: .85rem; }
+.person-row .sub { display: block; }
+
+/* ---------- Detail: 3 sloupce ---------- */
+.detail-grid {
+  display: grid; grid-template-columns: 320px minmax(0, 1fr) 320px;
+  gap: 1.25rem; align-items: start; margin-top: 1.25rem;
+}
+
+/* ---------- Timeline ---------- */
+.actions-row { display: flex; gap: .6rem; align-items: center; margin: 1.1rem 0; flex-wrap: wrap; }
+.actions-row .grow { flex: 1; }
+.input {
+  height: 34px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 0 .8rem; font: inherit; font-size: .8125rem; background: var(--card);
+  color: var(--ink); min-width: 200px;
+}
+.input::placeholder { color: var(--muted); }
+.tl-item { display: flex; gap: .85rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+.tl-ico {
+  width: 34px; height: 34px; flex: none; border-radius: 8px;
+  display: grid; place-items: center; background: #f0f1f4; font-size: .95rem;
+}
+.tl-head { font-size: .8125rem; }
+.tl-head b { font-size: .875rem; }
+.tl-head .when { color: var(--muted); }
+.tl-body { margin-top: .25rem; }
+.file-chip {
+  display: inline-flex; align-items: center; gap: .5rem; margin-top: .6rem;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: .4rem .7rem; font-size: .78rem; font-weight: 500;
+}
+.file-chip span { color: var(--muted); font-weight: 400; }
+
+/* ---------- Úkoly (pravý sloupec / nástěnka) ---------- */
+.task-group { color: var(--muted); font-size: .75rem; font-weight: 650; text-transform: none; margin: .9rem 0 .35rem; display: flex; align-items: center; gap: .4rem; }
+.task-group.overdue { color: var(--red); }
+.task-item { display: flex; gap: .6rem; padding: .55rem 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.task-item:last-child { border-bottom: none; }
+.task-item input[type="checkbox"] { margin-top: .2rem; width: 16px; height: 16px; border-radius: 50%; accent-color: var(--teal); }
+.task-txt { font-size: .84rem; }
+.task-txt .when { display: block; color: var(--muted); font-size: .76rem; margin-top: .1rem; }
+
+/* ---------- Naposledy zobrazené ---------- */
+.recent { display: flex; gap: .75rem; flex-wrap: wrap; }
+.recent-chip {
+  display: flex; align-items: center; gap: .6rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  padding: .4rem .9rem .4rem .45rem; cursor: pointer;
+}
+.recent-chip:hover { background: #fafbfc; text-decoration: none; }
+.recent-chip .nm { font-weight: 600; font-size: .8125rem; color: var(--ink); line-height: 1.15; }
+.recent-chip .sub { display: block; font-weight: 400; }
+
+/* ---------- Nástěnka layout ---------- */
+.dash-grid { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 1.5rem; align-items: start; margin-top: .5rem; }
+
+/* ---------- Prázdný stav ---------- */
+.empty { text-align: center; color: var(--muted); padding: 1.4rem .5rem; }
+.empty .big { font-size: 1.6rem; display: block; margin-bottom: .4rem; color: var(--teal); }
+.empty .hint { font-size: .78rem; }
+
+/* ---------- Progress ---------- */
+.progress { height: 6px; background: #e9ebef; border-radius: 99px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--teal); border-radius: 99px; }
+
+/* ---------- Quick-view panel ---------- */
+.quickview {
+  position: fixed; right: 1.5rem; top: 110px; width: 340px; z-index: 40;
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 1.4rem; box-shadow: 0 18px 45px rgba(30,34,53,.12);
+}
+
+/* ---------- Responzivita ---------- */
+@media (max-width: 1150px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .quickview { position: static; width: auto; margin-top: 1rem; box-shadow: none; }
+  .uname { display: none; }
+}
+@media (max-width: 720px) {
+  .search { display: none; }
+  .page { padding: 1rem .9rem 3rem; }
+  .stats { grid-template-columns: 1fr 1fr; }
+}

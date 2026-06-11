@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · Borovec-elektro.cz — Conviu CRM v2</title>
+<link rel="stylesheet" href="styl.css">
+</head>
+<body>
+
+<header class="topbar">
+  <nav class="nav-icons" aria-label="Hlavní navigace">
+    <a class="nico" href="nastenka.html" title="Nástěnka" aria-label="Nástěnka">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <a class="nico active" href="zakaznici.html" title="Zákazníci" aria-label="Zákazníci">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </a>
+    <a class="nico" href="#" title="Úkoly" aria-label="Úkoly">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </a>
+    <a class="nico" href="#" title="Zakázky" aria-label="Zakázky">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    </a>
+    <a class="nico" href="#" title="Obchod" aria-label="Obchod">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    </a>
+    <a class="nico" href="#" title="Administrace" aria-label="Administrace">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    </a>
+  </nav>
+
+  <div class="search" role="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Hledat firmu, osobu, zakázku…</span>
+    <kbd>/</kbd>
+  </div>
+
+  <div class="top-right">
+    <button class="btn" type="button">Přidat
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div class="user">
+      <span class="av av-i">PB</span>
+      <span class="uname">Petr Běloch<small>Conviu</small></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="detail-grid">
+
+    <!-- LEVÝ SLOUPEC: profil a fakta -->
+    <aside class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span class="av av-b av-lg">BE</span>
+        <button class="btn btn-sm" type="button">Upravit <span class="btn-split">▾</span></button>
+      </div>
+      <h2 class="record-name">Borovec-elektro.cz</h2>
+      <div class="chips" style="margin:.35rem 0 1rem">
+        <span class="chip">E-shop</span>
+        <span class="chip">Upgates</span>
+        <span class="chip chip-soft-teal">Aktivní</span>
+      </div>
+
+      <div class="fact"><span class="val">+420 601 111 222</span><span class="lbl">Telefon · Práce</span></div>
+      <div class="fact"><span class="val"><a href="#">hello@borovec-elektro.cz</a></span><span class="lbl">E-mail · Práce</span></div>
+      <div class="fact"><span class="val"><a href="#">borovec-elektro.cz</a></span><span class="lbl">Web</span></div>
+      <div class="fact"><span class="val">Plzeňská 142, Praha 5</span><span class="lbl">Adresa</span></div>
+      <div class="fact"><span class="val">12345678</span><span class="lbl">IČO</span></div>
+
+      <div class="side-section">
+        <h4>Odpovědná osoba</h4>
+        <div class="person-row">
+          <span class="av av-sm av-i">PB</span>
+          <span class="nm">Petr Běloch</span>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <h4>Lidé <a href="#" aria-label="Přidat osobu" style="font-weight:400">+ Přidat</a></h4>
+        <div class="person-row">
+          <span class="av av-sm av-g">JB</span>
+          <span><span class="nm">Jan Borovec</span><span class="sub">Jednatel · +420 601 111 222</span></span>
+        </div>
+        <div class="person-row">
+          <span class="av av-sm av-p">MB</span>
+          <span><span class="nm">Marie Borovcová</span><span class="sub">Fakturace · marie@borovec-elektro.cz</span></span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- STŘED: přehled + timeline -->
+    <section>
+      <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat"><b>2</b><span>aktivní služby</span></div>
+        <div class="stat"><b>před 2 dny</b><span>poslední kontakt</span></div>
+        <div class="stat"><b>18 500 Kč</b><span>měsíčně</span></div>
+        <div class="stat"><b>1</b><span>běžící zakázka</span></div>
+      </div>
+
+      <nav class="tabs" aria-label="Sekce detailu">
+        <a class="tab active" href="#">Historie</a>
+        <a class="tab" href="#">Soubory <span class="cnt">1</span></a>
+        <a class="tab" href="#">Zakázky <span class="cnt">1</span></a>
+        <a class="tab" href="#">Příležitosti <span class="cnt">1</span></a>
+      </nav>
+
+      <div class="actions-row">
+        <span class="fpill">Vše <span class="chev">▾</span></span>
+        <input class="input grow" type="search" placeholder="Hledat v historii…" aria-label="Hledat v historii">
+        <button class="btn" type="button">Poslat e-mail</button>
+        <button class="btn btn-primary" type="button">Zapsat aktivitu</button>
+      </div>
+
+      <div class="card" style="padding-top:.4rem">
+        <div class="tl-item" style="border-top:none">
+          <div class="tl-ico">📝</div>
+          <div>
+            <div class="tl-head"><b>Poznámka od Petra Bělocha</b> <span class="when">· 9. 6. 2026</span></div>
+            <div class="tl-body">Schůzka ke správě produktových feedů — klient chce od července přidat Glami
+              a Favi. Připravíme nacenění a upravíme smlouvu.</div>
+            <span class="file-chip">📄 feed-audit.pdf <span>1,2 MB</span></span>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-ico">📞</div>
+          <div>
+            <div class="tl-head"><b>Hovor od Jany Marketérové</b> <span class="when">· 5. 6. 2026</span></div>
+            <div class="tl-body">Domluven rozsah PPC kampaní na Q3. Rozpočet potvrdí Jan do pátku.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-ico">✉️</div>
+          <div>
+            <div class="tl-head"><b>E-mail od Jana Borovce</b> <span class="when">· 2. 6. 2026</span></div>
+            <div class="tl-body">Potvrzení objednávky správy feedů — startujeme 1. 7.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRAVÝ SLOUPEC: úkoly, služby, komentáře -->
+    <aside>
+      <div class="card">
+        <div class="card-head">
+          <h3>Úkoly</h3>
+          <button class="btn btn-sm" type="button">Přidat úkol</button>
+        </div>
+        <div class="task-item">
+          <input type="checkbox" aria-label="Označit jako hotové">
+          <div class="task-txt">
+            <span class="cat cat-teal">Hovor</span> Zavolat ohledně rozpočtu PPC
+            <span class="when">pá 12. 6. · Petr Běloch</span>
+          </div>
+        </div>
+        <div class="task-item">
+          <input type="checkbox" aria-label="Označit jako hotové">
+          <div class="task-txt">
+            <span class="cat cat-orange">Follow-up</span> Poslat návrh dodatku smlouvy
+            <span class="when">po 15. 6. · Jana Marketérová</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Aktivní služby</h3>
+          <a href="#" class="sub">Spravovat</a>
+        </div>
+        <div class="person-row">
+          <span><span class="nm">Správa produktových feedů</span>
+          <span class="sub">Tomáš Specialista · 10 500 Kč/měs</span></span>
+          <span class="chip chip-soft-teal" style="margin-left:auto">Aktivní</span>
+        </div>
+        <div class="person-row">
+          <span><span class="nm">SEO</span>
+          <span class="sub">Jana Marketérová · 8 000 Kč/měs</span></span>
+          <span class="chip chip-soft-teal" style="margin-left:auto">Aktivní</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Poslední komentář</h3>
+        </div>
+        <div class="person-row" style="align-items:flex-start">
+          <span class="av av-sm av-y">JM</span>
+          <span>
+            <span class="nm">Jana Marketérová <span class="sub" style="display:inline">· včera</span></span>
+            <span class="sub" style="color:var(--ink)">Feed je nasazený, čekáme na schválení klientem. Pak spustíme bidding.</span>
+          </span>
+        </div>
+        <div class="side-section" style="margin-top:.8rem;padding-top:.8rem">
+          <a href="#">Zobrazit všechny komentáře ›</a>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+</body>
+</html>

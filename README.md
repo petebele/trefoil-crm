@@ -18,10 +18,15 @@ Interní CRM pro marketingovou agenturu **Conviu**. Budoucí adresa: `https://cr
 - **Flexibilní datový základ** (z v1): Osoby a Firmy (Person/Client), vícenásobné kontaktní
   údaje, konfigurovatelné Seznamy, role a práva (RBAC).
 
-## Postup
+## Postup a dokumentace
 
-Roadmapa a specifikace modulů vzniknou v `docs/` (Krok 1). Tento commit je pouze
-založení repozitáře (Krok 0: prostředí + repo).
+- [ROADMAP.md](ROADMAP.md) — kroky vývoje (spec-first)
+- [docs/UI-ZASADY.md](docs/UI-ZASADY.md) — designový manuál (replika Capsule)
+- [docs/SLOVNIK.md](docs/SLOVNIK.md) — jednotná terminologie
+- [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md) — datový základ (Person/Client/Seznamy/RBAC)
+- [docs/specs/](docs/specs/) — specifikace modulů (vznikají před stavbou)
+- [mockupy/](mockupy/) — **klikací ukázky obrazovek** (otevři `nastenka.html` v prohlížeči):
+  nástěnka · přehled zákazníků · detail zákazníka
 
 ## Důležité
 
