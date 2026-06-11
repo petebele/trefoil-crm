@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Katalog komponent — Conviu CRM v2</title>
+<link rel="stylesheet" href="styl.css">
+<style>
+  /* chrome katalogu (jen pro tuto stránku) */
+  .ks { margin: 2.2rem 0 0; }
+  .ks > h2 { font-size: 1.05rem; font-weight: 650; margin: 0 0 .2rem; }
+  .ks > .kd { color: var(--muted); font-size: .8125rem; margin: 0 0 .9rem; }
+  .krow { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+  .kbox { background: var(--card); border: 1px dashed var(--line); border-radius: var(--radius); padding: 1.1rem 1.25rem; }
+  .swatch { width: 110px; border-radius: 10px; border: 1px solid var(--line); overflow: hidden; font-size: .72rem; }
+  .swatch i { display: block; height: 44px; }
+  .swatch span { display: block; padding: .35rem .5rem; background: var(--card); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <nav class="nav-icons" aria-label="Hlavní navigace">
+    <a class="nico" href="nastenka.html" title="Nástěnka" aria-label="Nástěnka">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <a class="nico" href="zakaznici.html" title="Zákazníci" aria-label="Zákazníci">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </a>
+    <a class="nico" href="#" title="Úkoly" aria-label="Úkoly">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </a>
+    <a class="nico" href="#" title="Zakázky" aria-label="Zakázky">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    </a>
+    <a class="nico" href="#" title="Obchod" aria-label="Obchod">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    </a>
+    <a class="nico" href="#" title="Administrace" aria-label="Administrace">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    </a>
+  </nav>
+  <div class="search" role="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Hledat firmu, osobu, zakázku…</span>
+    <kbd>/</kbd>
+  </div>
+  <div class="top-right">
+    <button class="btn" type="button">Přidat
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div class="user">
+      <span class="av av-i">PB</span>
+      <span class="uname">Petr Běloch<small>Conviu</small></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <h1>Katalog komponent</h1>
+  <p class="sub">Živý náhled všech znovupoužitelných prvků. Přesné kódy a pravidla: <b>docs/KOMPONENTY.md</b>.
+  Horní lišta na této stránce je sama komponentou (§17).</p>
+
+  <section class="ks">
+    <h2>1 · Barvy (tokeny)</h2>
+    <p class="kd">--ink text · --muted sekundární · --accent akce/odkazy · --teal úspěch · --red destrukce · --orange/--pink kategorie</p>
+    <div class="krow">
+      <div class="swatch"><i style="background:#1e2235"></i><span>--ink</span></div>
+      <div class="swatch"><i style="background:#6b7280"></i><span>--muted</span></div>
+      <div class="swatch"><i style="background:#635df5"></i><span>--accent</span></div>
+      <div class="swatch"><i style="background:#eceafd"></i><span>--accent-soft</span></div>
+      <div class="swatch"><i style="background:#0aa789"></i><span>--teal</span></div>
+      <div class="swatch"><i style="background:#e5484d"></i><span>--red</span></div>
+      <div class="swatch"><i style="background:#f59e0b"></i><span>--orange</span></div>
+      <div class="swatch"><i style="background:#ec5b78"></i><span>--pink</span></div>
+      <div class="swatch"><i style="background:#f6f7f9"></i><span>--bg</span></div>
+      <div class="swatch"><i style="background:#e7e9ee"></i><span>--line</span></div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>2 · Typografie</h2>
+    <div class="kbox">
+      <h1 style="margin-bottom:.3rem">Nadpis stránky (h1)</h1>
+      <h2 class="record-name" style="margin-top:.3rem">Název záznamu (.record-name)</h2>
+      <h3 class="section-title" style="margin-top:.6rem">Nadpis sekce (.section-title)</h3>
+      <p style="margin:.4rem 0">Běžný text odstavce — 14 px, řádkování 1.5.</p>
+      <p class="sub" style="margin:0">Sekundární text (.sub) — 13 px, šedý. Pro popisky, meta údaje, role.</p>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>3 · Tlačítka</h2>
+    <p class="kd">Na stránce max. jedno primární. Ikonová tlačítka vždy s aria-label.</p>
+    <div class="krow">
+      <button class="btn btn-primary" type="button">Primární akce</button>
+      <button class="btn" type="button">Sekundární</button>
+      <button class="btn btn-sm" type="button">Malé</button>
+      <button class="btn btn-sm" type="button">Split <span class="btn-split">▾</span></button>
+      <button class="btn btn-ghost" type="button">Textová akce</button>
+      <button class="btn btn-danger" type="button">Smazat</button>
+      <button class="btn btn-success-solid" type="button">Vyhráno</button>
+      <button class="btn btn-danger-solid" type="button">Prohráno</button>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>4 · Chipy — tři druhy, nezaměňovat</h2>
+    <p class="kd">Štítky tlumené · stavy měkké barevné · kategorie úkolů plné (jediné „hlasité").</p>
+    <div class="krow">
+      <span class="chips"><span class="chip">Štítek</span><span class="chip">E-shop</span><span class="chip">VIP</span></span>
+      <span style="width:1.5rem"></span>
+      <span class="chip chip-soft-teal">Aktivní</span>
+      <span class="chip chip-soft-gray">Lead</span>
+      <span style="width:1.5rem"></span>
+      <span class="cat cat-teal">Hovor</span>
+      <span class="cat cat-pink">E-mail</span>
+      <span class="cat cat-red">Schůzka</span>
+      <span class="cat cat-orange">Follow-up</span>
+      <span class="cat cat-indigo">Milník</span>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>5 · Avatary</h2>
+    <p class="kd">Pastelové iniciály; av-i jen pro přihlášeného uživatele. Velikosti sm/—/lg.</p>
+    <div class="krow">
+      <span class="av av-sm av-g">JB</span>
+      <span class="av av-b">BE</span>
+      <span class="av av-p">DE</span>
+      <span class="av av-y">LG</span>
+      <span class="av av-i">PB</span>
+      <span class="av av-lg av-g">SP</span>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>6 · Taby a filtr pilulky</h2>
+    <div class="kbox">
+      <nav class="tabs" style="margin-top:0" aria-label="Ukázka tabů">
+        <a class="tab active" href="#">Historie</a>
+        <a class="tab" href="#">Soubory <span class="cnt">1</span></a>
+        <a class="tab" href="#">Zakázky <span class="cnt">2</span></a>
+      </nav>
+      <div class="frow" style="margin-bottom:0">
+        <span class="fpill">Uložené seznamy <span class="chev">▾</span></span>
+        <span class="fpill">Štítek: <b>Vše</b> <span class="chev">▾</span></span>
+        <span class="fpill">Stav: <b>Aktivní</b> <span class="chev">▾</span></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>7 · Karta a stat dlaždice</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem">
+      <div class="card" style="margin:0">
+        <div class="card-head">
+          <h3>Hlavička karty</h3>
+          <button class="btn btn-sm" type="button">Kontextová akce</button>
+        </div>
+        Obsah karty.
+      </div>
+      <div class="stats" style="grid-template-columns:1fr 1fr">
+        <div class="stat"><b>2</b><span>aktivní služby</span></div>
+        <div class="stat"><b>18 500 Kč</b><span>měsíčně</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>8 · Tabulka</h2>
+    <div class="card card-table">
+      <table class="tbl">
+        <thead><tr><th class="check"></th><th>Souhrn</th><th>E-mail</th><th>Štítky</th><th>Stav</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="check"><input type="checkbox" aria-label="Vybrat"></td>
+            <td><span class="cell-name"><span class="av av-b">BE</span><span><span class="nm">Borovec-elektro.cz</span><span class="sub">Firma · borovec-elektro.cz</span></span></span></td>
+            <td><a href="#">hello@borovec-elektro.cz</a><span class="meta-lbl">Práce</span></td>
+            <td><span class="chips"><span class="chip">E-shop</span></span></td>
+            <td><span class="chip chip-soft-teal">Aktivní</span></td>
+          </tr>
+          <tr>
+            <td class="check"><input type="checkbox" aria-label="Vybrat"></td>
+            <td><span class="cell-name"><span class="av av-g">JB</span><span><span class="nm">Jan Borovec</span><span class="sub">Jednatel v <a href="#">Borovec-elektro.cz</a></span></span></span></td>
+            <td><a href="#">jan@borovec-elektro.cz</a><span class="meta-lbl">Práce</span></td>
+            <td><span class="chips"><span class="chip">VIP</span></span></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>9 · Fakta a osoby (levý sloupec detailu)</h2>
+    <div class="card" style="max-width:340px">
+      <div class="fact"><span class="val">+420 601 111 222</span><span class="lbl">Telefon · Práce</span></div>
+      <div class="fact"><span class="val"><a href="#">hello@borovec-elektro.cz</a></span><span class="lbl">E-mail · Práce</span></div>
+      <div class="side-section">
+        <h4>Lidé <a href="#" style="font-weight:400">+ Přidat</a></h4>
+        <div class="person-row">
+          <span class="av av-sm av-g">JB</span>
+          <span><span class="nm">Jan Borovec</span><span class="sub">Jednatel · +420 601 111 222</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>10 · Timeline + akční řádek</h2>
+    <div class="actions-row" style="margin-top:0">
+      <span class="fpill">Vše <span class="chev">▾</span></span>
+      <input class="input grow" type="search" placeholder="Hledat v historii…" aria-label="Hledat v historii">
+      <button class="btn" type="button">Poslat e-mail</button>
+      <button class="btn btn-primary" type="button">Zapsat aktivitu</button>
+    </div>
+    <div class="card" style="padding-top:.4rem">
+      <div class="tl-item" style="border-top:none">
+        <div class="tl-ico">📝</div>
+        <div>
+          <div class="tl-head"><b>Poznámka od Petra Bělocha</b> <span class="when">· 9. 6. 2026</span></div>
+          <div class="tl-body">Text poznámky s přílohou.</div>
+          <span class="file-chip">📄 feed-audit.pdf <span>1,2 MB</span></span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-ico">📞</div>
+        <div>
+          <div class="tl-head"><b>Hovor od Jany Marketérové</b> <span class="when">· 5. 6. 2026</span></div>
+          <div class="tl-body">Ikony typů: 📝 poznámka · ✉️ e-mail · 📞 hovor · 👥 schůzka.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>11 · Úkoly</h2>
+    <div class="card" style="max-width:420px">
+      <div class="task-group overdue" style="margin-top:0">● Po termínu</div>
+      <div class="task-item">
+        <input type="checkbox" aria-label="Označit jako hotové">
+        <div class="task-txt">
+          <span class="cat cat-teal">Hovor</span> Zavolat ohledně rozpočtu PPC
+          <span class="when">út 9. 6. · pro <a href="#">Borovec-elektro.cz</a></span>
+        </div>
+      </div>
+      <div class="task-group">Dnes</div>
+      <div class="task-item">
+        <input type="checkbox" aria-label="Označit jako hotové">
+        <div class="task-txt">
+          <span class="cat cat-red">Schůzka</span> Onboarding recenzního programu
+          <span class="when">dnes 14:00 · pro <a href="#">Derma.cz</a></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>12 · Prázdný stav, progress, recent chip</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;align-items:start">
+      <div class="card" style="margin:0">
+        <div class="empty">
+          <span class="big">✓</span>
+          Zatím žádná zakázka.
+          <div class="hint" style="margin-top:.6rem"><button class="btn btn-sm btn-primary" type="button">Vytvořit zakázku</button></div>
+        </div>
+      </div>
+      <div class="card" style="margin:0">
+        <div class="sub" style="margin-bottom:.4rem">Milník: Nabídka (40 %)</div>
+        <div class="progress" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"><i style="width:40%"></i></div>
+        <div style="margin-top:1.2rem">
+          <a class="recent-chip" href="#">
+            <span class="av av-b">BE</span>
+            <span class="nm">Borovec-elektro.cz<span class="sub">Firma</span></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>13 · Formulář (modální karta)</h2>
+    <div class="modal-card">
+      <h3>Přidat úkol</h3>
+      <div class="field">
+        <label>Popis <span class="req">*</span> <a class="side-link" href="#">Přidat detail</a></label>
+        <input class="input" type="text" placeholder="Co je potřeba udělat?">
+      </div>
+      <div class="field">
+        <label>Kategorie</label>
+        <select class="input"><option>Žádná</option><option>Hovor</option><option>E-mail</option><option>Schůzka</option></select>
+      </div>
+      <div class="field">
+        <label>Termín</label>
+        <input class="input" type="date">
+        <span class="help">Úkol se objeví na Nástěnce v den termínu.</span>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="button">Uložit</button>
+        <button class="btn btn-ghost" type="button">Zrušit</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

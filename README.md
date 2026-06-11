@@ -22,6 +22,8 @@ Interní CRM pro marketingovou agenturu **Conviu**. Budoucí adresa: `https://cr
 
 - [ROADMAP.md](ROADMAP.md) — kroky vývoje (spec-first)
 - [docs/UI-ZASADY.md](docs/UI-ZASADY.md) — designový manuál (replika Capsule)
+- [docs/KOMPONENTY.md](docs/KOMPONENTY.md) — katalog znovupoužitelných komponent (kódy + pravidla);
+  živý náhled: [mockupy/komponenty.html](mockupy/komponenty.html)
 - [docs/SLOVNIK.md](docs/SLOVNIK.md) — jednotná terminologie
 - [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md) — datový základ (Person/Client/Seznamy/RBAC)
 - [docs/specs/](docs/specs/) — specifikace modulů (vznikají před stavbou)

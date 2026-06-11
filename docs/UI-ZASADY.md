@@ -110,6 +110,9 @@ Dle §4; nad tabulí H1 + přepínač Pipeline/List(/Dashboard) + souhrn vpravo
 
 ## 7. Implementace v našem stacku
 
+- **Katalog komponent**: přesné kódy a pravidla každého prvku → `docs/KOMPONENTY.md`,
+  živý náhled všech prvků → `mockupy/komponenty.html`. Moduly **nevymýšlejí nové prvky** —
+  používají katalog; co chybí, nejdřív přibude do katalogu.
 - Tokeny z §2 = CSS proměnné v `public/theme.css` (vznikne v Kroku 2 z `mockupy/styl.css`).
 - **Bootstrap 5 jen jako podvozek chování** (dropdown, collapse, modal) — vzhled určuje náš theme;
   Bootstrap proměnné přemapovat na naše tokeny, komponenty z §4 jako vlastní třídy (`.chip`, `.kanban-card`…).
