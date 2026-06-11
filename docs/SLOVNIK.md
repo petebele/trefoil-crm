@@ -13,7 +13,10 @@
 | **Zákazník** | Zastřešující neformální pojem pro Firmy i Osoby. | Sekce **Zákazníci** obsahuje obojí + filtr. |
 | **Kolega** | Člen týmu Conviu (Osoba s přihlášením a rolí). | Spravuje se v **Administraci**, ne v Zákaznících. |
 | **Kontaktní údaj** | Telefon / e-mail / … u Osoby nebo Firmy. | Vícenásobné; mohou být vázané na konkrétní Firmu (osobní vs. firemní mobil). |
-| **Služba** | Co u nás Firma/Osoba má aktivního (z Katalogu služeb). | SEO, PPC, feedy, Conviu aplikace… + stav, cena, odpovědný. |
+| **Služba** | Co u nás Firma/Osoba má aktivního (z Katalogu služeb): stav, odpovědný a **orientační měsíční spend**. Součet spendů = celkový orientační spend zákazníka. | SEO, PPC, sociální sítě, feedy… |
+| **Rozpočet hodin** | Domluvený měsíční počet hodin u zákazníka. Schválené výkazy se z něj odečítají (vidíš „nastaveno / zbývá"); bez rozpočtu se hodiny kumulují k fakturaci. | Zadávají jen manažeři. |
+| **Výkaz práce** (záznam práce) | Úkon odvedený pro zákazníka (volitelně ke službě): popis, detailnější poznámka, strávený čas, pracovník, datum, dohledatelné ID. Zadává kdokoli, **schvaluje odpovědná osoba zákazníka** (založení výkazu jí automaticky vytvoří úkol). | Rychlé zadání z lišty, Nástěnky i detailu zákazníka. |
+| **Manažer** | Kdo smí nastavovat rozpočty/spendy a schvaluje výkazy svých zákazníků. | Do zavedení rolí (RBAC) = admin; odpovědná osoba = manažer daného zákazníka. |
 | **Zakázka** | Delivery projekt navázaný na zákazníka (cíl, stav, milníky, odpovědný). | Kanban stavů. |
 | **Milník** | Dílčí cíl zakázky s termínem a odškrtnutím. | |
 | **Příležitost** | Potenciální obchod (deal) ve fázích pipeline, s hodnotou. | Sekce **Obchod**. |

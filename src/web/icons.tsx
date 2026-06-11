@@ -58,6 +58,21 @@ export const IconTrend = (p: IconProps = {}) => (
   </Svg>
 );
 
+export const IconLayers = (p: IconProps = {}) => (
+  <Svg size={p.size}>
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </Svg>
+);
+
+export const IconClock = (p: IconProps = {}) => (
+  <Svg size={p.size}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </Svg>
+);
+
 export const IconSliders = (p: IconProps = {}) => (
   <Svg size={p.size}>
     <line x1="4" y1="21" x2="4" y2="14" />
@@ -93,7 +108,7 @@ export const IconChevron = (p: IconProps = {}) => (
 );
 
 /** Ikona modulu podle klíče z registru. */
-export function moduleIcon(icon: 'users' | 'check' | 'briefcase' | 'trend') {
+export function moduleIcon(icon: 'users' | 'check' | 'briefcase' | 'trend' | 'layers' | 'clock') {
   switch (icon) {
     case 'users':
       return <IconUsers />;
@@ -103,5 +118,9 @@ export function moduleIcon(icon: 'users' | 'check' | 'briefcase' | 'trend') {
       return <IconBriefcase />;
     case 'trend':
       return <IconTrend />;
+    case 'layers':
+      return <IconLayers />;
+    case 'clock':
+      return <IconClock />;
   }
 }

@@ -43,13 +43,20 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 | Tabulka | Účel |
 |---|---|
 | `sessions` | Cookie session (httpOnly token, expirace). Hesla scrypt (Node crypto). |
-| `services` | Aktivní služba u klienta: `catalog_item_id` (položka Seznamu), stav active/paused/ended, od/do, cena, `owner_id`. |
+| `services` | Aktivní služba u klienta: `catalog_item_id` (položka Seznamu), stav active/paused/ended, od/do, **`monthly_spend` (orientační měsíční spend Kč)**, `owner_id`. Součet spendů = celkový orientační spend zákazníka. |
+| `work_records` | **Výkaz práce**: `client_id`, volitelně `service_id`, `worker_id` (kdo pracoval), `description` (úkon), `note` (detail, volitelně), `minutes`, `performed_at`, **`status` pending/approved**, `approved_by_id`, `approved_at`. Každý záznam má dohledatelné ID. Při založení se automaticky vytvoří úkol pro odpovědnou osobu zákazníka (schválení). |
 | `engagements` | Zakázka: klient, název, cíl, stav (ze Seznamu — kanban), odpovědný, termíny. |
 | `milestones` | Milníky zakázky: název, termín, hotovo, pořadí. |
 | `deals` | Příležitost: klient (volitelně), titulek, fáze (ze Seznamu — pipeline), hodnota, odpovědný, očekávaná uzávěrka, zdroj. |
 | `activities` | Timeline: klient, volitelně osoba, `type` note/email/call/meeting, text, kdy, autor. |
 | `tasks` | Úkol: titulek, kategorie (ze Seznamu), volitelně klient/zakázka/deal, termín `due_at`, odklad `remind_at`, hotovo, přiřazený. |
-| `tenants` | Nositel multi-tenant připravenosti (teď 1 řádek „Conviu"). |
+| `tenants` | Organizace (nositel multi-tenant připravenosti). |
+
+**Rozpočet hodin:** `clients.hours_budget_monthly` (nullable) = domluvený měsíční počet hodin.
+Schválené výkazy se z něj v daném měsíci odečítají (zbývá X h); bez rozpočtu se hodiny
+**kumulují** → podklad pro fakturaci na konci měsíce. Rozpočty a spendy smí měnit jen
+**manažer** (do zavedení RBAC = admin); výkaz může zadat kdokoli, schvaluje odpovědná
+osoba zákazníka.
 
 ## Lekce z v1 (závazné)
 

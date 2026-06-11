@@ -9,7 +9,7 @@ export type ModuleDef = {
   key: string;
   label: string;
   desc: string;
-  icon: 'users' | 'check' | 'briefcase' | 'trend';
+  icon: 'users' | 'check' | 'briefcase' | 'trend' | 'layers' | 'clock';
   path: string;
   built: boolean;
 };
@@ -29,6 +29,22 @@ export const MODULES: ModuleDef[] = [
     desc: 'Úkoly s kategoriemi a termíny, přehled Po termínu / Dnes.',
     icon: 'check',
     path: '/ukoly',
+    built: false,
+  },
+  {
+    key: 'sluzby',
+    label: 'Služby & rozpočty',
+    desc: 'Co zákazníkům spravujeme, orientační měsíční spendy a rozpočty hodin.',
+    icon: 'layers',
+    path: '/sluzby',
+    built: false,
+  },
+  {
+    key: 'vykazy',
+    label: 'Výkazy práce',
+    desc: 'Záznamy odvedené práce s časem, schvalováním a podklady pro fakturaci.',
+    icon: 'clock',
+    path: '/vykazy',
     built: false,
   },
   {

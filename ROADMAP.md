@@ -16,12 +16,14 @@ Vizuální reference: `docs/UI-ZASADY.md` + `/mockupy`. Datový základ: `docs/D
 | **2 — Kostra** | DB základ, auth (login), layout dle Capsule (theme.css z mockupů), **založení Organizace průvodcem** (admin + výběr modulů), **zapínatelné moduly** (Administrace → Moduly), launcher na plochu | bez funkčních modulů; běžící prázdná appka |
 | **3 — Jádro: Zákazníci** | Firmy + Osoby (+kontaktní údaje, vazby), přehled s filtrem a quick-view, detail = 3sloupcový hub, štítky | dle mockupů `zakaznici` + `zakaznik-detail` |
 | **4 — Komunikace + Úkoly + Nástěnka** | Timeline aktivit (typy), úkoly s kategoriemi (barevné chipy), Nástěnka (pozdrav, naposledy zobrazené, stat dlaždice, Po termínu/Dnes) | dle mockupu `nastenka` |
-| **5 — Služby + Seznamy + Administrace** | Katalog služeb, aktivní služby u klienta, správa Seznamů, tým + role/práva (RBAC) | |
-| **6 — Zakázky** | Zakázky + milníky, kanban (drag-drop) + list, „update klientovi" | sdílená kanban komponenta |
-| **7 — Obchod** | Příležitosti, pipeline kanban + hodnoty/součty, list | reuse kanbanu |
-| **8 — Vyhledávání** | Horní hledání + Ctrl+K (skok na firmu/osobu/zakázku/deal) | |
-| **9 — Doleštění** | UX/responzivita/aria audit proti UI zásadám, drobnosti | |
-| Později | reporting (Přehledy), e-mail integrace, nasazení na crm.conviu.com | mimo MVP |
+| **5 — Služby & rozpočty** | Aktivní služby u zákazníka (katalog, stav, odpovědný, **orientační měsíční spend**), součet spendů za zákazníka, **měsíční rozpočet hodin** (nastaveno/zbývá; jen manažeři), stat dlaždice na detailu ožívají | jádro agenturní evidence |
+| **6 — Výkazy práce** | „Záznam práce" odkudkoli (lišta, Nástěnka, detail zákazníka): zákazník + volitelně služba + popis úkonu + poznámka + čas + pracovník + ID. **Schvalování** odpovědnou osobou (auto-úkol). Odečet z rozpočtu hodin / kumulace k fakturaci, výkaz pracovníka | navazuje na 3+4+5 |
+| **7 — Administrace** | Tým + pozvánky kolegů, správa Seznamů, **role/práva (RBAC)** — formalizace „manažera", nahrazení dočasného is_admin | |
+| **8 — Zakázky** | Zakázky + milníky, kanban (drag-drop) + list, „update klientovi" | sdílená kanban komponenta |
+| **9 — Obchod** | Příležitosti, pipeline kanban + hodnoty/součty, list | reuse kanbanu |
+| **10 — Vyhledávání** | Horní hledání + Ctrl+K (skok na firmu/osobu/zakázku/deal) | |
+| **11 — Doleštění** | UX/responzivita/aria audit proti UI zásadám, drobnosti | |
+| Později | manažerské reporty (hodiny/spendy/tým), e-mail integrace, nasazení na crm.conviu.com | mimo MVP |
 
 ## Technické lekce z v1 (aplikovat průběžně)
 
