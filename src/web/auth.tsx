@@ -14,7 +14,7 @@ function LoginPage(props: { orgName: string; email?: string; error?: string }) {
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Přihlášení · Conviu CRM</title>
-        <link rel="stylesheet" href="/static/theme.css" />
+        <link rel="stylesheet" href="/static/theme.css?v=4" />
       </head>
       <body>
         <main class="page" style="max-width:420px">

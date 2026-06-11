@@ -176,8 +176,14 @@ zakazniciRoutes.get('/zakaznici', async (c) => {
   const personCount = allRows.filter((r) => r.kind === 'osoba').length;
   const hasFilter = Boolean(q || stitek || stav);
 
-  const tabHref = (k: string) =>
-    `/zakaznici?typ=${k}${q ? `&q=${encodeURIComponent(q)}` : ''}${stitek ? `&stitek=${stitek}` : ''}${stav ? `&stav=${stav}` : ''}&sort=${sort}`;
+  /** Odkaz na přehled se změněným filtrem (ostatní parametry zůstávají). */
+  const href = (o: Partial<Record<'typ' | 'q' | 'stitek' | 'stav' | 'sort', string>>) => {
+    const v = { typ, q, stitek, stav, sort, ...o };
+    const p = new URLSearchParams();
+    for (const [k, val] of Object.entries(v)) if (val) p.set(k, val);
+    return `/zakaznici?${p.toString()}`;
+  };
+  const tabHref = (k: string) => href({ typ: k });
 
   return c.html(
     <Layout title="Zákazníci" person={person} modules={c.get('modules')} active="zakaznici">
@@ -195,39 +201,70 @@ zakazniciRoutes.get('/zakaznici', async (c) => {
         <a class={`tab ${typ === 'osoby' ? 'active' : ''}`} href={tabHref('osoby')}>Osoby <span class="cnt">{personCount}</span></a>
       </nav>
 
-      <form
-        method="get"
-        action="/zakaznici"
-        hx-get="/zakaznici"
-        hx-target="#cl-tbody"
-        hx-select="#cl-tbody"
-        hx-swap="outerHTML"
-        hx-trigger="change, keyup changed delay:300ms from:find input[name='q']"
-        hx-push-url="true"
-      >
-        <input type="hidden" name="typ" value={typ} />
-        <div class="frow" style="align-items:center">
+      <div class="frow" style="align-items:center">
+        <form
+          method="get"
+          action="/zakaznici"
+          class="m0"
+          hx-get="/zakaznici"
+          hx-target="#cl-tbody"
+          hx-select="#cl-tbody"
+          hx-swap="outerHTML"
+          hx-trigger="submit, keyup changed delay:300ms from:find input[name='q']"
+          hx-push-url="true"
+        >
+          <input type="hidden" name="typ" value={typ} />
+          <input type="hidden" name="stitek" value={stitek} />
+          <input type="hidden" name="stav" value={stav} />
+          <input type="hidden" name="sort" value={sort} />
           <input class="input" type="search" name="q" value={q} placeholder="Jméno obsahuje…" aria-label="Hledat podle jména" style="max-width:14rem" />
-          <select class="input" name="stitek" aria-label="Filtr podle štítku" style="max-width:11rem">
-            <option value="">Štítek: vše</option>
+        </form>
+
+        <div class="menu" id="fltStitek">
+          <button type="button" class="fpill" data-menu-toggle="fltStitek" aria-haspopup="true">
+            Štítek: <b>{allTags.find((x) => x.id === stitek)?.label ?? 'Vše'}</b> <span class="chev">▾</span>
+          </button>
+          <div class="menu-list panel" role="menu">
+            {allTags.length > 6 ? <input class="input" data-filter-list placeholder="Hledat štítek…" aria-label="Hledat štítek" /> : null}
+            <a class="opt" href={href({ stitek: '' })}>Vše {!stitek ? <span class="tick">✓</span> : null}</a>
             {allTags.map((tg) => (
-              <option value={tg.id} selected={stitek === tg.id}>{tg.label}</option>
+              <a class="opt" href={href({ stitek: tg.id })}>
+                {tg.label}
+                {stitek === tg.id ? <span class="tick">✓</span> : null}
+              </a>
             ))}
-          </select>
-          <select class="input" name="stav" aria-label="Filtr podle stavu" style="max-width:11rem">
-            <option value="">Stav: vše</option>
-            {statusItems.map((s) => (
-              <option value={s.value} selected={stav === s.value}>{s.label}</option>
-            ))}
-          </select>
-          <span style="margin-left:auto"></span>
-          <select class="input" name="sort" aria-label="Řazení" style="max-width:11rem">
-            <option value="az" selected={sort === 'az'}>Řadit: Název A→Z</option>
-            <option value="za" selected={sort === 'za'}>Řadit: Název Z→A</option>
-            <option value="new" selected={sort === 'new'}>Řadit: Nejnovější</option>
-          </select>
+            {allTags.length === 0 ? <div class="sub" style="padding:.4rem .6rem">Zatím žádné štítky.</div> : null}
+          </div>
         </div>
-      </form>
+
+        <div class="menu" id="fltStav">
+          <button type="button" class="fpill" data-menu-toggle="fltStav" aria-haspopup="true">
+            Stav: <b>{statusItems.find((x) => x.value === stav)?.label ?? 'Vše'}</b> <span class="chev">▾</span>
+          </button>
+          <div class="menu-list panel" role="menu">
+            <a class="opt" href={href({ stav: '' })}>Vše {!stav ? <span class="tick">✓</span> : null}</a>
+            {statusItems.map((s) => (
+              <a class="opt" href={href({ stav: s.value })}>
+                {s.label}
+                {stav === s.value ? <span class="tick">✓</span> : null}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <span style="margin-left:auto"></span>
+
+        <div class="menu" id="fltSort">
+          <button type="button" class="fpill" data-menu-toggle="fltSort" aria-haspopup="true">
+            Řadit: <b>{sort === 'za' ? 'Název Z→A' : sort === 'new' ? 'Nejnovější' : 'Název A→Z'}</b> <span class="chev">▾</span>
+          </button>
+          <div class="menu-list panel" role="menu">
+            <a class="opt" href={href({ sort: 'az' })}>Název A→Z {sort === 'az' ? <span class="tick">✓</span> : null}</a>
+            <a class="opt" href={href({ sort: 'za' })}>Název Z→A {sort === 'za' ? <span class="tick">✓</span> : null}</a>
+            <a class="opt" href={href({ sort: 'new' })}>Nejnovější {sort === 'new' ? <span class="tick">✓</span> : null}</a>
+          </div>
+        </div>
+      </div>
 
       <div class="list-meta">
         <span>Zobrazeno 1–{rows.length} z {rows.length}</span>

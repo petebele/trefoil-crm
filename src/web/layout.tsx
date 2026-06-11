@@ -3,6 +3,9 @@ import type { PersonsTable } from '../db/schema';
 import { MODULES } from '../modules';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
 
+/** Verze statických souborů — zvednout při změně theme.css/app.js (cache-busting). */
+const ASSET_V = '4';
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?';
@@ -29,9 +32,9 @@ export function Layout(props: {
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{title} · Conviu CRM</title>
-        <link rel="stylesheet" href="/static/theme.css" />
+        <link rel="stylesheet" href={`/static/theme.css?v=${ASSET_V}`} />
         <script src="/static/htmx.min.js" defer></script>
-        <script src="/static/app.js" defer></script>
+        <script src={`/static/app.js?v=${ASSET_V}`} defer></script>
       </head>
       <body>
         {person ? (
