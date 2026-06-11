@@ -308,6 +308,38 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 }
 .menu-item:hover { background: var(--bg); text-decoration: none; }
 
+/* Dropdown panel (Capsule styl): větší plovoucí panel s hledáním, položkami a akcemi */
+.menu-list.panel {
+  min-width: 250px; padding: .7rem; border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(30,34,53,.14);
+}
+.menu-list.panel .input { width: 100%; margin-bottom: .5rem; }
+.opt {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  width: 100%; text-align: left; border: none; background: none; font: inherit;
+  font-size: .85rem; color: var(--ink); cursor: pointer;
+  padding: .45rem .6rem; border-radius: 6px;
+}
+.opt:hover { background: var(--bg); text-decoration: none; }
+.opt .tick { color: var(--accent); font-weight: 700; }
+.opt-group { font-size: .68rem; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: .45rem .6rem .15rem; }
+.panel-actions { display: flex; justify-content: flex-end; gap: .9rem; align-items: center; padding-top: .55rem; margin-top: .35rem; border-top: 1px solid var(--line); }
+
+/* Ikonové tlačítko + akce zobrazené až při najetí na řádek */
+.icon-btn {
+  display: inline-grid; place-items: center; width: 26px; height: 26px;
+  border: none; background: none; border-radius: 6px; cursor: pointer;
+  color: var(--muted); font-size: .8rem; padding: 0;
+}
+.icon-btn:hover { background: #f0f1f4; color: var(--ink); }
+.hover-row .row-actions { opacity: 0; transition: opacity .12s ease; }
+.hover-row:hover .row-actions, .hover-row:focus-within .row-actions { opacity: 1; }
+.quick-add { display: flex; gap: .25rem; margin-top: .5rem; }
+
+/* Nenápadný akční odkaz (kontextové „Přiřadit…", „+ štítek") */
+.subtle-action { font-size: .78rem; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+.subtle-action:hover { text-decoration: underline; }
+
 /* ---------- Modální karta ---------- */
 .modal-card {
   background: var(--card); border: 1px solid var(--line); border-radius: 16px;

@@ -67,6 +67,29 @@ export async function addContact(
   return db.selectFrom('person_contacts').selectAll().where('id', '=', id).executeTakeFirstOrThrow();
 }
 
+/** Upraví hodnotu/štítek kontaktu (inline ✎). Štítek se opět zakládá do Seznamu. */
+export async function updateContact(
+  tenantId: string,
+  id: string,
+  data: { value: string; label?: string | null },
+): Promise<PersonContactsTable | null> {
+  const row = await db
+    .selectFrom('person_contacts')
+    .selectAll()
+    .where('tenant_id', '=', tenantId)
+    .where('id', '=', id)
+    .executeTakeFirst();
+  if (!row) return null;
+  const value = data.value.trim() || row.value;
+  let label: string | null = null;
+  if (data.label?.trim()) {
+    const item = await ensureItemByLabel(tenantId, 'contact_labels', data.label);
+    label = item?.label ?? data.label.trim();
+  }
+  await db.updateTable('person_contacts').set({ value, label }).where('id', '=', id).execute();
+  return { ...row, value, label };
+}
+
 export async function removeContact(tenantId: string, id: string): Promise<PersonContactsTable | null> {
   const row = await db
     .selectFrom('person_contacts')

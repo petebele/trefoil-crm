@@ -15,18 +15,20 @@ import {
 } from '../domain/clients';
 import { listCustomerPersons, createCustomerPerson, listCoworkers } from '../domain/people';
 import { itemsByKey, listEntityTags, addEntityTag, removeEntityTag } from '../domain/lists';
-import { listContacts, addContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
+import { listContacts, addContact, updateContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
 import { logEvent, listEvents } from '../domain/events';
 import {
   initials,
   avColor,
   relTime,
   EmptyState,
-  StatusChip,
   FieldDisplay,
   FieldEdit,
+  StatusBox,
+  OwnerBox,
   TagsSection,
   ContactsSection,
+  ContactEditRow,
   DetailTabs,
   EventRow,
   type FieldKind,
@@ -47,7 +49,6 @@ const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
   website: { label: 'Web', kind: 'text' },
   ico: { label: 'IČO', kind: 'text' },
   dic: { label: 'DIČ', kind: 'text' },
-  status: { label: 'Stav', kind: 'select' },
   note: { label: 'Poznámka', kind: 'textarea' },
 };
 
@@ -259,25 +260,14 @@ firmyRoutes.get('/firmy/:id', async (c) => {
               <FieldDisplay base={base} field="ico" label="IČO" value={client.ico} kind="text" />
               <FieldDisplay base={base} field="dic" label="DIČ" value={client.dic} kind="text" />
             </div>
-            <FieldDisplay
-              base={base}
-              field="status"
-              label="Stav"
-              value={client.status}
-              kind="select"
-              display={<StatusChip value={client.status} items={statusItems} />}
-            />
+            <StatusBox base={base} value={client.status} items={statusItems} />
           </div>
 
-          <div class="side-section">
-            <h4>Odpovědná osoba</h4>
-            <select class="input" name="owner_id" aria-label="Odpovědná osoba" hx-post={`${base}/owner`} hx-trigger="change" hx-swap="none" style="height:32px;font-size:.8rem">
-              <option value="">— nikdo —</option>
-              {coworkers.map((u) => (
-                <option value={u.id} selected={client.owner_id === u.id}>{u.name}</option>
-              ))}
-            </select>
-          </div>
+          <OwnerBox
+            base={base}
+            owner={coworkers.find((u) => u.id === client.owner_id) ?? null}
+            coworkers={coworkers}
+          />
 
           <div class="side-section">
             <h4>Lidé</h4>
@@ -396,18 +386,13 @@ firmyRoutes.get('/firmy/:id/pole/:field', async (c) => {
   if (!isEditableClientField(field)) return c.notFound();
   const client = await getClient(person.tenant_id, c.req.param('id'));
   if (!client) return c.notFound();
-  const meta = FIELD_META[field]!;
-  const statusItems = field === 'status' ? await itemsByKey(person.tenant_id, 'client_statuses') : [];
-  return c.html(
-    <FieldDisplay
-      base={`/firmy/${client.id}`}
-      field={field}
-      label={meta.label}
-      value={client[field]}
-      kind={meta.kind}
-      display={field === 'status' ? <StatusChip value={client.status} items={statusItems} /> : undefined}
-    />,
-  );
+  if (field === 'status') {
+    const items = await itemsByKey(person.tenant_id, 'client_statuses');
+    return c.html(<StatusBox base={`/firmy/${client.id}`} value={client.status} items={items} />);
+  }
+  const meta = FIELD_META[field];
+  if (!meta) return c.notFound();
+  return c.html(<FieldDisplay base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} />);
 });
 
 firmyRoutes.get('/firmy/:id/pole/:field/edit', async (c) => {
@@ -416,14 +401,9 @@ firmyRoutes.get('/firmy/:id/pole/:field/edit', async (c) => {
   if (!isEditableClientField(field)) return c.notFound();
   const client = await getClient(person.tenant_id, c.req.param('id'));
   if (!client) return c.notFound();
-  const meta = FIELD_META[field]!;
-  const options =
-    field === 'status'
-      ? (await itemsByKey(person.tenant_id, 'client_statuses')).map((s) => ({ value: s.value, label: s.label }))
-      : undefined;
-  return c.html(
-    <FieldEdit base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} options={options} />,
-  );
+  const meta = FIELD_META[field];
+  if (!meta) return c.notFound();
+  return c.html(<FieldEdit base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} />);
 });
 
 firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {
@@ -438,21 +418,21 @@ firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {
   const body = await c.req.parseBody();
   let value: string | null = String(body.value ?? '').trim() || null;
   if (field === 'name' && !value) value = client.name;
-  await updateClientField(t, id, field, value);
-  const meta = FIELD_META[field]!;
-  await logEvent(t, 'client', id, person.id, `${meta.label}: ${value ?? '—'}`);
 
-  const statusItems = field === 'status' ? await itemsByKey(t, 'client_statuses') : [];
-  return c.html(
-    <FieldDisplay
-      base={`/firmy/${id}`}
-      field={field}
-      label={meta.label}
-      value={value}
-      kind={meta.kind}
-      display={field === 'status' ? <StatusChip value={value ?? 'lead'} items={statusItems} /> : undefined}
-    />,
-  );
+  if (field === 'status') {
+    const items = await itemsByKey(t, 'client_statuses');
+    const status = items.some((s) => s.value === value) ? (value as string) : client.status;
+    await updateClientField(t, id, 'status', status);
+    const label = items.find((s) => s.value === status)?.label ?? status;
+    await logEvent(t, 'client', id, person.id, `Stav: ${label}`);
+    return c.html(<StatusBox base={`/firmy/${id}`} value={status} items={items} />);
+  }
+
+  const meta = FIELD_META[field];
+  if (!meta) return c.notFound();
+  await updateClientField(t, id, field, value);
+  await logEvent(t, 'client', id, person.id, `${meta.label}: ${value ?? '—'}`);
+  return c.html(<FieldDisplay base={`/firmy/${id}`} field={field} label={meta.label} value={value} kind={meta.kind} />);
 });
 
 // ---------- odpovědná osoba ----------
@@ -466,9 +446,9 @@ firmyRoutes.post('/firmy/:id/owner', async (c) => {
   const ownerId = String((await c.req.parseBody()).owner_id ?? '').trim() || null;
   await setClientOwner(t, id, ownerId);
   const coworkers = await listCoworkers(t);
-  const ownerName = coworkers.find((u) => u.id === ownerId)?.name ?? '— nikdo —';
-  await logEvent(t, 'client', id, person.id, `Odpovědná osoba: ${ownerName}`);
-  return c.body(null, 204);
+  const owner = coworkers.find((u) => u.id === ownerId) ?? null;
+  await logEvent(t, 'client', id, person.id, `Odpovědná osoba: ${owner?.name ?? '— nikdo —'}`);
+  return c.html(<OwnerBox base={`/firmy/${id}`} owner={owner} coworkers={coworkers} />);
 });
 
 // ---------- štítky ----------
@@ -522,6 +502,40 @@ firmyRoutes.post('/firmy/:id/kontakt', async (c) => {
     if (added) {
       await logEvent(t, 'client', id, person.id, `Přidán kontakt: ${CONTACT_TYPE_LABELS[added.type]} ${added.value}${added.label ? ` (${added.label})` : ''}`);
     }
+  }
+  return contactsFragment(c, t, id);
+});
+
+firmyRoutes.get('/firmy/:id/kontakty', async (c) => {
+  const person = c.get('person')!;
+  const id = c.req.param('id');
+  if (!(await getClient(person.tenant_id, id))) return c.notFound();
+  return contactsFragment(c, person.tenant_id, id);
+});
+
+firmyRoutes.get('/firmy/:id/kontakt/:cid/edit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  if (!(await getClient(t, id))) return c.notFound();
+  const contacts = await listContacts(t, 'client', id);
+  const contact = contacts.find((x) => x.id === c.req.param('cid'));
+  if (!contact) return c.notFound();
+  return c.html(<ContactEditRow base={`/firmy/${id}`} contact={contact} />);
+});
+
+firmyRoutes.post('/firmy/:id/kontakt/:cid', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  if (!(await getClient(t, id))) return c.notFound();
+  const body = await c.req.parseBody();
+  const updated = await updateContact(t, c.req.param('cid'), {
+    value: String(body.value ?? ''),
+    label: String(body.label ?? '').trim() || null,
+  });
+  if (updated) {
+    await logEvent(t, 'client', id, person.id, `Upraven kontakt: ${CONTACT_TYPE_LABELS[updated.type]} ${updated.value}${updated.label ? ` (${updated.label})` : ''}`);
   }
   return contactsFragment(c, t, id);
 });

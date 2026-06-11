@@ -11,6 +11,18 @@ document.addEventListener('click', function (e) {
   }
 });
 
+// Dropdown panel: psaní v [data-filter-list] filtruje .opt položky panelu.
+document.addEventListener('input', function (e) {
+  var inp = e.target.closest('[data-filter-list]');
+  if (!inp) return;
+  var q = inp.value.toLowerCase();
+  var list = inp.closest('.menu-list');
+  if (!list) return;
+  list.querySelectorAll('.opt').forEach(function (o) {
+    o.style.display = o.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+  });
+});
+
 // Formuláře: tlačítko [data-add-row="idTemplate"] přidá další řádek (např. kontakt).
 document.addEventListener('click', function (e) {
   var btn = e.target.closest('[data-add-row]');

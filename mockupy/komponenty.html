@@ -281,6 +281,40 @@
   </section>
 
   <section class="ks">
+    <h2>14 · Dropdown panel (Capsule styl) + kontextové akce</h2>
+    <p class="kd">Formulářové prvky se neukazují natrvalo — panel se otevře kliknutím na nenápadný odkaz/ikonku (§19, §20). Zde vykresleno otevřené:</p>
+    <div style="display:flex;gap:2.5rem;flex-wrap:wrap;align-items:flex-start">
+      <div class="menu open" style="position:relative">
+        <button class="subtle-action" type="button">Přiřadit odpovědnou osobu</button>
+        <div class="menu-list panel" style="position:static;display:block;margin-top:.5rem">
+          <input class="input" placeholder="Hledat kolegu…">
+          <div class="opt-group">Kolegové</div>
+          <button class="opt" type="button"><span style="display:flex;align-items:center;gap:.5rem"><span class="av av-sm av-i">PB</span>Petr Běloch</span><span class="tick">✓</span></button>
+          <button class="opt" type="button"><span style="display:flex;align-items:center;gap:.5rem"><span class="av av-sm av-y">JM</span>Jana Marketérová</span></button>
+          <button class="opt" type="button" style="color:var(--muted)">Zrušit přiřazení</button>
+        </div>
+      </div>
+      <div class="card" style="margin:0;max-width:300px">
+        <div class="sub" style="font-size:.73rem;margin-bottom:.2rem">Telefon</div>
+        <div class="hover-row" style="display:flex;align-items:baseline;gap:.45rem">
+          <span>+420 601 111 222</span><span class="meta-lbl">Práce</span>
+          <span class="row-actions" style="margin-left:auto">
+            <button class="icon-btn" type="button" aria-label="Upravit">✎</button>
+            <button class="icon-btn" type="button" aria-label="Smazat">✕</button>
+          </span>
+        </div>
+        <p class="sub" style="margin:.5rem 0 .25rem">↑ ikonky se ukážou až najetím · ↓ rychlé přidání kontaktů</p>
+        <div class="quick-add">
+          <button class="icon-btn" type="button" aria-label="Přidat telefon">📞</button>
+          <button class="icon-btn" type="button" aria-label="Přidat e-mail">✉️</button>
+          <button class="icon-btn" type="button" aria-label="Přidat web">🌐</button>
+          <button class="icon-btn" type="button" aria-label="Přidat jiný kontakt">＋</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
     <h2>13 · Formulář (modální karta)</h2>
     <div class="modal-card">
       <h3>Přidat úkol</h3>

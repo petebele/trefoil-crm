@@ -252,21 +252,52 @@ Otevírání řeší `public/app.js` (klik na `[data-menu-toggle]` přepne `.ope
 **Kdy:** údaje v levém panelu detailu — mění se na místě, žádné tlačítko Upravit.
 
 ```html
-<!-- zobrazení: klik (htmx) vymění za formulář -->
+<!-- zobrazení: klik (htmx) vymění za kompaktní formulář -->
 <div class="editable" role="button" tabindex="0"
      hx-get="/firmy/ID/pole/nazev/edit" hx-target="closest .field-wrap" hx-swap="outerHTML">
   Borovec-elektro.cz
 </div>
 
-<!-- editace: input + Uložit + Zrušit (vrací zobrazení) -->
+<!-- editace: input + ikonky ✓ / ✕ (žádná velká tlačítka) -->
 <form class="inline-form" hx-post="/firmy/ID/pole/nazev" hx-target="closest .field-wrap" hx-swap="outerHTML">
   <input class="input" name="value" value="…">
-  <button class="btn btn-sm btn-primary">Uložit</button>
-  <button class="btn btn-sm btn-ghost" type="button" hx-get="/firmy/ID/pole/nazev">Zrušit</button>
+  <button class="icon-btn" type="submit" aria-label="Uložit">✓</button>
+  <button class="icon-btn" type="button" aria-label="Zrušit" hx-get="/firmy/ID/pole/nazev">✕</button>
 </form>
 ```
 
 Hover ukáže ✎; prázdná hodnota se zobrazuje jako „— doplnit —" (šedě, kurzívou).
+Pro výběrové hodnoty (stav, osoba) NEpoužívej select v editaci — použij dropdown panel (§19).
+
+## 19. Dropdown panel `.menu-list.panel` (Capsule styl)
+
+**Kdy:** kontextový výběr hodnoty (stav, odpovědná osoba, štítky…). Formulářové prvky se
+**neukazují natrvalo** — viditelný je jen výsledek (text/chip/odkaz), panel se otevře kliknutím.
+
+```html
+<div class="menu" id="statusPicker">
+  <button class="subtle-action" data-menu-toggle="statusPicker">změnit</button>
+  <div class="menu-list panel" role="menu">
+    <input class="input" data-filter-list placeholder="Hledat…">      <!-- volitelné -->
+    <div class="opt-group">Stavy</div>
+    <button class="opt">Lead</button>
+    <button class="opt">Aktivní <span class="tick">✓</span></button>  <!-- vybraná hodnota -->
+    <div class="panel-actions"><button class="btn btn-ghost">Zrušit</button><button class="btn btn-sm btn-primary">Použít</button></div> <!-- jen u vícenásobného výběru -->
+  </div>
+</div>
+```
+
+Otevírání řeší `data-menu-toggle` (app.js), `[data-filter-list]` filtruje `.opt` položky psaním.
+Jednoduché výběry (stav, osoba) aplikují volbu hned klikem na položku — bez Použít.
+
+## 20. Kontextové akce na řádcích + rychlé přidání
+
+- **Hodnoty jsou text**; akční ikonky (`.icon-btn` ✎ ✕) jsou v `.row-actions` a ukážou se až
+  najetím na `.hover-row` (nebo fokusem). Vždy s `aria-label`.
+- **Rychlé přidání** (např. kontaktů): řádek malých ikonek `.quick-add` (telefon/e-mail/web/+)
+  dole v sekci — každá otevře dropdown panel s minimálním formulářem pro daný typ.
+- **Prázdná hodnota = kontextový odkaz** (`.subtle-action`): „Přiřadit odpovědnou osobu",
+  „+ štítek" — klik otevře panel. Žádné trvale viditelné selecty mimo filtry/řazení přehledů.
 
 ## 17. Horní lišta `.topbar`
 

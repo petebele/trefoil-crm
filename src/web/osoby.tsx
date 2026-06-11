@@ -11,7 +11,7 @@ import {
   softDeletePerson,
 } from '../domain/people';
 import { itemsByKey, listEntityTags, addEntityTag, removeEntityTag } from '../domain/lists';
-import { listContacts, addContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
+import { listContacts, addContact, updateContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
 import { logEvent, listEvents } from '../domain/events';
 import {
   initials,
@@ -22,6 +22,7 @@ import {
   FieldEdit,
   TagsSection,
   ContactsSection,
+  ContactEditRow,
   DetailTabs,
   EventRow,
   type FieldKind,
@@ -378,6 +379,40 @@ osobyRoutes.post('/osoby/:id/kontakt', async (c) => {
     if (added) {
       await logEvent(t, 'person', id, person.id, `Přidán kontakt: ${CONTACT_TYPE_LABELS[added.type]} ${added.value}${added.label ? ` (${added.label})` : ''}`);
     }
+  }
+  return contactsFragment(c, t, id);
+});
+
+osobyRoutes.get('/osoby/:id/kontakty', async (c) => {
+  const person = c.get('person')!;
+  const id = c.req.param('id');
+  if (!(await getCustomerPerson(person.tenant_id, id))) return c.notFound();
+  return contactsFragment(c, person.tenant_id, id);
+});
+
+osobyRoutes.get('/osoby/:id/kontakt/:cid/edit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  if (!(await getCustomerPerson(t, id))) return c.notFound();
+  const contacts = await listContacts(t, 'person', id);
+  const contact = contacts.find((x) => x.id === c.req.param('cid'));
+  if (!contact) return c.notFound();
+  return c.html(<ContactEditRow base={`/osoby/${id}`} contact={contact} />);
+});
+
+osobyRoutes.post('/osoby/:id/kontakt/:cid', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  if (!(await getCustomerPerson(t, id))) return c.notFound();
+  const body = await c.req.parseBody();
+  const updated = await updateContact(t, c.req.param('cid'), {
+    value: String(body.value ?? ''),
+    label: String(body.label ?? '').trim() || null,
+  });
+  if (updated) {
+    await logEvent(t, 'person', id, person.id, `Upraven kontakt: ${CONTACT_TYPE_LABELS[updated.type]} ${updated.value}${updated.label ? ` (${updated.label})` : ''}`);
   }
   return contactsFragment(c, t, id);
 });
