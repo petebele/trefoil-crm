@@ -139,6 +139,8 @@ h2.record-name { font-size: 1.4rem; font-weight: 700; margin: .75rem 0 .25rem; l
 }
 .chip-soft-teal { background: var(--teal-soft); color: #067a64; }
 .chip-soft-gray { background: #eef0f3; color: var(--muted); }
+.chip-soft-orange { background: #fdf0d4; color: #9a6b08; }
+.chip-soft-dark { background: #e4e5e9; color: #3a3f51; }
 .cat {
   display: inline-flex; align-items: center;
   border-radius: 6px; padding: .08rem .5rem;
@@ -313,6 +315,29 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
   box-shadow: 0 18px 45px rgba(30,34,53,.12);
 }
 .modal-card h3 { margin: 0 0 1.1rem; font-size: 1.05rem; font-weight: 650; }
+
+/* ---------- Inline editace ---------- */
+.editable {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: .12rem .35rem;
+  margin: -.12rem -.35rem;
+  transition: background-color .12s ease;
+}
+.editable:hover { background: #f0f1f4; }
+.editable:hover::after {
+  content: '✎';
+  opacity: .45;
+  margin-left: .4rem;
+  font-size: .8em;
+}
+.editable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  background: #f0f1f4;
+}
+.inline-form { display: flex; gap: .45rem; align-items: flex-start; }
+.inline-form .input { min-width: 0; flex: 1; }
 
 /* ---------- Utility ---------- */
 .m0 { margin: 0; }

@@ -21,7 +21,7 @@ export const MODULES: ModuleDef[] = [
     desc: 'Firmy a osoby, kontakty, štítky a historie komunikace.',
     icon: 'users',
     path: '/zakaznici',
-    built: false,
+    built: true,
   },
   {
     key: 'ukoly',

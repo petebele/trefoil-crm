@@ -6,6 +6,7 @@ import { newId, now } from '../lib/util';
 import { hashPassword } from '../auth/password';
 import { createSession } from '../auth/session';
 import { MODULES, isModuleKey } from '../modules';
+import { seedTenantLists } from '../db/seed';
 
 export const setupRoutes = new Hono<AppEnv>();
 
@@ -114,6 +115,7 @@ setupRoutes.post('/zalozeni', async (c) => {
 
   const tenantId = newId();
   await db.insertInto('tenants').values({ id: tenantId, name: orgName, created_at: now() }).execute();
+  await seedTenantLists(tenantId);
 
   for (const key of moduleKeys) {
     await db.insertInto('tenant_modules').values({ tenant_id: tenantId, module: key }).execute();

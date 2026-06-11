@@ -30,6 +30,7 @@ export function Layout(props: {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{title} · Conviu CRM</title>
         <link rel="stylesheet" href="/static/theme.css" />
+        <script src="/static/htmx.min.js" defer></script>
         <script src="/static/app.js" defer></script>
       </head>
       <body>
@@ -74,9 +75,23 @@ export function Layout(props: {
             </div>
 
             <div class="top-right">
-              <button class="btn" type="button" title="Připravujeme" aria-label="Přidat — připravujeme">
-                Přidat <IconPlus />
-              </button>
+              <div class="menu" id="addMenu">
+                {enabled.has('zakaznici') ? (
+                  <>
+                    <button class="btn" type="button" data-menu-toggle="addMenu" aria-haspopup="true">
+                      Přidat <IconPlus />
+                    </button>
+                    <div class="menu-list" role="menu">
+                      <a class="menu-item" href="/firmy/nova" role="menuitem">Nová firma</a>
+                      <a class="menu-item" href="/osoby/nova" role="menuitem">Nová osoba</a>
+                    </div>
+                  </>
+                ) : (
+                  <button class="btn" type="button" title="Připravujeme" aria-label="Přidat — připravujeme">
+                    Přidat <IconPlus />
+                  </button>
+                )}
+              </div>
               <div class="menu" id="userMenu">
                 <div class="user" data-menu-toggle="userMenu" role="button" tabindex={0} aria-haspopup="true">
                   <span class="av av-i">{initials(person.name)}</span>

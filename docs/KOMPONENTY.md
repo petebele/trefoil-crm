@@ -247,6 +247,27 @@ Chyba formuláře: `<div class="form-error">Neplatný e-mail nebo heslo.</div>` 
 
 Otevírání řeší `public/app.js` (klik na `[data-menu-toggle]` přepne `.open`, klik mimo zavře).
 
+## 18. Inline editace `.editable`
+
+**Kdy:** údaje v levém panelu detailu — mění se na místě, žádné tlačítko Upravit.
+
+```html
+<!-- zobrazení: klik (htmx) vymění za formulář -->
+<div class="editable" role="button" tabindex="0"
+     hx-get="/firmy/ID/pole/nazev/edit" hx-target="closest .field-wrap" hx-swap="outerHTML">
+  Borovec-elektro.cz
+</div>
+
+<!-- editace: input + Uložit + Zrušit (vrací zobrazení) -->
+<form class="inline-form" hx-post="/firmy/ID/pole/nazev" hx-target="closest .field-wrap" hx-swap="outerHTML">
+  <input class="input" name="value" value="…">
+  <button class="btn btn-sm btn-primary">Uložit</button>
+  <button class="btn btn-sm btn-ghost" type="button" hx-get="/firmy/ID/pole/nazev">Zrušit</button>
+</form>
+```
+
+Hover ukáže ✎; prázdná hodnota se zobrazuje jako „— doplnit —" (šedě, kurzívou).
+
 ## 17. Horní lišta `.topbar`
 
 Jediná navigace aplikace: ikonová navigace (`.nico`, aktivní `.active`, vždy `title` + `aria-label`),

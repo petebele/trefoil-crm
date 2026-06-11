@@ -8,6 +8,9 @@ import { setupRoutes } from './web/setup';
 import { authRoutes } from './web/auth';
 import { dashboardRoutes } from './web/dashboard';
 import { adminRoutes } from './web/admin';
+import { zakazniciRoutes } from './web/zakaznici';
+import { firmyRoutes } from './web/firmy';
+import { osobyRoutes } from './web/osoby';
 
 export const app = new Hono<AppEnv>();
 
@@ -50,3 +53,6 @@ app.route('/', setupRoutes);
 app.route('/', authRoutes);
 app.route('/', dashboardRoutes);
 app.route('/', adminRoutes);
+app.route('/', zakazniciRoutes);
+app.route('/', firmyRoutes);
+app.route('/', osobyRoutes);

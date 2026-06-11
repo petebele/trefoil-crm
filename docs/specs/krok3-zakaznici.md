@@ -1,99 +1,81 @@
 # Specifikace: Krok 3 — modul Zákazníci
 
-> Stav: **ke schválení**. První skutečný modul. Vizuální reference: `mockupy/zakaznici.html`
-> a `mockupy/zakaznik-detail.html`; prvky výhradně z katalogu (`docs/KOMPONENTY.md`).
+> Stav: **schváleno** (upřesněno Petrem 12. 6. dle reálných Capsule screenshotů
+> `D:\Download\capsule-crm\zákazníci`). Vizuální reference: mockupy + Capsule trial.
 
 ## 1. Účel
 
-Evidence zákazníků: **Firmy** a **Osoby** (slovník!), jejich **kontaktní údaje**, vzájemné
-**vazby** (osoba ↔ firma s rolí), **štítky**, **stav** a **odpovědná osoba**. Historie
-komunikace, úkoly a služby přijdou v dalších krocích — detail je na ně připravený a poroste.
+Evidence zákazníků: **Firmy** a **Osoby**, jejich **kontaktní údaje** (vícenásobné, se
+štítky typu „práce/domů"), **vazby** osoba↔firma s rolí, **štítky**, **stav**, **odpovědná
+osoba** a **Historie** (dohledatelný log všeho, co se u zákazníka stalo).
 
-## 2. Obrazovky
+## 2. Přehled /zakaznici (dle Capsule)
 
-### /zakaznici — přehled
-- H1 „Zákazníci" + vpravo **Přidat osobu** a **Přidat firmu** (primární).
-- Taby **Vše / Firmy / Osoby** (s počty) · filtr: **hledání** (živé, přes htmx),
-  výběr **Štítek** a **Stav**.
-- Tabulka dle katalogu §8: Souhrn (avatar, tučné jméno, podtitulek: firma → web,
-  osoba → „Jednatel v [Firma]" jako odkaz) · E-mail (+ malé „Práce/Osobní") · Telefon ·
-  Štítky (chipy) · Stav (jen firmy).
-- **Klik na řádek → quick-view panel** (katalog §15, načítá se přes htmx): avatar, jméno,
-  chipy, hlavní kontakty, „Zobrazit celý profil ›" + Upravit.
-- Prázdné stavy: nikdo → „Zatím tu nikdo není." + [Přidat firmu] [Přidat osobu];
-  nic nenalezeno → „Nic nenalezeno. Zkus jiné hledání."
+- H1 + vpravo **Přidat osobu** / **Přidat firmu**; „Přidat +" v liště nabídne totéž.
+- Taby **Vše / Firmy / Osoby** (s počty) — analogie Capsule „system lists".
+- Filtr pilulky: **Štítek**, **Stav**, hledání **Jméno (obsahuje)** — živé přes htmx;
+  **Řadit** (Název A→Z / Z→A / Nejnovější). „Zobrazeno X–Y z N".
+- Tabulka: Souhrn (avatar, tučné jméno, podtitulek) · E-mail · Telefon · Štítky · Stav.
+- **Klik na řádek → quick-view panel** (jméno, chipy, hlavní kontakty, odkaz na profil).
+- Prázdné stavy: „Zatím tu nikdo není." + akce; „Nic nenalezeno. Zkus jiné hledání."
 
-### /firmy/nova · /osoby/nova — založení (formulář dle katalogu §16)
-- **Firma:** název\*, web, IČO, DIČ, stav (výchozí Lead), odpovědná osoba, poznámka.
-- **Osoba:** jméno\*, poznámka. (Kontakty a vazby se přidávají na detailu.)
-- Po vytvoření → detail. **„Přidat +" v liště ožívá**: menu „Nová firma" / „Nová osoba"
-  (zobrazuje se jen se zapnutým modulem).
+## 3. Zakládání
 
-### /firmy/:id — detail firmy (3sloupcový hub dle mockupu)
-- **Levý sloupec:** avatar (iniciály) · **Upravit** · název · chipy (štítky + stav) ·
-  **štítky přidat/odebrat přímo zde** (input s našeptáním, × na chipu) · fakta: kontaktní
-  údaje firmy (telefon/e-mail/…) s „+ Přidat", web, IČO, DIČ · sekce **Odpovědná osoba**
-  (výběr kolegy, uloží se hned) · sekce **Lidé**: napojené osoby s rolí u firmy
-  („Jednatel · telefon") + **„+ Přidat"** → vybrat existující osobu NEBO rovnou založit
-  novou (jméno, role u firmy, telefon/e-mail — kontakty se naváží na tuto firmu).
-- **Střed:** karta Historie s prázdným stavem: „Historie komunikace přijde s modulem
-  Úkoly & komunikace." (plní se v Kroku 4; stat dlaždice přibudou, až budou mít data).
-- **Pravý sloupec:** karta **Poznámka** (interní poznámka, editace na místě tlačítkem).
+- **Osoba** (`/osoby/nova`): jméno\*, **Firma** (našeptávač — vyber existující NEBO napiš
+  novou a založí se s osobou), role u firmy, štítky, **kontakty: více telefonů / e-mailů /
+  webů**, každý se **štítkem typu** (Práce, Domů, Mobil… — ze Seznamu, nový jde napsat
+  rovnou a uloží se pro příště), poznámka.
+- **Firma** (`/firmy/nova`): název\*, web, IČO, DIČ, stav, odpovědná osoba, štítky, kontakty
+  (stejný vzor), poznámka.
+- Obě nezávisle; po vytvoření → detail.
 
-### /osoby/:id — detail osoby
-- Levý: jméno, štítky, kontaktní údaje (+ přidat). Střed: prázdný stav historie.
-  Pravý: karta **Firmy** (kde působí, s rolí, odkazy) + karta Poznámka.
-- **Vazba osoba↔firma se spravuje z detailu firmy** (sekce Lidé) — osoba k osobě nejde (slovník).
+## 4. Detail zákazníka (firma i osoba) — 3 panely, BEZ mezipanelu ikon
 
-### Úpravy a mazání
-- **Upravit** → formulář se stejnými poli; dole oddělená zóna **Smazat** (soft-delete,
-  potvrzení; firma jde smazat i s vazbami — osoby zůstávají).
+### A) Levý panel — informace, **inline editace (žádné tlačítko Upravit)**
+Avatar · název/jméno (klik → uprav na místě) · štítky (přidat psaním s našeptávačem,
+× odebere) · kontaktní údaje seskupené (telefony, e-maily, weby) se štítky typu, „+ Přidat
+kontakt", × smazat · u firmy: web/IČO/DIČ/stav (inline), **Odpovědná osoba** (výběr) ·
+sekce **Lidé** (u firmy): osoby s rolí, + přidat (existující/nová), odebrat · u osoby:
+sekce **Firmy** (kde působí, s rolí) · poznámka (inline) · dole malé: Smazat (soft, potvrzení).
 
-## 3. Pole a data (migrace modulu)
+### B) Střední panel — feed se záložkami
+1. **Nástěnka** — pills statistiky (zatím: poslední aktivita, počet lidí/kontaktů; spendy
+   a hodiny přibudou v Kroku 5/6) + feed posledních událostí; komunikace přijde v Kroku 4.
+2. **Služby** — zatím prázdný stav „Připravujeme — modul Služby & rozpočty (Krok 5)."
+   Pak: aktivní služby se spendem a odpovědnou osobou **za službu u tohoto zákazníka**
+   (jiná než obecná odpovědná osoba!) + tracking práce (Krok 6).
+3. **Projekty** — prázdný stav „Funkčnost projektů teprve promyslíme."
+4. **Historie** — kompletní log: **čas · osoba · co se stalo · ID záznamu** (každá akce
+   v modulu se loguje: založení, úprava pole, kontakt, štítek, vazba, poznámka…).
 
-Nové tabulky dle `docs/DATOVY-MODEL.md`: `clients` (Firma; `kind` v DB připraven, UI zatím
-jen company), `person_clients` (vazba + `role_at_client` + `is_primary`), `person_contacts`
-(typ/hodnota/label, `owner_kind` person|client, volitelný kontext `client_id`),
-`lists` + `list_items` + `entity_list_items`.
+### C) Pravý panel — agenda zákazníka
+Karta **Úkoly a události** pro tohoto zákazníka (od kohokoli). Zatím prázdný stav
+„Úkoly přijdou s modulem Úkoly (Krok 4)." — panel je připravený.
 
-**Seedované Seznamy** (idempotentně; správa UI až v Kroku 5):
-- `client_statuses`: Lead (šedá) · Aktivní (teal) · Pozastaveno (orange) · Ukončeno (tmavá)
-- `client_tags`: prázdné — štítky vznikají psaním přímo u zákazníka
-- `contact_types`: Telefon · E-mail · Jiné
-- `roles_at_client`: Jednatel/majitel · Marketing · Fakturace
+## 5. Data (migrace modulu)
 
-Osoby = stávající `persons` (zákaznická osoba bez přihlášení; kolegové se v Zákaznících nezobrazují).
+`clients` · `person_clients` (role_at_client) · `person_contacts` (**type** pevně:
+telefon/e-mail/web/jiné; **label** = štítek typu ze Seznamu `contact_labels`, inline-create;
+volitelný kontext client_id) · `lists`+`list_items`+`entity_list_items` ·
+**`events`** (obecný log: entity_kind, entity_id, person_id, action, created_at — základ
+Historie pro celou aplikaci) · `persons.note` (ALTER).
 
-## 4. Pravidla a stavy
+**Seedované Seznamy:** `client_statuses` (Lead šedá · Aktivní teal · Pozastaveno orange ·
+Ukončeno tmavá) · `client_tags` (prázdné, vznikají psaním) · `contact_labels` (Práce, Domů,
+Mobil, Osobní) · `roles_at_client` (Jednatel/majitel, Marketing, Fakturace).
 
-- Vše scoped na Organizaci (`tenant_id`), soft-delete přes `deleted_at`.
-- Práva zatím bez omezení (každý přihlášený může vše) — RBAC přijde v Kroku 5.
-- Štítek vzniká napsáním (když neexistuje, vytvoří se v Seznamu `client_tags`).
-- Modul v registru přepnout na `built: true` → ikona v liště ožije.
+## 6. Pravidla
 
-## 5. Akce (kontextové)
-
-Přidání čehokoli tam, kde to je: štítek u štítků, kontakt u kontaktů, osoba v sekci Lidé,
-poznámka v kartě Poznámka. Quick-view nabízí Upravit + celý profil. Žádné akce „schované jinde".
-
-## 6. Prázdné stavy (doslovně)
-
-| Kde | Text + akce |
-|---|---|
-| Přehled bez záznamů | „Zatím tu nikdo není." + [Přidat firmu] [Přidat osobu] |
-| Výsledek hledání | „Nic nenalezeno. Zkus jiné hledání." |
-| Lidé u firmy | „Zatím žádná osoba." + [Přidat osobu] |
-| Kontakty | „Zatím žádný kontakt." + [Přidat kontakt] |
-| Firmy u osoby | „Zatím není u žádné firmy. Přiřadíš ji na detailu firmy." |
-| Historie (střed) | „Historie komunikace přijde s modulem Úkoly & komunikace." (bez akce) |
+- Modul gated: vypnutý modul → routy přesměrují pryč, ikona zmizí.
+- Vše tenant-scoped, soft-delete, **každá akce zapisuje událost** do `events`.
+- Práva zatím volná (RBAC Krok 7). Registr: `zakaznici.built = true`.
+- Inline editace = nová komponenta katalogu (§18) — přidat do katalogu před použitím.
 
 ## 7. Hotovo, když…
 
-- [ ] založím firmu i osobu (formulářem i přes „Přidat +"), vidím je v přehledu s filtrem Vše/Firmy/Osoby
-- [ ] hledání živě filtruje; filtr Štítek a Stav funguje
-- [ ] klik na řádek otevře quick-view; z něj se dostanu na detail
-- [ ] detail firmy: štítky (přidat/odebrat), kontakty (+ smazat), odpovědná osoba, Lidé (existující i nová osoba s rolí), poznámka
-- [ ] detail osoby: kontakty, štítky, seznam firem s rolí, poznámka
-- [ ] úprava i smazání (soft) firmy a osoby s potvrzením
-- [ ] všechny prázdné stavy dle §6; vzhled odpovídá mockupům a katalogu
-- [ ] `pnpm typecheck` zelený, HTTP testy projdou, commit + push, CI zelená
+- [ ] založím osobu s novou firmou jedním formulářem (+ samostatně firmu/osobu)
+- [ ] vícenásobné kontakty se štítky typu (vč. nově napsaného štítku → uloží se do Seznamu)
+- [ ] přehled: taby s počty, filtr štítek/stav, živé hledání, řazení, quick-view
+- [ ] detail: 3 panely dle §4, inline editace bez Edit tlačítka, taby Nástěnka/Služby/Projekty/Historie
+- [ ] Historie loguje akce s časem, osobou a ID
+- [ ] prázdné stavy doslovně, typecheck + HTTP testy + CI zelené, push
