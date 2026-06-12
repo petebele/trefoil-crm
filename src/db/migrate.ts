@@ -87,6 +87,8 @@ export async function migrate(): Promise<void> {
     .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
     .addColumn('client_id', 'text', (c) => c.notNull().references('clients.id'))
     .addColumn('catalog_item_id', 'text', (c) => c.notNull().references('list_items.id'))
+    .addColumn('detail', 'text')
+    .addColumn('description', 'text')
     .addColumn('mode', 'text', (c) => c.notNull().defaultTo('retainer'))
     .addColumn('rate', 'real')
     .addColumn('monthly_amount', 'real')
@@ -95,6 +97,9 @@ export async function migrate(): Promise<void> {
     .addColumn('created_at', 'text', (c) => c.notNull())
     .execute();
   await db.schema.createIndex('services_client').ifNotExists().on('services').columns(['client_id']).execute();
+  // starší DB bez sloupců detail/description (idempotentně)
+  await sql`ALTER TABLE services ADD COLUMN detail text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE services ADD COLUMN description text`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('person_clients')

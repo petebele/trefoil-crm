@@ -66,14 +66,18 @@ try {
   r = await req(`${fbase}?tab=sluzby`);
   ok('řádek služby (chip, sazba, osoba)', r.text.includes('TestE2E Služba K5') && r.text.includes('Paušál hodin') && r.text.includes(`sazba ${kc(1500)} Kč/h`) && r.text.includes(`odpovídá ${admin.name}`));
 
-  // --- duplicitní přidělení ---
-  r = await req(`${fbase}/sluzby`, { method: 'POST', form: { catalog_item_id: cat.id, mode: '', rate: '', monthly_amount: '', owner_id: '' } });
-  ok('duplicitní služba → err=dup', r.location.includes('err=dup'));
-  r = await req(`${fbase}?tab=sluzby&err=dup`);
-  ok('hláška o duplicitě', r.text.includes('už u zákazníka běží'));
+  // --- opakované přidělení téže služby s upřesněním + popisem ---
+  r = await req(`${fbase}/sluzby`, { method: 'POST', form: { catalog_item_id: cat.id, detail: 'Sklik', description: 'Správa Sklik kampaní', mode: 'payg', rate: '1200', monthly_amount: '', owner_id: '' } });
+  const svcs = db.prepare('SELECT * FROM services WHERE client_id = ?').all(client.id);
+  const svcB = svcs.find((x) => x.detail === 'Sklik');
+  ok('tatáž služba podruhé (s upřesněním)', r.status === 302 && !r.location.includes('err') && svcs.length === 2);
+  ok('upřesnění + popis + režim uloženy', !!svcB && svcB.description === 'Správa Sklik kampaní' && svcB.mode === 'payg' && svcB.rate === 1200);
+  r = await req(`${fbase}?tab=sluzby`);
+  ok('řádek s upřesněním a popisem', r.text.includes('· Sklik') && r.text.includes('Správa Sklik kampaní'));
+  ok('formulář: závislá pole + výchozí z katalogu', r.text.includes('data-depends-on="mode"') && r.text.includes('data-defaults') && r.text.includes('data-set-mode'));
 
   // --- úprava na předplatné s částkou → součet ---
-  await req(`${fbase}/sluzby/${svc.id}`, { method: 'POST', form: { mode: 'subscription', rate: '1500', monthly_amount: '2000', owner_id: admin.id } });
+  await req(`${fbase}/sluzby/${svc.id}`, { method: 'POST', form: { detail: '', description: '', mode: 'subscription', rate: '1500', monthly_amount: '2000', owner_id: admin.id } });
   const svc2 = db.prepare('SELECT * FROM services WHERE id = ?').get(svc.id);
   ok('úprava: předplatné s částkou', svc2.mode === 'subscription' && svc2.monthly_amount === 2000);
   r = await req(`${fbase}?tab=sluzby`);
@@ -89,8 +93,7 @@ try {
   r = await req(`${fbase}?tab=sluzby`);
   ok('ukončení: stav v DB + chip', svc3.status === 'ended' && r.text.includes('Ukončená'));
 
-  // --- osoba: read-only pohled na služby firem ---
-  await req(`${fbase}/sluzby`, { method: 'POST', form: { catalog_item_id: cat.id, mode: '', rate: '', monthly_amount: '', owner_id: '' } });
+  // --- osoba: read-only pohled na služby firem (svcB stále běží) ---
   await req(`${fbase}/osoba`, { method: 'POST', form: { existing: '', new_name: 'TestE2E Osoba K5' } });
   const osoba = db.prepare("SELECT id FROM persons WHERE name = 'TestE2E Osoba K5'").get();
   if (osoba) cleanup.persons.push(osoba.id);

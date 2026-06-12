@@ -7,13 +7,13 @@ import { getCatalogService, isServiceMode, SERVICE_MODE_LABELS, type ServiceMode
 import type { CatalogService } from '../domain/services';
 import {
   getClientService,
-  hasRunningService,
   assignService,
   updateClientService,
   setClientServiceStatus,
   setClientRetainer,
   SERVICE_STATUS_LABELS,
   type ClientService,
+  type ClientServiceInput,
 } from '../domain/clientServices';
 import type { ClientsTable } from '../db/schema';
 
@@ -25,7 +25,6 @@ import type { ClientsTable } from '../db/schema';
 export const sluzbyZakaznikaRoutes = new Hono<AppEnv>();
 
 const ERRORS: Record<string, string> = {
-  dup: 'Tato služba už u zákazníka běží — upravte ji, nebo ji nejdřív ukončete.',
   povinne: 'Vyberte službu z katalogu.',
 };
 
@@ -38,60 +37,52 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-// ---------- formuláře (sdílené pro přidělení i úpravu) ----------
+// ---------- formulář (JEDEN pro přidělení i úpravu — úprava jen předvyplní) ----------
 
-function ServiceFormFields(props: {
+function ServiceForm(props: {
+  action: string;
   service: ClientService | null; // null = přidělení nové
   available: CatalogService[];
   coworkers: Array<{ id: string; name: string }>;
   defaultOwnerId: string | null;
 }) {
   const s = props.service;
+  const mode = s?.mode ?? 'retainer';
   return (
-    <>
+    <form method="post" action={props.action} class="m0">
       {s ? null : (
         <>
           <div class="opt-group" style="padding-left:0">Služba z katalogu</div>
-          <select class="input" name="catalog_item_id" required aria-label="Služba z katalogu">
+          {/* data-set-* = výchozí hodnoty; app.js je při výběru propíše do polí
+              a u odpovídající volby režimu ukáže „(výchozí)" */}
+          <select class="input" name="catalog_item_id" required data-defaults aria-label="Služba z katalogu">
             <option value="">— vyberte službu —</option>
             {props.available.map((it) => (
-              <option value={it.id}>
+              <option value={it.id} data-set-mode={it.meta.mode} data-set-rate={it.meta.price ?? ''}>
                 {it.label}
-                {it.meta.price !== null ? ` (${kc(it.meta.price)} Kč/h)` : ''}
               </option>
             ))}
           </select>
         </>
       )}
+      <div class="opt-group" style="padding-left:0">Upřesnění služby</div>
+      <input class="input" name="detail" value={s?.detail ?? ''} placeholder="odliší opakovaná přidělení (např. „Sklik“)" aria-label="Upřesnění služby" />
       <div class="opt-group" style="padding-left:0">Režim účtování</div>
       <select class="input" name="mode" aria-label="Režim účtování">
-        {s ? null : <option value="">— výchozí z katalogu —</option>}
-        <option value="retainer" selected={s?.mode === 'retainer'}>{SERVICE_MODE_LABELS.retainer}</option>
-        <option value="payg" selected={s?.mode === 'payg'}>{SERVICE_MODE_LABELS.payg}</option>
-        <option value="subscription" selected={s?.mode === 'subscription'}>{SERVICE_MODE_LABELS.subscription}</option>
+        <option value="retainer" selected={mode === 'retainer'}>{SERVICE_MODE_LABELS.retainer}</option>
+        <option value="payg" selected={mode === 'payg'}>{SERVICE_MODE_LABELS.payg}</option>
+        <option value="subscription" selected={mode === 'subscription'}>{SERVICE_MODE_LABELS.subscription}</option>
       </select>
-      <div class="opt-group" style="padding-left:0">Sazba (Kč/h)</div>
-      <input
-        class="input"
-        type="number"
-        name="rate"
-        min="0"
-        step="1"
-        value={s?.rate ?? ''}
-        placeholder={s ? '' : 'prázdné = výchozí z katalogu'}
-        aria-label="Sazba Kč/h"
-      />
-      <div class="opt-group" style="padding-left:0">Částka předplatného (Kč/měs)</div>
-      <input
-        class="input"
-        type="number"
-        name="monthly_amount"
-        min="0"
-        step="1"
-        value={s?.monthly_amount ?? ''}
-        placeholder="jen u režimu Předplatné"
-        aria-label="Částka předplatného Kč/měs"
-      />
+      <div data-depends-on="mode" data-depends-value="retainer,payg" class={mode === 'subscription' ? 'hidden' : ''}>
+        <div class="opt-group" style="padding-left:0">Sazba (Kč/h)</div>
+        <input class="input" type="number" name="rate" min="0" step="1" value={s?.rate ?? ''} aria-label="Sazba Kč/h" />
+      </div>
+      <div data-depends-on="mode" data-depends-value="subscription" class={mode === 'subscription' ? '' : 'hidden'}>
+        <div class="opt-group" style="padding-left:0">Částka předplatného (Kč/měs)</div>
+        <input class="input" type="number" name="monthly_amount" min="0" step="1" value={s?.monthly_amount ?? ''} aria-label="Částka předplatného Kč/měs" />
+      </div>
+      <div class="opt-group" style="padding-left:0">Popis služby</div>
+      <textarea class="input" name="description" rows={2} placeholder="co v rámci služby pro klienta děláme" aria-label="Popis služby">{s?.description ?? ''}</textarea>
       <div class="opt-group" style="padding-left:0">Odpovědná osoba za službu</div>
       <select class="input" name="owner_id" aria-label="Odpovědná osoba za službu">
         <option value="">— nikdo —</option>
@@ -102,7 +93,7 @@ function ServiceFormFields(props: {
       <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.5rem">
         {s ? 'Uložit' : 'Přidělit'}
       </button>
-    </>
+    </form>
   );
 }
 
@@ -142,10 +133,7 @@ export function SluzbyZakaznikaTab(props: {
   err?: string;
 }) {
   const { base, client, services, coworkers, isAdmin } = props;
-  const running = services.filter((s) => s.status !== 'ended');
-  const available = props.catalog.filter(
-    (it) => it.active === 1 && !running.some((s) => s.catalog_item_id === it.id),
-  );
+  const available = props.catalog.filter((it) => it.active === 1);
   const hasRetainer = client.hours_budget_monthly !== null;
 
   // orientační měsíční spend
@@ -153,7 +141,7 @@ export function SluzbyZakaznikaTab(props: {
   if (hasRetainer && client.retainer_price !== null) lines.push({ label: 'Paušál hodin', amount: client.retainer_price });
   for (const s of services) {
     if (s.status === 'active' && s.mode === 'subscription' && s.monthly_amount !== null) {
-      lines.push({ label: s.label, amount: s.monthly_amount });
+      lines.push({ label: s.detail ? `${s.label} · ${s.detail}` : s.label, amount: s.monthly_amount });
     }
   }
   const total = lines.reduce((sum, l) => sum + l.amount, 0);
@@ -200,16 +188,14 @@ export function SluzbyZakaznikaTab(props: {
           available.length > 0 ? (
             <span class={services.length > 0 ? 'area-actions' : ''}>
               <Picker id="svcAssign" trigger="Přidělit službu" triggerLabel="Přidělit službu z katalogu">
-                <form method="post" action={`${base}/sluzby`} class="m0">
-                  <ServiceFormFields service={null} available={available} coworkers={coworkers} defaultOwnerId={client.owner_id} />
-                </form>
+                <ServiceForm action={`${base}/sluzby`} service={null} available={available} coworkers={coworkers} defaultOwnerId={client.owner_id} />
               </Picker>
             </span>
-          ) : props.catalog.filter((it) => it.active === 1).length === 0 ? (
+          ) : (
             <p class="sub" style="margin:0">
               Nejdřív přidejte služby do katalogu v <a href="/administrace?tab=sluzby">Administraci</a>.
             </p>
-          ) : null
+          )
         ) : null}
 
         {services.length === 0 ? (
@@ -220,6 +206,7 @@ export function SluzbyZakaznikaTab(props: {
               <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.55' : ''}`}>
                 <span style="flex:1">
                   <span style="font-weight:600">{s.label}</span>
+                  {s.detail ? <span class="sub" style="font-weight:600"> · {s.detail}</span> : null}
                   <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
                     {SERVICE_MODE_LABELS[s.mode]}
                   </span>
@@ -233,13 +220,12 @@ export function SluzbyZakaznikaTab(props: {
                     {' · '}
                     {s.owner_name ? `odpovídá ${s.owner_name}` : 'bez odpovědné osoby'}
                   </span>
+                  {s.description ? <span class="sub" style="display:block;font-size:.78rem">{s.description}</span> : null}
                 </span>
                 {isAdmin && s.status !== 'ended' ? (
                   <span class="row-actions" style="white-space:nowrap;display:flex;gap:.8rem">
                     <Picker id={`svcEdit-${s.id}`} trigger="Upravit" triggerLabel={`Upravit službu ${s.label}`}>
-                      <form method="post" action={`${base}/sluzby/${s.id}`} class="m0">
-                        <ServiceFormFields service={s} available={available} coworkers={coworkers} defaultOwnerId={client.owner_id} />
-                      </form>
+                      <ServiceForm action={`${base}/sluzby/${s.id}`} service={s} available={available} coworkers={coworkers} defaultOwnerId={client.owner_id} />
                     </Picker>
                     <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
                       <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
@@ -294,6 +280,32 @@ async function guard(c: any): Promise<{ t: string; clientId: string; base: strin
   return { t: person.tenant_id, clientId, base };
 }
 
+/** Společné čtení formuláře služby (jeden formulář pro přidělení i úpravu). */
+function serviceInputFromBody(body: Record<string, unknown>, fallbackMode: ServiceMode): ClientServiceInput {
+  const rawMode = String(body.mode ?? '');
+  return {
+    detail: String(body.detail ?? '').trim() || null,
+    description: String(body.description ?? '').trim() || null,
+    mode: isServiceMode(rawMode) ? rawMode : fallbackMode,
+    rate: num(body.rate),
+    monthlyAmount: num(body.monthly_amount),
+    ownerId: String(body.owner_id ?? '') || null,
+  };
+}
+
+function serviceEventText(verb: string, label: string, input: ClientServiceInput): string {
+  const name = input.detail ? `${label} · ${input.detail}` : label;
+  const money =
+    input.mode === 'subscription'
+      ? input.monthlyAmount !== null
+        ? `, ${kc(input.monthlyAmount)} Kč/měs`
+        : ''
+      : input.rate !== null
+        ? `, ${kc(input.rate)} Kč/h`
+        : '';
+  return `${verb} služba „${name}" (${SERVICE_MODE_LABELS[input.mode]}${money})`;
+}
+
 sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
@@ -303,22 +315,12 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby', async (c) => {
   const catalogItemId = String(body.catalog_item_id ?? '');
   const cat = catalogItemId ? await getCatalogService(g.t, catalogItemId) : null;
   if (!cat) return c.redirect(`${g.base}?tab=sluzby&err=povinne`);
-  if (await hasRunningService(g.t, g.clientId, cat.id)) return c.redirect(`${g.base}?tab=sluzby&err=dup`);
 
-  const rawMode = String(body.mode ?? '');
-  const mode: ServiceMode = isServiceMode(rawMode) ? rawMode : cat.meta.mode;
-  const rate = num(body.rate) ?? cat.meta.price;
-  const monthlyAmount = num(body.monthly_amount);
-  const ownerId = String(body.owner_id ?? '') || null;
+  const input = serviceInputFromBody(body as Record<string, unknown>, cat.meta.mode);
+  if (input.rate === null && input.mode !== 'subscription') input.rate = cat.meta.price; // bez JS: výchozí sazba z katalogu
 
-  await assignService(g.t, g.clientId, { catalogItemId: cat.id, mode, rate, monthlyAmount, ownerId });
-  await logEvent(
-    g.t,
-    'client',
-    g.clientId,
-    person.id,
-    `Přidělena služba „${cat.label}" (${SERVICE_MODE_LABELS[mode]}${rate !== null ? `, ${kc(rate)} Kč/h` : ''}${mode === 'subscription' && monthlyAmount !== null ? `, ${kc(monthlyAmount)} Kč/měs` : ''})`,
-  );
+  await assignService(g.t, g.clientId, cat.id, input);
+  await logEvent(g.t, 'client', g.clientId, person.id, serviceEventText('Přidělena', cat.label, input));
   return c.redirect(`${g.base}?tab=sluzby`);
 });
 
@@ -330,20 +332,10 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid', async (c) => {
   if (!svc || svc.client_id !== g.clientId) return c.notFound();
 
   const body = await c.req.parseBody();
-  const rawMode = String(body.mode ?? '');
-  const mode: ServiceMode = isServiceMode(rawMode) ? rawMode : svc.mode;
-  const rate = num(body.rate);
-  const monthlyAmount = num(body.monthly_amount);
-  const ownerId = String(body.owner_id ?? '') || null;
+  const input = serviceInputFromBody(body as Record<string, unknown>, svc.mode);
 
-  await updateClientService(g.t, svc.id, { mode, rate, monthlyAmount, ownerId });
-  await logEvent(
-    g.t,
-    'client',
-    g.clientId,
-    person.id,
-    `Upravena služba „${svc.label}" (${SERVICE_MODE_LABELS[mode]}${rate !== null ? `, ${kc(rate)} Kč/h` : ''}${mode === 'subscription' && monthlyAmount !== null ? `, ${kc(monthlyAmount)} Kč/měs` : ''})`,
-  );
+  await updateClientService(g.t, svc.id, input);
+  await logEvent(g.t, 'client', g.clientId, person.id, serviceEventText('Upravena', svc.label, input));
   return c.redirect(`${g.base}?tab=sluzby`);
 });
 

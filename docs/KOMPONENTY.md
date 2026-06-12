@@ -334,6 +334,22 @@ Jediná navigace aplikace: ikonová navigace (`.nico`, aktivní `.active`, vždy
 vyhledávání `.search` s `<kbd>/</kbd>`, vpravo `Přidat +` a `.user`. Přesný markup: kterýkoli mockup
 (`mockupy/nastenka.html`). Ikony: inline SVG (Feather styl, stroke 2, 20×20).
 
+## 22. Závislá pole a výchozí hodnoty z katalogu (formuláře)
+
+Obecné mechanismy v `app.js` — použitelné v každém formuláři, žádný kód na míru:
+
+- **Závislé pole:** obal s `data-depends-on="jménoPole" data-depends-value="a,b"` je vidět,
+  jen když má pole daného jména ve stejném formuláři jednu z hodnot (jinak `.hidden`).
+  Server vykreslí výchozí stav (`class="hidden"` podle předvyplněné hodnoty), JS pak
+  reaguje na změny. Příklad: „Částka předplatného" jen při režimu Předplatné.
+- **Výchozí hodnoty z číselníku:** `<select data-defaults>` nese na `<option>` atributy
+  `data-set-<pole>` (např. `data-set-mode`, `data-set-rate`). Výběr položky propíše
+  hodnoty do polí formuláře a u odpovídající volby cílového selectu zobrazí
+  **„(výchozí)"**. Uživatel tak nikdy nemusí znát nastavení katalogu zpaměti.
+- **Jeden formulář pro založení i úpravu:** stejná komponenta (např. `ServiceForm`),
+  úprava jen předvyplní dřívější hodnoty; liší se nanejvýš poli, která po založení
+  nedávají smysl měnit (např. výběr služby z katalogu).
+
 ---
 
 ## Jak katalog rozšiřovat

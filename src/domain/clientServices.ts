@@ -48,23 +48,21 @@ export async function getClientService(tenantId: string, id: string): Promise<Cl
   return (row as ClientService | undefined) ?? null;
 }
 
-/** Běží už u klienta stejná služba? (duplicitní aktivní/pozastavená přidělení nechceme) */
-export async function hasRunningService(tenantId: string, clientId: string, catalogItemId: string): Promise<boolean> {
-  const row = await db
-    .selectFrom('services')
-    .select('id')
-    .where('tenant_id', '=', tenantId)
-    .where('client_id', '=', clientId)
-    .where('catalog_item_id', '=', catalogItemId)
-    .where('status', '!=', 'ended')
-    .executeTakeFirst();
-  return row !== undefined;
+/** Údaje služby u klienta společné pro přidělení i úpravu (jeden formulář v UI). */
+export interface ClientServiceInput {
+  detail: string | null;
+  description: string | null;
+  mode: ServiceMode;
+  rate: number | null;
+  monthlyAmount: number | null;
+  ownerId: string | null;
 }
 
 export async function assignService(
   tenantId: string,
   clientId: string,
-  data: { catalogItemId: string; mode: ServiceMode; rate: number | null; monthlyAmount: number | null; ownerId: string | null },
+  catalogItemId: string,
+  data: ClientServiceInput,
 ): Promise<string> {
   const id = newId();
   await db
@@ -73,7 +71,9 @@ export async function assignService(
       id,
       tenant_id: tenantId,
       client_id: clientId,
-      catalog_item_id: data.catalogItemId,
+      catalog_item_id: catalogItemId,
+      detail: data.detail,
+      description: data.description,
       mode: data.mode,
       rate: data.rate,
       monthly_amount: data.mode === 'subscription' ? data.monthlyAmount : null,
@@ -85,14 +85,12 @@ export async function assignService(
   return id;
 }
 
-export async function updateClientService(
-  tenantId: string,
-  id: string,
-  data: { mode: ServiceMode; rate: number | null; monthlyAmount: number | null; ownerId: string | null },
-): Promise<void> {
+export async function updateClientService(tenantId: string, id: string, data: ClientServiceInput): Promise<void> {
   await db
     .updateTable('services')
     .set({
+      detail: data.detail,
+      description: data.description,
       mode: data.mode,
       rate: data.rate,
       monthly_amount: data.mode === 'subscription' ? data.monthlyAmount : null,

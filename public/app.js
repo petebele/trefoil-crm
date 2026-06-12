@@ -78,3 +78,50 @@ document.addEventListener('click', function (e) {
   var tpl = document.getElementById(btn.getAttribute('data-add-row'));
   if (tpl && tpl.content) tpl.parentNode.insertBefore(tpl.content.cloneNode(true), tpl);
 });
+
+// Závislá pole: prvek s data-depends-on="jménoPole" data-depends-value="a,b" je vidět,
+// jen když má pole daného jména ve stejném formuláři jednu z uvedených hodnot.
+function updateDependentFields(scope) {
+  (scope || document).querySelectorAll('[data-depends-on]').forEach(function (el) {
+    var form = el.closest('form');
+    if (!form) return;
+    var field = form.querySelector('[name="' + el.getAttribute('data-depends-on') + '"]');
+    var values = (el.getAttribute('data-depends-value') || '').split(',');
+    el.classList.toggle('hidden', !(field && values.indexOf(field.value) !== -1));
+  });
+}
+document.addEventListener('change', function (e) {
+  var form = e.target.closest && e.target.closest('form');
+  if (form) updateDependentFields(form);
+});
+document.addEventListener('DOMContentLoaded', function () {
+  updateDependentFields(document);
+});
+document.body.addEventListener('htmx:afterSwap', function () {
+  updateDependentFields(document);
+});
+
+// Výchozí hodnoty z katalogu: <select data-defaults> nese na <option> atributy
+// data-set-<pole> (např. data-set-mode, data-set-rate). Při výběru se hodnoty
+// propíší do polí formuláře a u odpovídající volby selectu se ukáže „(výchozí)".
+document.addEventListener('change', function (e) {
+  var sel = e.target.closest && e.target.closest('select[data-defaults]');
+  if (!sel) return;
+  var form = sel.closest('form');
+  var opt = sel.selectedOptions && sel.selectedOptions[0];
+  if (!form || !opt) return;
+  Object.keys(opt.dataset).forEach(function (key) {
+    if (key.indexOf('set') !== 0) return;
+    var name = key.charAt(3).toLowerCase() + key.slice(4);
+    var field = form.querySelector('[name="' + name + '"]');
+    if (field) field.value = opt.dataset[key] || '';
+    if (field && field.tagName === 'SELECT') {
+      Array.from(field.options).forEach(function (o) {
+        var base = o.getAttribute('data-base') || o.text;
+        o.setAttribute('data-base', base);
+        o.text = base + (o.value === opt.dataset[key] ? ' (výchozí)' : '');
+      });
+    }
+  });
+  updateDependentFields(form);
+});

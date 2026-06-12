@@ -29,12 +29,17 @@ spend** zákazníka. Vykázaná práce (Krok 6) se pak sama správně zaúčtuje
    (vykázaná práce „samostatně" se dopočítá až z výkazů — Krok 6). Jedno číslo
    s rozpisem položek.
 
-**Přidělení/úprava služby** — **malý panel** (kotvený k odkazu) s poli:
+**Přidělení/úprava služby** — **jeden společný formulář** (malý panel kotvený k odkazu;
+úprava jen předvyplní dřívější hodnoty) s poli:
 
-- služba (našeptávač z aktivních položek katalogu),
-- režim účtování (předvyplněný výchozí z katalogu, jde změnit),
-- sazba Kč/h (předvyplněná z katalogu, jde přepsat),
-- u režimu Předplatné: částka předplatného Kč/měs (volitelná),
+- služba (výběr z aktivních položek katalogu; výběr **propíše výchozí režim a sazbu**
+  do polí níže a u režimu ukáže „(výchozí)" — uživatel nesmí být nucen znát katalog),
+- upřesnění služby (odliší **opakovaná přidělení téže služby** — povoleno),
+- režim účtování (předvybraný výchozí z katalogu),
+- sazba Kč/h (jen u paušálu/samostatné fakturace — **závislá pole se zobrazují podle
+  zvoleného režimu**),
+- částka předplatného Kč/měs (jen u Předplatného, volitelná),
+- popis služby (co v rámci služby pro klienta děláme),
 - odpovědná osoba za službu (předvyplněná odpovědnou osobou zákazníka, jde změnit
   — **liší se od obecné odpovědné osoby zákazníka**).
 
@@ -52,8 +57,8 @@ spend** zákazníka. Vykázaná práce (Krok 6) se pak sama správně zaúčtuje
 ## 4. Pravidla a stavy
 
 - Stejná služba může být u každého klienta nastavená jinak (režim, sazba, osoba).
-- Tatáž služba podruhé u téhož klienta jen po ukončení té první (žádné duplicitní
-  aktivní řádky).
+- Tatáž služba může u klienta běžet **vícekrát zároveň** — rozlišuje ji „upřesnění
+  služby" (např. Správa PPC · Sklik a Správa PPC · Google).
 - Ukončená/pozastavená služba se nemaže — historie a výkazy na ni zůstávají vázané.
 - Paušál hodin: nevyčerpané hodiny defaultně propadají; zaškrtávátko = převod
   do dalšího měsíce (bez stropů, zatím).

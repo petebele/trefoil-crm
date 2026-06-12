@@ -66,12 +66,15 @@ export interface ClientsTable {
   deleted_at: string | null;
 }
 
-/** Služba přidělená zákazníkovi — režim/sazba/osoba per klient (výchozí z katalogu). */
+/** Služba přidělená zákazníkovi — režim/sazba/osoba per klient (výchozí z katalogu).
+ *  Stejná služba může běžet u klienta vícekrát; rozlišuje ji `detail` (upřesnění). */
 export interface ServicesTable {
   id: string;
   tenant_id: string;
   client_id: string;
   catalog_item_id: string; // položka Seznamu service_catalog
+  detail: string | null; // upřesnění služby (odlišení opakovaných přidělení)
+  description: string | null; // popis — co v rámci služby pro klienta děláme
   mode: 'subscription' | 'retainer' | 'payg';
   rate: number | null; // hodinová sazba Kč/h (override katalogu)
   monthly_amount: number | null; // částka předplatného Kč/měs (jen subscription)
