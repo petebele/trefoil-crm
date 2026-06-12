@@ -326,9 +326,12 @@ Zavření: ✕ (`data-modal-close`), klik na pozadí, klávesa Esc (app.js). Kom
 - **Výjimka — prázdná sekce:** když v sekci nic není, přidávací akce je **viditelná rovnou**
   (jinak by ji nikdo nenašel) — „Přiřadit odpovědnou osobu", „+ štítek", ikonky kontaktů.
 - **Dotyková zařízení** (bez hoveru): `.row-actions` jsou vždy viditelné (media `hover: none`).
-- **Jednota akčních odkazů:** `.subtle-action` je **vždy podtržený** (je jasné, že jde o akci)
-  a umisťuje se **pod nadpis sekce** — u všech sekcí stejně („Přiřadit odpovědnou osobu",
-  „Vyplnit údaje", „Přidat poznámku", „Přidat osobu"). Jako `<summary>` bez rozbalovací šipky.
+- **Jednota akčních odkazů:** `.subtle-action` je **vždy podtržený** (je jasné, že jde o akci).
+- **Akce sekce patří do řádku nadpisu (vpravo)** — `h4`/`.card-head` jsou flex
+  se `space-between`, takže akce využije existující výšku nadpisu a **skrytá akce
+  nerezervuje žádné svislé místo** ani při objevení nic neposune (skrývá se přes
+  `opacity`, ne `display`). Pod nadpisem smí být jen akce prázdné sekce, která je
+  viditelná trvale („Přiřadit osobu", „Přidat poznámku").
 - **Rychlé přidání kontaktů:** řádek ikonek `.quick-add` (telefon/e-mail/web/+), každá otevře
   dropdown panel s minimálním formulářem. Žádné trvale viditelné selecty mimo filtry/řazení.
 

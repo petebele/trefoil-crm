@@ -230,20 +230,13 @@ export function SluzbyZakaznikaTab(props: {
     <>
       {props.err && ERRORS[props.err] ? <div class="form-error">{ERRORS[props.err]}</div> : null}
 
+      {/* Akce sekcí žijí v řádku nadpisu — skryté akce nerezervují žádné svislé místo. */}
       <div class="card hover-area">
-        <div class="card-head"><h3>Paušál hodin</h3></div>
-        {hasRetainer ? (
-          <div style="display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap">
-            <span>
-              <b>{kc(client.hours_budget_monthly!)} h</b> měsíčně
-              {client.retainer_price !== null ? <> za <b>{kc(client.retainer_price)} Kč/měs</b></> : null}
-              <span class="sub" style="display:block">
-                Nevyčerpané hodiny se {client.hours_rollover === 1 ? 'převádějí do dalšího měsíce' : 'nepřevádějí (propadají)'}.
-                Kryje služby v režimu „{SERVICE_MODE_LABELS.retainer}".
-              </span>
-            </span>
-            {isAdmin ? (
-              <span class="area-actions" style="margin-left:auto;display:flex;gap:.8rem">
+        <div class="card-head">
+          <h3>Paušál hodin</h3>
+          {isAdmin ? (
+            hasRetainer ? (
+              <span class="area-actions" style="display:flex;gap:.8rem">
                 <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
                   Upravit
                 </button>
@@ -251,31 +244,42 @@ export function SluzbyZakaznikaTab(props: {
                   <button class="subtle-action" type="submit" name="hours" value="">Zrušit</button>
                 </form>
               </span>
-            ) : null}
+            ) : (
+              <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
+                Nastavit paušál hodin
+              </button>
+            )
+          ) : null}
+        </div>
+        {hasRetainer ? (
+          <div>
+            <b>{kc(client.hours_budget_monthly!)} h</b> měsíčně
+            {client.retainer_price !== null ? <> za <b>{kc(client.retainer_price)} Kč/měs</b></> : null}
+            <span class="sub" style="display:block">
+              Nevyčerpané hodiny se {client.hours_rollover === 1 ? 'převádějí do dalšího měsíce' : 'nepřevádějí (propadají)'}.
+              Kryje služby v režimu „{SERVICE_MODE_LABELS.retainer}".
+            </span>
           </div>
-        ) : isAdmin ? (
-          <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
-            Nastavit paušál hodin
-          </button>
         ) : (
           <p class="sub" style="margin:0">Bez paušálu hodin.</p>
         )}
       </div>
 
       <div class="card hover-area" style="margin-top:1rem">
-        <div class="card-head"><h3>Služby</h3></div>
-        {isAdmin ? (
-          available.length > 0 ? (
+        <div class="card-head">
+          <h3>Služby</h3>
+          {isAdmin && available.length > 0 ? (
             <span class={running.length > 0 ? 'area-actions' : ''}>
               <button class="subtle-action" type="button" hx-get={`${base}/sluzby/modal/nova`} hx-target="#modal" hx-swap="innerHTML">
                 Přidělit službu
               </button>
             </span>
-          ) : (
-            <p class="sub" style="margin:0">
-              Nejdřív přidejte služby do katalogu v <a href="/administrace?tab=sluzby">Administraci</a>.
-            </p>
-          )
+          ) : null}
+        </div>
+        {isAdmin && available.length === 0 ? (
+          <p class="sub" style="margin:0">
+            Nejdřív přidejte služby do katalogu v <a href="/administrace?tab=sluzby">Administraci</a>.
+          </p>
         ) : null}
 
         {running.length === 0 && archived.length === 0 ? (

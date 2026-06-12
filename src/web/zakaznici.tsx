@@ -75,7 +75,7 @@ async function buildRows(
         href: `/osoby/${p.id}`,
         name: p.name,
         subtitle: firm ? null : 'Osoba',
-        subtitleLink: firm ? { href: `/firmy/${firm.clientId}`, text: `${firm.role ?? 'Kontakt'} v ${firm.clientName}` } : null,
+        subtitleLink: firm ? { href: `/firmy/${firm.clientId}`, text: firm.role ? `${firm.role} v ${firm.clientName}` : firm.clientName } : null,
         ...personContacts.get(p.id),
         tags: personTags.get(p.id) ?? [],
         createdAt: p.created_at,
@@ -323,7 +323,7 @@ zakazniciRoutes.get('/zakaznici/nahled/:kind/:id', async (c) => {
   return c.html(
     <QuickView
       name={p.name}
-      sub={firm ? `${firm.role_at_client ?? 'Kontakt'} v ${firm.name}` : 'Osoba'}
+      sub={firm ? (firm.role_at_client ? `${firm.role_at_client} v ${firm.name}` : firm.name) : 'Osoba'}
       href={`/osoby/${p.id}`}
       tags={tags}
       contacts={contacts.map((x) => ({ value: x.value, label: x.label, type: x.type }))}

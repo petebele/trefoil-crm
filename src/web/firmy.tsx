@@ -280,27 +280,30 @@ function FirmFieldsSection(props: { base: string; client: { website: string | nu
     ['Adresa', c.address],
   ] as const;
   const filled = defs.filter(([, v]) => v);
+  // Akce v řádku nadpisu — skrytá akce nerezervuje žádné svislé místo.
   return (
     <div class={`side-section ${filled.length ? 'hover-area' : ''}`} id="firm-udaje">
-      <h4>Firemní údaje</h4>
+      <h4>
+        Firemní údaje
+        <span class={filled.length ? 'area-actions' : ''}>
+          <Picker id="firmUdaje" trigger={filled.length ? 'Upravit údaje' : 'Zadat údaje'} triggerLabel="Firemní údaje — zadat nebo upravit">
+            <form hx-post={`${props.base}/udaje`} hx-target="#firm-udaje" hx-swap="outerHTML" class="m0">
+              <div class="opt-group" style="padding-left:0">Firemní údaje</div>
+              <input class="input" name="website" value={c.website ?? ''} placeholder="Web" aria-label="Web" />
+              <input class="input" name="ico" value={c.ico ?? ''} placeholder="IČO" aria-label="IČO" />
+              <input class="input" name="dic" value={c.dic ?? ''} placeholder="DIČ" aria-label="DIČ" />
+              <textarea class="input" name="address" placeholder="Adresa" aria-label="Adresa" rows={2}>{c.address ?? ''}</textarea>
+              <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+            </form>
+          </Picker>
+        </span>
+      </h4>
       {filled.map(([label, v]) => (
         <div class="fact">
           <span class="val" style="white-space:pre-wrap">{v}</span>
           <span class="lbl">{label}</span>
         </div>
       ))}
-      <span class={filled.length ? 'area-actions' : ''}>
-        <Picker id="firmUdaje" trigger={filled.length ? 'Upravit údaje' : 'Zadat údaje'} triggerLabel="Firemní údaje — zadat nebo upravit">
-          <form hx-post={`${props.base}/udaje`} hx-target="#firm-udaje" hx-swap="outerHTML" class="m0">
-            <div class="opt-group" style="padding-left:0">Firemní údaje</div>
-            <input class="input" name="website" value={c.website ?? ''} placeholder="Web" aria-label="Web" />
-            <input class="input" name="ico" value={c.ico ?? ''} placeholder="IČO" aria-label="IČO" />
-            <input class="input" name="dic" value={c.dic ?? ''} placeholder="DIČ" aria-label="DIČ" />
-            <textarea class="input" name="address" placeholder="Adresa" aria-label="Adresa" rows={2}>{c.address ?? ''}</textarea>
-            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
-          </form>
-        </Picker>
-      </span>
     </div>
   );
 }

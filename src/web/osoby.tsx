@@ -258,7 +258,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
                 <span class={`av av-sm ${avColor(f.name)}`}>{initials(f.name)}</span>
                 <span>
                   <a class="nm" href={`/firmy/${f.id}`} style="color:inherit">{f.name}</a>
-                  <span class="sub">{f.role_at_client ?? 'Kontakt'}</span>
+                  {f.role_at_client ? <span class="sub">{f.role_at_client}</span> : null}
                 </span>
               </div>
             ))}
