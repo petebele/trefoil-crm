@@ -6,6 +6,7 @@ import {
   getClient,
   createClient,
   updateClientField,
+  updateClientMain,
   isEditableClientField,
   setClientOwner,
   softDeleteClient,
@@ -112,6 +113,88 @@ firmyRoutes.get('/firmy/modal/nova', async (c) => {
       </form>
     </ModalShell>,
   );
+});
+
+// Úprava firmy — stejný velký modál jako založení, jen předvyplněný (kontakty
+// a štítky se spravují přímo v levém panelu, proto tu nejsou).
+firmyRoutes.get('/firmy/:id/modal/upravit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const client = await getClient(t, c.req.param('id'));
+  if (!client) return c.notFound();
+  const [statusItems, coworkers] = await Promise.all([itemsByKey(t, 'client_statuses'), listCoworkers(t)]);
+
+  return c.html(
+    <ModalShell title={`Upravit firmu · ${client.name}`}>
+      <form method="post" action={`/firmy/${client.id}/upravit`}>
+        <div class="field">
+          <label>Název firmy <span class="req">*</span></label>
+          <input class="input" name="name" value={client.name} required autofocus />
+        </div>
+        <div class="field"><label>Web</label><input class="input" name="website" value={client.website ?? ''} placeholder="https://…" /></div>
+        <div class="field"><label>IČO</label><input class="input" name="ico" value={client.ico ?? ''} /></div>
+        <div class="field"><label>DIČ</label><input class="input" name="dic" value={client.dic ?? ''} /></div>
+        <div class="field"><label>Adresa</label><textarea class="input" name="address" rows={2}>{client.address ?? ''}</textarea></div>
+        <div class="field">
+          <label>Stav</label>
+          <select class="input" name="status">
+            {statusItems.map((s) => (
+              <option value={s.value} selected={s.value === client.status}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label>Odpovědná osoba</label>
+          <select class="input" name="owner_id">
+            <option value="">— nikdo —</option>
+            {coworkers.map((u) => (
+              <option value={u.id} selected={u.id === client.owner_id}>{u.name}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field"><label>Poznámka</label><textarea class="input" name="note">{client.note ?? ''}</textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Uložit změny</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+        </div>
+      </form>
+    </ModalShell>,
+  );
+});
+
+firmyRoutes.post('/firmy/:id/upravit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const client = await getClient(t, c.req.param('id'));
+  if (!client) return c.notFound();
+
+  const body = await c.req.parseBody();
+  const name = String(body.name ?? '').trim();
+  if (!name) return c.redirect(`/firmy/${client.id}`);
+
+  const data = {
+    name,
+    website: String(body.website ?? '').trim() || null,
+    ico: String(body.ico ?? '').trim() || null,
+    dic: String(body.dic ?? '').trim() || null,
+    address: String(body.address ?? '').trim() || null,
+    status: String(body.status ?? client.status),
+    ownerId: String(body.owner_id ?? '') || null,
+    note: String(body.note ?? '').trim() || null,
+  };
+  await updateClientMain(t, client.id, data);
+
+  const changes: string[] = [];
+  if (client.name !== data.name) changes.push('název');
+  if ((client.website ?? null) !== data.website) changes.push('web');
+  if ((client.ico ?? null) !== data.ico) changes.push('IČO');
+  if ((client.dic ?? null) !== data.dic) changes.push('DIČ');
+  if ((client.address ?? null) !== data.address) changes.push('adresa');
+  if (client.status !== data.status) changes.push('stav');
+  if ((client.owner_id ?? null) !== data.ownerId) changes.push('odpovědná osoba');
+  if ((client.note ?? null) !== data.note) changes.push('poznámka');
+  await logEvent(t, 'client', client.id, person.id, changes.length ? `Firma upravena (${changes.join(', ')})` : 'Firma upravena (beze změn)');
+  return c.redirect(`/firmy/${client.id}`);
 });
 
 async function saveContactsFromForm(
@@ -328,7 +411,10 @@ firmyRoutes.get('/firmy/:id', async (c) => {
 
           <div class="side-section"><h4>Poznámka</h4>{noteBox(base, client.note)}</div>
 
-          <div class="side-section" style="border-top-style:dashed">
+          <div class="side-section" style="border-top-style:dashed;display:flex;gap:1rem;align-items:center">
+            <button class="subtle-action" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
+              Upravit firmu
+            </button>
             <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')">
               <button class="btn btn-sm btn-danger" type="submit">Smazat firmu</button>
             </form>

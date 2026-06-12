@@ -17,20 +17,22 @@ spend** zákazníka. Vykázaná práce (Krok 6) se pak sama správně zaúčtuje
 1. **Paušál hodin** (volitelný, jeden na zákazníka — kryje všechny jeho služby
    v režimu „paušál hodin"):
    - nevyplněný → jen podtržený odkaz „Nastavit paušál hodin" pod nadpisem
-     (vzor skrytých akcí);
-   - vyplněný → **hodiny/měsíc**, **cena paušálu (Kč/měs)**, zaškrtávátko
-     **převádět nevyčerpané hodiny**; zobrazeno textově s ikonkou tužky
-     (malý panel pro úpravu, kotvený k ikoně levým horním rohem).
-2. **Služby** — řádky: název služby, chip režimu účtování, sazba (Kč/h) /
-   u předplatného částka (Kč/měs), odpovědná osoba za službu, stav
-   (aktivní/pozastavená/ukončená). Hover akce: Upravit · Pozastavit/Obnovit ·
-   Ukončit. Nad seznamem podtržený odkaz **„Přidělit službu"**.
-3. **Měsíčně celkem** — orientační spend: Σ částek předplatných + cena paušálu
-   (vykázaná práce „samostatně" se dopočítá až z výkazů — Krok 6). Jedno číslo
-   s rozpisem položek.
+     (viditelný — vzor prázdné sekce);
+   - vyplněný → **hodiny/měsíc**, **cena paušálu (Kč/měs)**, převádění hodin;
+     akce Upravit/Zrušit **skryté do najetí** (hover vzor, jednotně se službami);
+     úprava ve **velkém modálu**.
+2. **Služby** — řádky běžících (aktivní/pozastavené): název · upřesnění, chip
+   režimu, sazba/částka, odpovědná osoba, popis. Hover akce: Upravit (velký
+   modál) · Pozastavit/Obnovit · Ukončit. Nad seznamem odkaz **„Přidělit službu"**.
+   **Ukončené služby** se přesouvají do rozbalovacího **archivu** („Ukončené
+   služby (N)") — hlavní seznam nezarůstá.
+3. **Měsíčně celkem (pevné platby)** — rozpis: paušál hodin (cena/měs; bez ceny
+   „cena nenastavena"; chybí-li paušál a běží paušálové služby → upozornění),
+   předplatná s částkou, samostatně fakturované služby informativně („dle výkazů
+   × sazba"). **Součet = jen pevné platby**; práce dle výkazů se doplní v Kroku 6.
 
-**Přidělení/úprava služby** — **jeden společný formulář** (malý panel kotvený k odkazu;
-úprava jen předvyplní dřívější hodnoty) s poli:
+**Přidělení/úprava služby** — **jeden společný formulář ve velkém modálu** (režim
+soustředění; úprava jen předvyplní dřívější hodnoty) s poli:
 
 - služba (výběr z aktivních položek katalogu; výběr **propíše výchozí režim a sazbu**
   do polí níže a u režimu ukáže „(výchozí)" — uživatel nesmí být nucen znát katalog),

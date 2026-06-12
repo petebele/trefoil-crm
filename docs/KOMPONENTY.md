@@ -296,8 +296,12 @@ Malý modál slouží pro **hlavní údaje**; ikonka „…" v něm otevírá ve
 
 ## 21. Velký modál `.modal-overlay` (kompletní editace)
 
-**Kdy:** kompletní editace záznamu (osoba/firma se všemi kontakty a údaji). Otevírá se
-ikonkou „…" z malého modálu (nebo přímou akcí), na střed obrazovky, s pozadím.
+**Kdy:** založení nebo kompletní úprava záznamu — vždy v **režimu soustředění**
+(na střed obrazovky, ztmavené pozadí). Závazný seznam použití: přidání/úprava
+**osoby**, **firmy**, **uživatele** (Administrace · Tým), **služby v katalogu**
+(Administrace · Služby), **přidělení/úprava služby u zákazníka**, **paušál hodin**.
+Otevírá se přímou akcí nebo ikonkou „…" z malého panelu. Malé panely (§19) zůstávají
+jen pro rychlé kontextové akce (výběry, filtry, rychlé přidání kontaktu/osoby).
 
 ```html
 <!-- server vrací fragment do <div id="modal"> (htmx hx-get → hx-target="#modal") -->

@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types';
-import { Picker, EmptyState } from './components';
+import { ModalShell, EmptyState } from './components';
 import { logEvent } from '../domain/events';
 import { getClient } from '../domain/clients';
-import { getCatalogService, isServiceMode, SERVICE_MODE_LABELS, type ServiceMode } from '../domain/services';
+import { listCoworkers } from '../domain/people';
+import { getCatalogService, listCatalog, isServiceMode, SERVICE_MODE_LABELS, type ServiceMode } from '../domain/services';
 import type { CatalogService } from '../domain/services';
 import {
   getClientService,
@@ -15,11 +16,12 @@ import {
   type ClientService,
   type ClientServiceInput,
 } from '../domain/clientServices';
-import type { ClientsTable } from '../db/schema';
+import type { ClientsTable, PersonsTable } from '../db/schema';
 
 /**
- * Záložka Služby v detailu zákazníka (Krok 5): paušál hodin, přidělené služby,
- * orientační měsíční spend. Ceny/sazby/paušál mění jen admin; ostatní vše vidí.
+ * Záložka Služby v detailu zákazníka (Krok 5): paušál hodin, přidělené služby
+ * (běžící + archiv ukončených), pevné měsíční platby. Zakládání a úpravy přes
+ * velké modály (režim soustředění). Ceny/sazby/paušál mění jen admin.
  */
 
 export const sluzbyZakaznikaRoutes = new Hono<AppEnv>();
@@ -37,10 +39,10 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-// ---------- formulář (JEDEN pro přidělení i úpravu — úprava jen předvyplní) ----------
+// ---------- velké modály (JEDEN formulář pro přidělení i úpravu služby) ----------
 
-function ServiceForm(props: {
-  action: string;
+function ServiceModal(props: {
+  base: string;
   service: ClientService | null; // null = přidělení nové
   available: CatalogService[];
   coworkers: Array<{ id: string; name: string }>;
@@ -49,68 +51,91 @@ function ServiceForm(props: {
   const s = props.service;
   const mode = s?.mode ?? 'retainer';
   return (
-    <form method="post" action={props.action} class="m0">
-      {s ? null : (
-        <>
-          <div class="opt-group" style="padding-left:0">Služba z katalogu</div>
-          {/* data-set-* = výchozí hodnoty; app.js je při výběru propíše do polí
-              a u odpovídající volby režimu ukáže „(výchozí)" */}
-          <select class="input" name="catalog_item_id" required data-defaults aria-label="Služba z katalogu">
-            <option value="">— vyberte službu —</option>
-            {props.available.map((it) => (
-              <option value={it.id} data-set-mode={it.meta.mode} data-set-rate={it.meta.price ?? ''}>
-                {it.label}
-              </option>
+    <ModalShell title={s ? `Upravit službu · ${s.label}${s.detail ? ` · ${s.detail}` : ''}` : 'Přidělit službu'}>
+      <form method="post" action={s ? `${props.base}/sluzby/${s.id}` : `${props.base}/sluzby`}>
+        {s ? null : (
+          <div class="field">
+            <label>Služba z katalogu <span class="req">*</span></label>
+            {/* data-set-* = výchozí hodnoty; app.js je při výběru propíše do polí
+                a u odpovídající volby režimu ukáže „(výchozí)" */}
+            <select class="input" name="catalog_item_id" required data-defaults autofocus>
+              <option value="">— vyberte službu —</option>
+              {props.available.map((it) => (
+                <option value={it.id} data-set-mode={it.meta.mode} data-set-rate={it.meta.price ?? ''}>
+                  {it.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div class="field">
+          <label>Upřesnění služby</label>
+          <input class="input" name="detail" value={s?.detail ?? ''} placeholder="odliší opakovaná přidělení (např. „Sklik“)" />
+        </div>
+        <div class="field">
+          <label>Režim účtování</label>
+          <select class="input" name="mode">
+            <option value="retainer" selected={mode === 'retainer'}>{SERVICE_MODE_LABELS.retainer}</option>
+            <option value="payg" selected={mode === 'payg'}>{SERVICE_MODE_LABELS.payg}</option>
+            <option value="subscription" selected={mode === 'subscription'}>{SERVICE_MODE_LABELS.subscription}</option>
+          </select>
+        </div>
+        <div class={`field ${mode === 'subscription' ? 'hidden' : ''}`} data-depends-on="mode" data-depends-value="retainer,payg">
+          <label>Sazba (Kč/h)</label>
+          <input class="input" type="number" name="rate" min="0" step="1" value={s?.rate ?? ''} />
+        </div>
+        <div class={`field ${mode === 'subscription' ? '' : 'hidden'}`} data-depends-on="mode" data-depends-value="subscription">
+          <label>Částka předplatného (Kč/měs)</label>
+          <input class="input" type="number" name="monthly_amount" min="0" step="1" value={s?.monthly_amount ?? ''} />
+        </div>
+        <div class="field">
+          <label>Popis služby</label>
+          <textarea class="input" name="description" rows={2} placeholder="co v rámci služby pro klienta děláme">{s?.description ?? ''}</textarea>
+        </div>
+        <div class="field">
+          <label>Odpovědná osoba za službu</label>
+          <select class="input" name="owner_id">
+            <option value="">— nikdo —</option>
+            {props.coworkers.map((u) => (
+              <option value={u.id} selected={(s ? s.owner_id : props.defaultOwnerId) === u.id}>{u.name}</option>
             ))}
           </select>
-        </>
-      )}
-      <div class="opt-group" style="padding-left:0">Upřesnění služby</div>
-      <input class="input" name="detail" value={s?.detail ?? ''} placeholder="odliší opakovaná přidělení (např. „Sklik“)" aria-label="Upřesnění služby" />
-      <div class="opt-group" style="padding-left:0">Režim účtování</div>
-      <select class="input" name="mode" aria-label="Režim účtování">
-        <option value="retainer" selected={mode === 'retainer'}>{SERVICE_MODE_LABELS.retainer}</option>
-        <option value="payg" selected={mode === 'payg'}>{SERVICE_MODE_LABELS.payg}</option>
-        <option value="subscription" selected={mode === 'subscription'}>{SERVICE_MODE_LABELS.subscription}</option>
-      </select>
-      <div data-depends-on="mode" data-depends-value="retainer,payg" class={mode === 'subscription' ? 'hidden' : ''}>
-        <div class="opt-group" style="padding-left:0">Sazba (Kč/h)</div>
-        <input class="input" type="number" name="rate" min="0" step="1" value={s?.rate ?? ''} aria-label="Sazba Kč/h" />
-      </div>
-      <div data-depends-on="mode" data-depends-value="subscription" class={mode === 'subscription' ? '' : 'hidden'}>
-        <div class="opt-group" style="padding-left:0">Částka předplatného (Kč/měs)</div>
-        <input class="input" type="number" name="monthly_amount" min="0" step="1" value={s?.monthly_amount ?? ''} aria-label="Částka předplatného Kč/měs" />
-      </div>
-      <div class="opt-group" style="padding-left:0">Popis služby</div>
-      <textarea class="input" name="description" rows={2} placeholder="co v rámci služby pro klienta děláme" aria-label="Popis služby">{s?.description ?? ''}</textarea>
-      <div class="opt-group" style="padding-left:0">Odpovědná osoba za službu</div>
-      <select class="input" name="owner_id" aria-label="Odpovědná osoba za službu">
-        <option value="">— nikdo —</option>
-        {props.coworkers.map((u) => (
-          <option value={u.id} selected={(s ? s.owner_id : props.defaultOwnerId) === u.id}>{u.name}</option>
-        ))}
-      </select>
-      <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.5rem">
-        {s ? 'Uložit' : 'Přidělit'}
-      </button>
-    </form>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">{s ? 'Uložit změny' : 'Přidělit službu'}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }
 
-function RetainerPanelForm(props: { base: string; client: ClientsTable }) {
+function RetainerModal(props: { base: string; client: ClientsTable }) {
   const c = props.client;
   return (
-    <form method="post" action={`${props.base}/pausal`} class="m0">
-      <div class="opt-group" style="padding-left:0">Hodiny měsíčně</div>
-      <input class="input" type="number" name="hours" min="0" step="0.5" value={c.hours_budget_monthly ?? ''} aria-label="Hodiny měsíčně" />
-      <div class="opt-group" style="padding-left:0">Cena paušálu (Kč/měs)</div>
-      <input class="input" type="number" name="price" min="0" step="1" value={c.retainer_price ?? ''} aria-label="Cena paušálu Kč/měs" />
-      <label style="display:flex;gap:.5rem;align-items:center;margin:.5rem 0;cursor:pointer;font-size:.85rem">
-        <input type="checkbox" name="rollover" value="1" checked={c.hours_rollover === 1} style="width:15px;height:15px;accent-color:var(--accent)" />
-        Převádět nevyčerpané hodiny do dalšího měsíce
-      </label>
-      <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
-    </form>
+    <ModalShell title="Paušál hodin">
+      <form method="post" action={`${props.base}/pausal`}>
+        <div class="field">
+          <label>Hodiny měsíčně <span class="req">*</span></label>
+          <input class="input" type="number" name="hours" min="0" step="0.5" value={c.hours_budget_monthly ?? ''} required autofocus />
+          <span class="help">Jeden paušál na zákazníka — kryje všechny jeho služby v režimu „{SERVICE_MODE_LABELS.retainer}".</span>
+        </div>
+        <div class="field">
+          <label>Cena paušálu (Kč/měs)</label>
+          <input class="input" type="number" name="price" min="0" step="1" value={c.retainer_price ?? ''} />
+        </div>
+        <div class="field">
+          <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer">
+            <input type="checkbox" name="rollover" value="1" checked={c.hours_rollover === 1} style="width:16px;height:16px;accent-color:var(--accent)" />
+            Převádět nevyčerpané hodiny do dalšího měsíce
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Uložit</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }
 
@@ -123,6 +148,47 @@ function serviceMoneyLine(s: ClientService): string {
   return s.rate !== null ? `sazba ${kc(s.rate)} Kč/h` : 'sazba neuvedena';
 }
 
+function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean }) {
+  const { base, s, isAdmin } = props;
+  return (
+    <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.6' : ''}`}>
+      <span style="flex:1">
+        <span style="font-weight:600">{s.label}</span>
+        {s.detail ? <span class="sub" style="font-weight:600"> · {s.detail}</span> : null}
+        <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
+          {SERVICE_MODE_LABELS[s.mode]}
+        </span>
+        {s.status !== 'active' ? (
+          <span class={`chip ${s.status === 'paused' ? 'chip-soft-orange' : 'chip-soft-gray'}`} style="margin-left:.35rem">
+            {SERVICE_STATUS_LABELS[s.status]}
+          </span>
+        ) : null}
+        <span class="sub" style="display:block">
+          {serviceMoneyLine(s)}
+          {' · '}
+          {s.owner_name ? `odpovídá ${s.owner_name}` : 'bez odpovědné osoby'}
+        </span>
+        {s.description ? <span class="sub" style="display:block;font-size:.78rem">{s.description}</span> : null}
+      </span>
+      {isAdmin && s.status !== 'ended' ? (
+        <span class="row-actions" style="white-space:nowrap;display:flex;gap:.8rem">
+          <button class="subtle-action" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
+            Upravit
+          </button>
+          <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
+            <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
+            <button class="subtle-action" type="submit">{s.status === 'paused' ? 'Obnovit' : 'Pozastavit'}</button>
+          </form>
+          <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit="return confirm('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')">
+            <input type="hidden" name="status" value="ended" />
+            <button class="subtle-action" type="submit">Ukončit</button>
+          </form>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export function SluzbyZakaznikaTab(props: {
   base: string;
   client: ClientsTable;
@@ -132,19 +198,33 @@ export function SluzbyZakaznikaTab(props: {
   isAdmin: boolean;
   err?: string;
 }) {
-  const { base, client, services, coworkers, isAdmin } = props;
+  const { base, client, services, isAdmin } = props;
   const available = props.catalog.filter((it) => it.active === 1);
+  const running = services.filter((s) => s.status !== 'ended');
+  const archived = services.filter((s) => s.status === 'ended');
   const hasRetainer = client.hours_budget_monthly !== null;
 
-  // orientační měsíční spend
-  const lines: Array<{ label: string; amount: number }> = [];
-  if (hasRetainer && client.retainer_price !== null) lines.push({ label: 'Paušál hodin', amount: client.retainer_price });
-  for (const s of services) {
-    if (s.status === 'active' && s.mode === 'subscription' && s.monthly_amount !== null) {
-      lines.push({ label: s.detail ? `${s.label} · ${s.detail}` : s.label, amount: s.monthly_amount });
+  // Pevné měsíční platby: paušál + předplatná. Samostatně účtovaná práce přijde z výkazů.
+  const active = services.filter((s) => s.status === 'active');
+  const lines: Array<{ label: string; amount: number | null; note: string | null }> = [];
+  if (hasRetainer) {
+    lines.push({
+      label: `Paušál hodin (${kc(client.hours_budget_monthly!)} h/měs)`,
+      amount: client.retainer_price,
+      note: client.retainer_price === null ? 'cena nenastavena' : null,
+    });
+  } else if (active.some((s) => s.mode === 'retainer')) {
+    lines.push({ label: 'Paušál hodin', amount: null, note: 'není nastaven — služby v režimu paušálu se nemají z čeho odečítat' });
+  }
+  for (const s of active) {
+    const name = s.detail ? `${s.label} · ${s.detail}` : s.label;
+    if (s.mode === 'subscription') {
+      lines.push({ label: name, amount: s.monthly_amount, note: s.monthly_amount === null ? 'bez částky' : null });
+    } else if (s.mode === 'payg') {
+      lines.push({ label: name, amount: null, note: s.rate !== null ? `dle výkazů × ${kc(s.rate)} Kč/h` : 'dle vykázané práce' });
     }
   }
-  const total = lines.reduce((sum, l) => sum + l.amount, 0);
+  const total = lines.reduce((sum, l) => sum + (l.amount ?? 0), 0);
 
   return (
     <>
@@ -164,9 +244,9 @@ export function SluzbyZakaznikaTab(props: {
             </span>
             {isAdmin ? (
               <span class="area-actions" style="margin-left:auto;display:flex;gap:.8rem">
-                <Picker id="pausalEdit" trigger="Upravit" triggerLabel="Upravit paušál hodin">
-                  <RetainerPanelForm base={base} client={client} />
-                </Picker>
+                <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
+                  Upravit
+                </button>
                 <form method="post" action={`${base}/pausal`} class="m0" onsubmit="return confirm('Zrušit paušál hodin u tohoto zákazníka?')">
                   <button class="subtle-action" type="submit" name="hours" value="">Zrušit</button>
                 </form>
@@ -174,9 +254,9 @@ export function SluzbyZakaznikaTab(props: {
             ) : null}
           </div>
         ) : isAdmin ? (
-          <Picker id="pausalSet" trigger="Nastavit paušál hodin" triggerLabel="Nastavit paušál hodin">
-            <RetainerPanelForm base={base} client={client} />
-          </Picker>
+          <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
+            Nastavit paušál hodin
+          </button>
         ) : (
           <p class="sub" style="margin:0">Bez paušálu hodin.</p>
         )}
@@ -186,10 +266,10 @@ export function SluzbyZakaznikaTab(props: {
         <div class="card-head"><h3>Služby</h3></div>
         {isAdmin ? (
           available.length > 0 ? (
-            <span class={services.length > 0 ? 'area-actions' : ''}>
-              <Picker id="svcAssign" trigger="Přidělit službu" triggerLabel="Přidělit službu z katalogu">
-                <ServiceForm action={`${base}/sluzby`} service={null} available={available} coworkers={coworkers} defaultOwnerId={client.owner_id} />
-              </Picker>
+            <span class={running.length > 0 ? 'area-actions' : ''}>
+              <button class="subtle-action" type="button" hx-get={`${base}/sluzby/modal/nova`} hx-target="#modal" hx-swap="innerHTML">
+                Přidělit službu
+              </button>
             </span>
           ) : (
             <p class="sub" style="margin:0">
@@ -198,67 +278,46 @@ export function SluzbyZakaznikaTab(props: {
           )
         ) : null}
 
-        {services.length === 0 ? (
+        {running.length === 0 && archived.length === 0 ? (
           <EmptyState text="Zatím žádné služby. Přidělte první službu z katalogu." />
         ) : (
           <div style="margin-top:.4rem">
-            {services.map((s) => (
-              <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.55' : ''}`}>
-                <span style="flex:1">
-                  <span style="font-weight:600">{s.label}</span>
-                  {s.detail ? <span class="sub" style="font-weight:600"> · {s.detail}</span> : null}
-                  <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
-                    {SERVICE_MODE_LABELS[s.mode]}
-                  </span>
-                  {s.status !== 'active' ? (
-                    <span class={`chip ${s.status === 'paused' ? 'chip-soft-orange' : 'chip-soft-gray'}`} style="margin-left:.35rem">
-                      {SERVICE_STATUS_LABELS[s.status]}
-                    </span>
-                  ) : null}
-                  <span class="sub" style="display:block">
-                    {serviceMoneyLine(s)}
-                    {' · '}
-                    {s.owner_name ? `odpovídá ${s.owner_name}` : 'bez odpovědné osoby'}
-                  </span>
-                  {s.description ? <span class="sub" style="display:block;font-size:.78rem">{s.description}</span> : null}
-                </span>
-                {isAdmin && s.status !== 'ended' ? (
-                  <span class="row-actions" style="white-space:nowrap;display:flex;gap:.8rem">
-                    <Picker id={`svcEdit-${s.id}`} trigger="Upravit" triggerLabel={`Upravit službu ${s.label}`}>
-                      <ServiceForm action={`${base}/sluzby/${s.id}`} service={s} available={available} coworkers={coworkers} defaultOwnerId={client.owner_id} />
-                    </Picker>
-                    <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
-                      <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
-                      <button class="subtle-action" type="submit">{s.status === 'paused' ? 'Obnovit' : 'Pozastavit'}</button>
-                    </form>
-                    <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit="return confirm('Ukončit tuto službu? Historie a výkazy zůstanou zachované.')">
-                      <input type="hidden" name="status" value="ended" />
-                      <button class="subtle-action" type="submit">Ukončit</button>
-                    </form>
-                  </span>
-                ) : null}
-              </div>
+            {running.map((s) => (
+              <ServiceRow base={base} s={s} isAdmin={isAdmin} />
             ))}
           </div>
         )}
+
+        {archived.length > 0 ? (
+          <div style="margin-top:.8rem">
+            <button type="button" class="subtle-action" data-reveal="svcArchive" aria-controls="svcArchive">
+              Ukončené služby ({archived.length})
+            </button>
+            <div id="svcArchive" class="hidden">
+              {archived.map((s) => (
+                <ServiceRow base={base} s={s} isAdmin={isAdmin} />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {lines.length > 0 ? (
         <div class="card" style="margin-top:1rem">
           <div class="card-head"><h3>Měsíčně celkem</h3></div>
           {lines.map((l) => (
-            <div style="display:flex;justify-content:space-between;padding:.35rem 0;border-top:1px solid var(--line);font-size:.88rem">
+            <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--line);font-size:.88rem">
               <span>{l.label}</span>
-              <span>{kc(l.amount)} Kč</span>
+              {l.amount !== null ? <span style="white-space:nowrap">{kc(l.amount)} Kč</span> : <span class="sub" style="white-space:nowrap">{l.note}</span>}
             </div>
           ))}
           <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;border-top:2px solid var(--line);font-weight:700">
-            <span>Celkem</span>
+            <span>Pevné platby celkem</span>
             <span>{kc(total)} Kč/měs</span>
           </div>
           <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">
-            Orientační měsíční spend. Práce účtovaná samostatně a vícepráce se dopočítají
-            z výkazů práce (připravujeme).
+            Jen pevné měsíční platby (paušál + předplatná). Samostatně účtovaná práce
+            a vícepráce nad paušál se doplní z výkazů práce (připravujeme).
           </p>
         </div>
       ) : null}
@@ -266,9 +325,11 @@ export function SluzbyZakaznikaTab(props: {
   );
 }
 
-// ---------- routy (mutace jen admin) ----------
+// ---------- routy (vše jen admin) ----------
 
-async function guard(c: any): Promise<{ t: string; clientId: string; base: string } | Response> {
+type Guarded = { t: string; clientId: string; base: string; client: ClientsTable; person: PersonsTable };
+
+async function guard(c: any): Promise<Guarded | Response> {
   const person = c.get('person');
   if (!person) return c.redirect('/login');
   if (!c.get('modules').has('zakaznici')) return c.redirect('/');
@@ -277,8 +338,36 @@ async function guard(c: any): Promise<{ t: string; clientId: string; base: strin
   if (person.is_admin !== 1) return c.redirect(`${base}?tab=sluzby`);
   const client = await getClient(person.tenant_id, clientId);
   if (!client) return c.notFound();
-  return { t: person.tenant_id, clientId, base };
+  return { t: person.tenant_id, clientId, base, client, person };
 }
+
+// --- velké modály ---
+
+sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/modal/nova', async (c) => {
+  const g = await guard(c);
+  if (g instanceof Response) return g;
+  const [catalog, coworkers] = await Promise.all([listCatalog(g.t), listCoworkers(g.t)]);
+  return c.html(
+    <ServiceModal base={g.base} service={null} available={catalog.filter((it) => it.active === 1)} coworkers={coworkers} defaultOwnerId={g.client.owner_id} />,
+  );
+});
+
+sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/:sid/modal', async (c) => {
+  const g = await guard(c);
+  if (g instanceof Response) return g;
+  const svc = await getClientService(g.t, c.req.param('sid'));
+  if (!svc || svc.client_id !== g.clientId) return c.notFound();
+  const coworkers = await listCoworkers(g.t);
+  return c.html(<ServiceModal base={g.base} service={svc} available={[]} coworkers={coworkers} defaultOwnerId={g.client.owner_id} />);
+});
+
+sluzbyZakaznikaRoutes.get('/firmy/:id/pausal/modal', async (c) => {
+  const g = await guard(c);
+  if (g instanceof Response) return g;
+  return c.html(<RetainerModal base={g.base} client={g.client} />);
+});
+
+// --- mutace ---
 
 /** Společné čtení formuláře služby (jeden formulář pro přidělení i úpravu). */
 function serviceInputFromBody(body: Record<string, unknown>, fallbackMode: ServiceMode): ClientServiceInput {
@@ -309,9 +398,8 @@ function serviceEventText(verb: string, label: string, input: ClientServiceInput
 sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
-  const person = c.get('person')!;
-  const body = await c.req.parseBody();
 
+  const body = await c.req.parseBody();
   const catalogItemId = String(body.catalog_item_id ?? '');
   const cat = catalogItemId ? await getCatalogService(g.t, catalogItemId) : null;
   if (!cat) return c.redirect(`${g.base}?tab=sluzby&err=povinne`);
@@ -320,14 +408,13 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby', async (c) => {
   if (input.rate === null && input.mode !== 'subscription') input.rate = cat.meta.price; // bez JS: výchozí sazba z katalogu
 
   await assignService(g.t, g.clientId, cat.id, input);
-  await logEvent(g.t, 'client', g.clientId, person.id, serviceEventText('Přidělena', cat.label, input));
+  await logEvent(g.t, 'client', g.clientId, g.person.id, serviceEventText('Přidělena', cat.label, input));
   return c.redirect(`${g.base}?tab=sluzby`);
 });
 
 sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
-  const person = c.get('person')!;
   const svc = await getClientService(g.t, c.req.param('sid'));
   if (!svc || svc.client_id !== g.clientId) return c.notFound();
 
@@ -335,14 +422,13 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid', async (c) => {
   const input = serviceInputFromBody(body as Record<string, unknown>, svc.mode);
 
   await updateClientService(g.t, svc.id, input);
-  await logEvent(g.t, 'client', g.clientId, person.id, serviceEventText('Upravena', svc.label, input));
+  await logEvent(g.t, 'client', g.clientId, g.person.id, serviceEventText('Upravena', svc.label, input));
   return c.redirect(`${g.base}?tab=sluzby`);
 });
 
 sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid/stav', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
-  const person = c.get('person')!;
   const svc = await getClientService(g.t, c.req.param('sid'));
   if (!svc || svc.client_id !== g.clientId) return c.notFound();
 
@@ -353,16 +439,15 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid/stav', async (c) => {
 
   await setClientServiceStatus(g.t, svc.id, status);
   const verb = status === 'active' ? 'obnovena' : status === 'paused' ? 'pozastavena' : 'ukončena';
-  await logEvent(g.t, 'client', g.clientId, person.id, `Služba „${svc.label}" ${verb}`);
+  await logEvent(g.t, 'client', g.clientId, g.person.id, `Služba „${svc.label}${svc.detail ? ` · ${svc.detail}` : ''}" ${verb}`);
   return c.redirect(`${g.base}?tab=sluzby`);
 });
 
 sluzbyZakaznikaRoutes.post('/firmy/:id/pausal', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
-  const person = c.get('person')!;
-  const body = await c.req.parseBody();
 
+  const body = await c.req.parseBody();
   const hours = num(body.hours);
   const price = num(body.price);
   const rollover = String(body.rollover ?? '') === '1';
@@ -372,7 +457,7 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/pausal', async (c) => {
     g.t,
     'client',
     g.clientId,
-    person.id,
+    g.person.id,
     hours === null
       ? 'Paušál hodin zrušen'
       : `Paušál hodin nastaven: ${kc(hours)} h/měs${price !== null ? ` za ${kc(price)} Kč/měs` : ''}, nevyčerpané hodiny se ${rollover ? 'převádějí' : 'nepřevádějí'}`,

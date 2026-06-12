@@ -74,7 +74,12 @@ try {
   ok('upřesnění + popis + režim uloženy', !!svcB && svcB.description === 'Správa Sklik kampaní' && svcB.mode === 'payg' && svcB.rate === 1200);
   r = await req(`${fbase}?tab=sluzby`);
   ok('řádek s upřesněním a popisem', r.text.includes('· Sklik') && r.text.includes('Správa Sklik kampaní'));
-  ok('formulář: závislá pole + výchozí z katalogu', r.text.includes('data-depends-on="mode"') && r.text.includes('data-defaults') && r.text.includes('data-set-mode'));
+  r = await req(`${fbase}/sluzby/modal/nova`);
+  ok('velký modál přidělení: závislá pole + výchozí z katalogu', r.text.includes('modal-overlay') && r.text.includes('data-depends-on="mode"') && r.text.includes('data-defaults') && r.text.includes('data-set-mode'));
+  r = await req(`${fbase}/sluzby/${svcB.id}/modal`);
+  ok('velký modál úpravy předvyplněn', r.text.includes('Upravit službu') && r.text.includes('value="Sklik"'));
+  r = await req(`${fbase}/pausal/modal`);
+  ok('velký modál paušálu', r.text.includes('modal-overlay') && r.text.includes('name="hours"'));
 
   // --- úprava na předplatné s částkou → součet ---
   await req(`${fbase}/sluzby/${svc.id}`, { method: 'POST', form: { detail: '', description: '', mode: 'subscription', rate: '1500', monthly_amount: '2000', owner_id: admin.id } });
@@ -91,7 +96,7 @@ try {
   await req(`${fbase}/sluzby/${svc.id}/stav`, { method: 'POST', form: { status: 'ended' } });
   const svc3 = db.prepare('SELECT status FROM services WHERE id = ?').get(svc.id);
   r = await req(`${fbase}?tab=sluzby`);
-  ok('ukončení: stav v DB + chip', svc3.status === 'ended' && r.text.includes('Ukončená'));
+  ok('ukončení: stav v DB + archiv', svc3.status === 'ended' && r.text.includes('Ukončené služby (1)') && r.text.includes('id="svcArchive"'));
 
   // --- osoba: read-only pohled na služby firem (svcB stále běží) ---
   await req(`${fbase}/osoba`, { method: 'POST', form: { existing: '', new_name: 'TestE2E Osoba K5' } });
@@ -99,6 +104,14 @@ try {
   if (osoba) cleanup.persons.push(osoba.id);
   r = await req(`/osoby/${osoba.id}?tab=sluzby`);
   ok('osoba: služby firem read-only s odkazem', r.text.includes('TestE2E Služba K5') && r.text.includes(`/firmy/${client.id}?tab=sluzby`) && !r.text.includes('Přidělit službu'));
+
+  // --- velké modály úpravy firmy a osoby ---
+  r = await req(`${fbase}/modal/upravit`);
+  ok('modál Upravit firmu předvyplněn', r.text.includes('Upravit firmu') && r.text.includes('value="TestE2E Firma K5"'));
+  await req(`${fbase}/upravit`, { method: 'POST', form: { name: 'TestE2E Firma K5', website: 'https://example.test', ico: '', dic: '', address: '', status: 'active', owner_id: '', note: '' } });
+  ok('úprava firmy uložena + event', db.prepare('SELECT website FROM clients WHERE id = ?').get(client.id).website === 'https://example.test');
+  r = await req(`/osoby/${osoba.id}/modal/upravit`);
+  ok('modál Upravit osobu předvyplněn', r.text.includes('Upravit osobu') && r.text.includes('value="TestE2E Osoba K5"'));
 
   // --- běžný uživatel: vidí, ale nemění ---
   await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E User K5', email: 'teste2e-k5@conviu.test', role: 'user', password: 'tajneheslo1' } });

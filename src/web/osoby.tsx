@@ -168,6 +168,51 @@ osobyRoutes.post('/osoby', async (c) => {
   return c.redirect(`/osoby/${personId}`);
 });
 
+// Úprava osoby — stejný velký modál jako založení, jen předvyplněný (kontakty,
+// štítky a vazby na firmy se spravují přímo v levém panelu).
+osobyRoutes.get('/osoby/:id/modal/upravit', async (c) => {
+  const person = c.get('person')!;
+  const p = await getCustomerPerson(person.tenant_id, c.req.param('id'));
+  if (!p) return c.notFound();
+
+  return c.html(
+    <ModalShell title={`Upravit osobu · ${p.name}`}>
+      <form method="post" action={`/osoby/${p.id}/upravit`}>
+        <div class="field">
+          <label>Jméno a příjmení <span class="req">*</span></label>
+          <input class="input" name="name" value={p.name} required autofocus />
+        </div>
+        <div class="field"><label>Poznámka</label><textarea class="input" name="note">{p.note ?? ''}</textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Uložit změny</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+        </div>
+      </form>
+    </ModalShell>,
+  );
+});
+
+osobyRoutes.post('/osoby/:id/upravit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const p = await getCustomerPerson(t, c.req.param('id'));
+  if (!p) return c.notFound();
+
+  const body = await c.req.parseBody();
+  const name = String(body.name ?? '').trim();
+  if (!name) return c.redirect(`/osoby/${p.id}`);
+  const note = String(body.note ?? '').trim() || null;
+
+  await updatePersonField(t, p.id, 'name', name);
+  await updatePersonField(t, p.id, 'note', note);
+
+  const changes: string[] = [];
+  if (p.name !== name) changes.push('jméno');
+  if ((p.note ?? null) !== note) changes.push('poznámka');
+  await logEvent(t, 'person', p.id, person.id, changes.length ? `Osoba upravena (${changes.join(', ')})` : 'Osoba upravena (beze změn)');
+  return c.redirect(`/osoby/${p.id}`);
+});
+
 // ---------- detail osoby ----------
 
 osobyRoutes.get('/osoby/:id', async (c) => {
@@ -221,7 +266,10 @@ osobyRoutes.get('/osoby/:id', async (c) => {
 
           <div class="side-section"><h4>Poznámka</h4>{noteBox(base, p.note)}</div>
 
-          <div class="side-section" style="border-top-style:dashed">
+          <div class="side-section" style="border-top-style:dashed;display:flex;gap:1rem;align-items:center">
+            <button class="subtle-action" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
+              Upravit osobu
+            </button>
             <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto osobu?')">
               <button class="btn btn-sm btn-danger" type="submit">Smazat osobu</button>
             </form>

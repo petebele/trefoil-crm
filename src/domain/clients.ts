@@ -58,6 +58,39 @@ export async function createClient(
 }
 
 export type EditableClientField = 'name' | 'website' | 'ico' | 'dic' | 'address' | 'status' | 'note';
+/** Hromadná úprava hlavních údajů (velký modál „Upravit firmu"). */
+export async function updateClientMain(
+  tenantId: string,
+  id: string,
+  data: {
+    name: string;
+    website: string | null;
+    ico: string | null;
+    dic: string | null;
+    address: string | null;
+    status: string;
+    ownerId: string | null;
+    note: string | null;
+  },
+): Promise<void> {
+  await db
+    .updateTable('clients')
+    .set({
+      name: data.name,
+      website: data.website,
+      ico: data.ico,
+      dic: data.dic,
+      address: data.address,
+      status: data.status,
+      owner_id: data.ownerId,
+      note: data.note,
+      updated_at: now(),
+    })
+    .where('tenant_id', '=', tenantId)
+    .where('id', '=', id)
+    .execute();
+}
+
 export function isEditableClientField(f: string): f is EditableClientField {
   return ['name', 'website', 'ico', 'dic', 'address', 'status', 'note'].includes(f);
 }
