@@ -13,8 +13,8 @@ export type ServiceMode = 'subscription' | 'retainer' | 'payg';
 
 export const SERVICE_MODE_LABELS: Record<ServiceMode, string> = {
   subscription: 'Předplatné',
-  retainer: 'Paušál s hodinami',
-  payg: 'Nepředplacená',
+  retainer: 'Paušál hodin',
+  payg: 'Samostatná fakturace',
 };
 
 export function isServiceMode(s: string): s is ServiceMode {
@@ -24,10 +24,10 @@ export function isServiceMode(s: string): s is ServiceMode {
 export interface ServiceMeta {
   description: string | null;
   mode: ServiceMode;
-  /** Výchozí měsíční cena v Kč (u předplatného volitelná, u nepředplacené žádná). */
+  /** Výchozí měsíční cena v Kč (u předplatného volitelná, u samostatné fakturace žádná). */
   price: number | null;
-  /** Výchozí počet hodin v ceně za měsíc (jen u paušálu). */
-  hours: number | null;
+  // Pozor: paušál hodin se NEnastavuje u služby — patří k zákazníkovi (jeden paušál
+  // může pokrývat víc služeb). Implementuje Krok 5.
 }
 
 export interface CatalogService {
@@ -39,7 +39,7 @@ export interface CatalogService {
 }
 
 function parseMeta(raw: string | null): ServiceMeta {
-  const fallback: ServiceMeta = { description: null, mode: 'retainer', price: null, hours: null };
+  const fallback: ServiceMeta = { description: null, mode: 'retainer', price: null };
   if (!raw) return fallback;
   try {
     const m = JSON.parse(raw) as Partial<ServiceMeta>;
@@ -47,20 +47,18 @@ function parseMeta(raw: string | null): ServiceMeta {
       description: typeof m.description === 'string' && m.description ? m.description : null,
       mode: typeof m.mode === 'string' && isServiceMode(m.mode) ? m.mode : 'retainer',
       price: typeof m.price === 'number' ? m.price : null,
-      hours: typeof m.hours === 'number' ? m.hours : null,
     };
   } catch {
     return fallback;
   }
 }
 
-/** Podle režimu nechá jen smysluplné hodnoty (nepředplacená nemá cenu, hodiny jen paušál). */
+/** Podle režimu nechá jen smysluplné hodnoty (samostatná fakturace nemá cenu předem). */
 export function normalizeMeta(meta: ServiceMeta): ServiceMeta {
   return {
     description: meta.description?.trim() || null,
     mode: meta.mode,
     price: meta.mode === 'payg' ? null : meta.price,
-    hours: meta.mode === 'retainer' ? meta.hours : null,
   };
 }
 

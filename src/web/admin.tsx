@@ -56,9 +56,6 @@ const ERRORS: Record<string, string> = {
 function fmtPrice(n: number | null): string {
   return n === null ? '—' : `${n.toLocaleString('cs-CZ')} Kč/měs`;
 }
-function fmtHours(n: number | null): string {
-  return n === null ? '—' : `${n.toLocaleString('cs-CZ')} h/měs`;
-}
 
 // ---------- záložka Moduly ----------
 
@@ -221,9 +218,8 @@ function SluzbyTab(props: { catalog: CatalogService[] }) {
         <thead>
           <tr>
             <th>Služba</th>
-            <th>Režim</th>
+            <th>Režim účtování</th>
             <th>Výchozí cena</th>
-            <th>Hodiny v ceně</th>
             <th>Stav</th>
             <th style="width:1%"></th>
           </tr>
@@ -245,7 +241,6 @@ function SluzbyTab(props: { catalog: CatalogService[] }) {
                 </span>
               </td>
               <td>{fmtPrice(s.meta.price)}</td>
-              <td>{fmtHours(s.meta.hours)}</td>
               <td>
                 <span class={`chip ${s.active === 1 ? 'chip-soft-teal' : 'chip-soft-gray'}`}>
                   {s.active === 1 ? 'Aktivní' : 'Deaktivována'}
@@ -291,26 +286,22 @@ function ServiceModal(props: { service: CatalogService | null }) {
           <textarea class="input" name="description" rows={2}>{s?.meta.description ?? ''}</textarea>
         </div>
         <div class="field">
-          <label>Režim</label>
+          <label>Výchozí režim účtování</label>
           <select class="input" name="mode">
-            <option value="retainer" selected={mode === 'retainer'}>Paušál s hodinami — cena + hodiny v ceně za měsíc</option>
-            <option value="subscription" selected={mode === 'subscription'}>Předplatné — fixní položka bez hodin (SaaS, licence…)</option>
-            <option value="payg" selected={mode === 'payg'}>Nepředplacená — účtuje se vykázaná práce × sazba</option>
+            <option value="retainer" selected={mode === 'retainer'}>Domluvený paušál hodin — čas práce se odečítá z domluveného paušálu</option>
+            <option value="payg" selected={mode === 'payg'}>Samostatná fakturace — práci účtujeme samostatně</option>
+            <option value="subscription" selected={mode === 'subscription'}>Předplatné v aplikaci — individuální částka předplatného</option>
           </select>
         </div>
         <div class="field">
           <label>Výchozí cena (Kč/měsíc)</label>
           <input class="input" type="number" name="price" min="0" step="1" value={s?.meta.price ?? ''} />
-          <span class="help">U předplatného volitelná (prázdná = jen evidence). U nepředplacené se neuvádí.</span>
-        </div>
-        <div class="field">
-          <label>Hodiny v ceně (h/měsíc)</label>
-          <input class="input" type="number" name="hours" min="0" step="0.5" value={s?.meta.hours ?? ''} />
-          <span class="help">Jen u paušálu s hodinami.</span>
+          <span class="help">U předplatného volitelná (prázdná = jen evidence). U samostatné fakturace se neuvádí.</span>
         </div>
         <p class="sub" style="font-size:.78rem">
-          Tohle jsou výchozí hodnoty pro celou firmu — při aktivaci služby u konkrétního zákazníka
-          půjde všechno nastavit jinak.
+          Tohle jsou výchozí hodnoty pro celou firmu — při přidělení služby konkrétnímu zákazníkovi
+          půjde vše nastavit jinak. Paušál hodin se nastavuje u zákazníka (může být společný pro
+          více služeb).
         </p>
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">{s ? 'Uložit změny' : 'Vytvořit službu'}</button>
@@ -487,7 +478,6 @@ function metaFromBody(body: Record<string, unknown>): ServiceMeta {
     description: String(body.description ?? '').trim() || null,
     mode,
     price: num(body.price),
-    hours: num(body.hours),
   };
 }
 

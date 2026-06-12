@@ -54,7 +54,7 @@ try {
   r = await req('/administrace/tym/modal/novy');
   ok('modál Nový uživatel', r.text.includes('Nový uživatel') && r.text.includes('name="password"') && r.text.includes('name="role"'));
   r = await req('/administrace/sluzby/modal/nova');
-  ok('modál Nová služba', r.text.includes('Nová služba') && r.text.includes('name="mode"') && r.text.includes('Paušál s hodinami'));
+  ok('modál Nová služba', r.text.includes('Nová služba') && r.text.includes('name="mode"') && r.text.includes('Domluvený paušál hodin'));
 
   // --- Tým: create / login / práva / edit / deaktivace ---
   r = await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E Žofie', email: 'teste2e@conviu.test', role: 'user', password: 'tajneheslo1' } });
@@ -108,23 +108,23 @@ try {
   r = await req('/administrace?tab=sluzby');
   ok('Služby: prázdný stav nebo tabulka', r.text.includes('Přidat službu'));
 
-  r = await req('/administrace/sluzby', { method: 'POST', form: { name: 'TestE2E Správa PPC', description: 'Kampaně vč. úprav', mode: 'retainer', price: '12000', hours: '8' } });
+  r = await req('/administrace/sluzby', { method: 'POST', form: { name: 'TestE2E Správa PPC', description: 'Kampaně vč. úprav', mode: 'retainer', price: '12000' } });
   ok('POST nová služba → redirect', r.status === 302 && !r.location.includes('err'));
   const s = db.prepare("SELECT li.* FROM list_items li JOIN lists l ON l.id = li.list_id WHERE l.key = 'service_catalog' AND li.label = 'TestE2E Správa PPC'").get();
   if (s) createdServices.push(s.id);
   const meta = s ? JSON.parse(s.meta) : {};
-  ok('služba v DB s JSON meta', !!s && meta.mode === 'retainer' && meta.price === 12000 && meta.hours === 8 && meta.description === 'Kampaně vč. úprav');
+  ok('služba v DB s JSON meta', !!s && meta.mode === 'retainer' && meta.price === 12000 && meta.description === 'Kampaně vč. úprav');
   r = await req('/administrace?tab=sluzby');
-  ok('služba v tabulce (chip, cena, hodiny)', r.text.includes('TestE2E Správa PPC') && r.text.includes('Paušál s hodinami') && r.text.includes('Kč/měs') && r.text.includes('h/měs'));
+  ok('služba v tabulce (chip, cena)', r.text.includes('TestE2E Správa PPC') && r.text.includes('Paušál hodin') && r.text.includes('Kč/měs'));
 
   // duplicitní název
   r = await req('/administrace/sluzby', { method: 'POST', form: { name: 'TestE2E Správa PPC', mode: 'payg' } });
   ok('duplicitní název → err=nazev', r.location.includes('err=nazev'));
 
-  // edit: na předplatné bez ceny → hodiny i cena null
-  r = await req(`/administrace/sluzby/${s.id}`, { method: 'POST', form: { name: 'TestE2E Správa PPC', description: '', mode: 'subscription', price: '', hours: '8' } });
+  // edit: na předplatné bez ceny → cena volitelná (null)
+  r = await req(`/administrace/sluzby/${s.id}`, { method: 'POST', form: { name: 'TestE2E Správa PPC', description: '', mode: 'subscription', price: '' } });
   const meta2 = JSON.parse(db.prepare('SELECT meta FROM list_items WHERE id = ?').get(s.id).meta);
-  ok('edit na předplatné (hodiny zahozeny, cena volitelná)', meta2.mode === 'subscription' && meta2.price === null && meta2.hours === null);
+  ok('edit na předplatné (cena volitelná)', meta2.mode === 'subscription' && meta2.price === null);
 
   // edit modál předvyplněný
   r = await req(`/administrace/sluzby/${s.id}/modal`);

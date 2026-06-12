@@ -19,31 +19,33 @@ Nástěnka/Služby/Historie):
 - **Tým** — tabulka uživatelů: avatar s iniciálami, jméno, přihlašovací e-mail, chip role
   (tmavý „Admin" / šedý „Uživatel"), stav (aktivní/deaktivovaný). Akce na řádku skryté,
   zobrazí se najetím (hover-row vzor). Nad tabulkou modré tlačítko **Přidat uživatele**.
-- **Služby** — tabulka katalogu: název, popis (šedě, zkrácený), režim (chip Předplatné /
-  Paušál / Nepředplacená), výchozí cena, hodiny v ceně, stav. Hover akce na řádku.
-  Nad tabulkou modré tlačítko **Přidat službu**.
+- **Služby** — tabulka katalogu: název, popis (šedě, zkrácený), režim účtování
+  (chip Paušál hodin / Samostatná fakturace / Předplatné), výchozí cena, stav.
+  Hover akce na řádku. Nad tabulkou modré tlačítko **Přidat službu**.
 
 Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
 
 - *Uživatel*: jméno, přihlašovací e-mail, role (Admin/Uživatel), heslo (při založení je
   povinné — nastaví ho admin a předá kolegovi; pozvánky e-mailem přijdou později).
   Při úpravě je heslo volitelné („vyplňte jen pro změnu").
-- *Služba*: název, popis, režim (**Předplatné** / **Paušál s hodinami** /
-  **Nepředplacená**), výchozí cena (Kč/měs — u předplatného volitelná, u nepředplacené
-  není), výchozí hodiny v ceně (jen u paušálu).
+- *Služba*: název, popis, výchozí režim účtování (**Domluvený paušál hodin** /
+  **Samostatná fakturace** / **Předplatné v aplikaci**), výchozí cena (Kč/měs —
+  u předplatného volitelná, u samostatné fakturace není). Paušál hodin se v katalogu
+  **nenastavuje** — patří k zákazníkovi (Krok 5).
 
 ## 3. Pole a data
 
 - **Uživatel** = osoba (`persons`) s přihlašovacím e-mailem. Role zatím dvě: **Admin**
   (vidí Administraci, spravuje tým/služby/moduly) a **Uživatel** (vše ostatní). Jemnější
   práva (RBAC z datového modelu) až později — teď je nepotřebujeme.
-- **Služba v katalogu**: Název, Popis, **Režim** (Předplatné = fixní položka bez hodin,
-  např. SaaS/licence; Paušál s hodinami = cena + počet hodin v ceně; Nepředplacená =
-  platí se vykázaná práce × sazba klienta), **výchozí cena** (Kč/měs; u předplatného
-  volitelná, u nepředplacené žádná) a **výchozí hodiny v ceně** (jen u paušálu).
+- **Služba v katalogu**: Název, Popis, **výchozí režim účtování** (Domluvený paušál
+  hodin = čas práce se odečítá z paušálu; Samostatná fakturace = práci účtujeme
+  samostatně; Předplatné v aplikaci = individuální částka předplatného) a **výchozí
+  cena** (Kč/měs; u předplatného volitelná, u samostatné fakturace žádná).
   Vše jsou výchozí hodnoty pro celou firmu; **u konkrétního zákazníka půjde při
-  aktivaci služby všechno změnit** (Krok 5) — viz fakturační model v `DATOVY-MODEL.md`.
-- Katalog je Seznam `service_catalog`; Popis, Režim, Cena a Hodiny se ukládají jako
+  přidělení služby všechno změnit** (Krok 5). **Paušál hodin patří k zákazníkovi**
+  (jeden paušál může pokrývat více služeb) — viz fakturační model v `DATOVY-MODEL.md`.
+- Katalog je Seznam `service_catalog`; Popis, Režim a Cena se ukládají jako
   doplňkové údaje (JSON meta) — **první reálné využití dohodnuté konvence**
   „detaily jako JSON snippety".
 - Každá změna (uživatel přidán, služba upravena…) se zapisuje do `events` → Historie
@@ -58,9 +60,8 @@ Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
   a budoucích výkazech zůstává). Deaktivovaného jde znovu aktivovat.
 - Služba se také **deaktivuje, nemaže** — nenabízí se nově, ale u zákazníků, kde běží,
   zůstává. Aktivace ji vrátí do nabídky.
-- Validace: e-mail uživatele unikátní; název služby povinný a unikátní; cena a hodiny
-  nezáporná čísla; u předplatného může být cena prázdná (jen evidence), u paušálu jsou
-  hodiny povinné.
+- Validace: e-mail uživatele unikátní; název služby povinný a unikátní; cena nezáporné
+  číslo; u předplatného může být cena prázdná (jen evidence).
 
 ## 5. Akce (kontextové)
 
@@ -80,7 +81,7 @@ Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
 - [ ] Administrace má záložky Moduly / Tým / Služby; Moduly fungují jako dřív
 - [ ] Jde přidat uživatele, přihlásit se jím, upravit ho, deaktivovat (nepřihlásí se) a aktivovat
 - [ ] Poslední admin nejde degradovat/deaktivovat — aplikace vrátí srozumitelnou hlášku
-- [ ] Jde přidat/upravit/deaktivovat službu; režim, cena, hodiny a popis se ukládají a zobrazují
+- [ ] Jde přidat/upravit/deaktivovat službu; režim účtování, cena a popis se ukládají a zobrazují
 - [ ] Změny se propisují realtime do otevřených oken a do Historie (s ID)
 - [ ] typecheck zelený, HTTP testy projdou
 - [ ] odpovídá UI zásadám (záložky, chipy, hover akce, velké modály, prázdné stavy)

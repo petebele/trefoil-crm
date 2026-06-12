@@ -55,31 +55,33 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 **Fakturační model (hybrid — finální podoba 12. 6. 2026, vzor Accelo/Productive,
 podklad `Komunikace\Strategie\Retainer management a fakturace - PSOHUB 20260612.md`):**
 
-- **Služba u zákazníka** má tři režimy (výchozí hodnoty z katalogu, u zákazníka vše
-  přepsatelné — stejná služba může být u každého klienta nastavená jinak):
-  - **Předplatné** — fixní položka bez hodin (typicky SaaS/licence/nástroj, různý
-    rozsah = různá částka). Cena **volitelná**: vyplněná se propisuje do měsíčního
+- **Služba u zákazníka** má tři **režimy účtování** (výchozí režim a cena z katalogu,
+  u zákazníka vše přepsatelné — stejná služba může být u každého klienta jinak):
+  - **Předplatné v aplikaci** — individuální částka předplatného (typicky SaaS/licence,
+    různý rozsah = různá částka). Cena **volitelná**: vyplněná se propisuje do měsíčního
     reportu/fakturace, prázdná = jen evidence, že službu má.
-  - **Paušál s hodinami** — domluvená cena (Kč/měs) + počet hodin v ceně (h/měs).
-    Žádný zvláštní „balík hodin" u klienta neexistuje — obecné předplacené hodiny
-    jsou položka katalogu „Předplacené hodiny" aktivovaná jako každá jiná služba.
-  - **Nepředplacená služba** — nic se neplatí předem; vykázaná práce se účtuje
-    × hodinová sazba klienta. Pro klienty bez paušálu (platí, co se vyčerpá)
-    i pro jednorázovky, které nesmí lézt do paušálu.
-- **Nevyčerpané hodiny paušálu defaultně propadají**; zaškrtávátko **u služby
-  u zákazníka** je převede do dalšího měsíce (rollover, zatím bez stropů).
+  - **Domluvený paušál hodin** — čas práce se odečítá z domluveného paušálu hodin.
+  - **Samostatná fakturace** — práci účtujeme samostatně (× hodinová sazba klienta).
+    Pro klienty bez paušálu (platí, co se vyčerpá) i pro jednorázovky, které nesmí
+    lézt do paušálu.
+- **Paušál hodin patří k zákazníkovi, NE ke službě v katalogu** — nastavuje se
+  (volitelně) až při přidělování služeb klientovi. Jeden paušál může pokrývat
+  **více služeb i celou spolupráci**, nejen jednu službu. Přesnou podobu
+  (společný vs. per-služba) určí spec Kroku 5.
+- **Nevyčerpané hodiny paušálu defaultně propadají**; zaškrtávátko u zákazníka
+  je převede do dalšího měsíce (rollover, zatím bez stropů).
 - **Hodinová sazba**: firemní výchozí (nastavení Organizace) + volitelný override
   u zákazníka — nutné umět odlišit.
 - **Výkaz práce** se vždy váže na klienta + jeho službu a má **vlastní pole „účtování"**:
-  předvyplní se defaultem podle režimu služby (paušál → z hodin paušálu, nepředplacená
-  → × sazba, předplatné → v ceně), ale **u každé položky jde ručně změnit** na kteroukoli
-  z možností: **z hodin paušálu** / **účtovat zvlášť** (× sazba) / **neúčtovat** (v ceně,
-  goodwill — čas se eviduje, peníze ne). Přečerpání hodin paušálu se viditelně označí
-  a počítá jako vícepráce × sazba; při schvalování jde přepnout na „neúčtovat".
-- **Měsíční „fakturace" zákazníka** = Σ předplatných (s cenou) + Σ paušálů
-  + (přečerpání paušálů + hodiny nepředplacených služeb) × sazba. Dva pohledy:
-  **čas** (vykázáno / z hodin služby zbývá) a **peníze** (složení fakturace
-  po položkách).
+  předvyplní se defaultem podle režimu služby (paušál hodin → z paušálu, samostatná
+  fakturace → × sazba, předplatné → v ceně), ale **u každé položky jde ručně změnit**
+  na kteroukoli z možností: **z paušálu hodin** / **účtovat zvlášť** (× sazba) /
+  **neúčtovat** (v ceně, goodwill — čas se eviduje, peníze ne). Přečerpání paušálu
+  se viditelně označí a počítá jako vícepráce × sazba; při schvalování jde přepnout
+  na „neúčtovat".
+- **Měsíční „fakturace" zákazníka** = Σ předplatných (s cenou) + cena paušálu
+  + (přečerpání paušálu + samostatně účtované hodiny) × sazba. Dva pohledy:
+  **čas** (vykázáno / z paušálu zbývá) a **peníze** (složení fakturace po položkách).
 - Ceny, hodiny a sazby smí měnit jen **manažer** (do zavedení RBAC = admin);
   výkaz může zadat kdokoli, schvaluje odpovědná osoba zákazníka.
 
