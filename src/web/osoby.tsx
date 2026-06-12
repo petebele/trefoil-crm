@@ -46,7 +46,7 @@ const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
 /** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
 function noteBox(base: string, value: string | null) {
   return value ? (
-    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" />
+    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" noLabel />
   ) : (
     <div class="field-wrap" id="f-note">
       <button type="button" class="subtle-action" hx-get={`${base}/pole/note/edit`} hx-target="#f-note" hx-swap="outerHTML">
@@ -248,7 +248,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
             ) : null}
           </div>
 
-          <div class="side-section">{noteBox(base, p.note)}</div>
+          <div class="side-section"><h4>Poznámka</h4>{noteBox(base, p.note)}</div>
 
           <div class="side-section" style="border-top-style:dashed">
             <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto osobu?')">
@@ -321,7 +321,7 @@ osobyRoutes.get('/osoby/:id/pole/:field/edit', async (c) => {
   const p = await getCustomerPerson(person.tenant_id, c.req.param('id'));
   if (!p) return c.notFound();
   const meta = FIELD_META[field]!;
-  return c.html(<FieldEdit base={`/osoby/${p.id}`} field={field} label={meta.label} value={p[field]} kind={meta.kind} />);
+  return c.html(<FieldEdit base={`/osoby/${p.id}`} field={field} label={meta.label} value={p[field]} kind={meta.kind} noLabel={field === 'note'} />);
 });
 
 osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {

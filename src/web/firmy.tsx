@@ -251,7 +251,7 @@ function FirmFieldsSection(props: { base: string; client: { website: string | nu
 /** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
 function noteBox(base: string, value: string | null) {
   return value ? (
-    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" />
+    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" noLabel />
   ) : (
     <div class="field-wrap" id="f-note">
       <button type="button" class="subtle-action" hx-get={`${base}/pole/note/edit`} hx-target="#f-note" hx-swap="outerHTML">
@@ -359,7 +359,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             </details>
           </div>
 
-          <div class="side-section">{noteBox(base, client.note)}</div>
+          <div class="side-section"><h4>Poznámka</h4>{noteBox(base, client.note)}</div>
 
           <div class="side-section" style="border-top-style:dashed">
             <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')">
@@ -442,7 +442,7 @@ firmyRoutes.get('/firmy/:id/pole/:field/edit', async (c) => {
   if (!client) return c.notFound();
   const meta = FIELD_META[field];
   if (!meta) return c.notFound();
-  return c.html(<FieldEdit base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} />);
+  return c.html(<FieldEdit base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} noLabel={field === 'note'} />);
 });
 
 firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {

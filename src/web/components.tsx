@@ -88,11 +88,12 @@ export function FieldDisplay(props: {
   label: string;
   value: string | null;
   kind: FieldKind;
+  noLabel?: boolean; // sekce má vlastní h4 nadpis — nezdvojovat malý popisek
 }) {
   const { base, field, label, value, kind } = props;
   return (
     <div class="field-wrap" id={`f-${field}`}>
-      {kind === 'title' ? null : <div class="sub" style="font-size:.73rem">{label}</div>}
+      {kind === 'title' || props.noLabel ? null : <div class="sub" style="font-size:.73rem">{label}</div>}
       <div
         class="editable"
         role="button"
@@ -118,12 +119,13 @@ export function FieldEdit(props: {
   label: string;
   value: string | null;
   kind: FieldKind;
+  noLabel?: boolean;
 }) {
   const { base, field, label, value, kind } = props;
   const action = `${base}/pole/${field}`;
   return (
     <div class="field-wrap" id={`f-${field}`}>
-      <div class="sub" style="font-size:.73rem">{label}</div>
+      {props.noLabel ? null : <div class="sub" style="font-size:.73rem">{label}</div>}
       <form class="inline-form" hx-post={action} hx-target={`#f-${field}`} hx-swap="outerHTML">
         {kind === 'textarea' ? (
           <textarea class="input" name="value" rows={3} autofocus>{value ?? ''}</textarea>
