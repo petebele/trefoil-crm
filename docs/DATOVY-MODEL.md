@@ -52,11 +52,27 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 | `tasks` | Úkol: titulek, kategorie (ze Seznamu), volitelně klient/zakázka/deal, termín `due_at`, odklad `remind_at`, hotovo, přiřazený. |
 | `tenants` | Organizace (nositel multi-tenant připravenosti). |
 
-**Rozpočet hodin:** `clients.hours_budget_monthly` (nullable) = domluvený měsíční počet hodin.
-Schválené výkazy se z něj v daném měsíci odečítají (zbývá X h); bez rozpočtu se hodiny
-**kumulují** → podklad pro fakturaci na konci měsíce. Rozpočty a spendy smí měnit jen
-**manažer** (do zavedení RBAC = admin); výkaz může zadat kdokoli, schvaluje odpovědná
-osoba zákazníka.
+**Fakturační model (hybrid — rozhodnuto 12. 6. 2026, vzor Accelo/Productive,
+podklad `Komunikace\Strategie\Retainer management a fakturace - PSOHUB 20260612.md`):**
+
+- **Paušální služby**: služba u zákazníka má měsíční cenu (výchozí z katalogu,
+  u zákazníka přepsatelná). Práce vykázaná „v paušálu" fakturaci nemění — slouží
+  ke sledování ziskovosti služby.
+- **Předplacené hodiny**: `clients.hours_budget_monthly` (nullable) = měsíční balík.
+  Nevyčerpané hodiny **defaultně propadají**; zaškrtávátko u zákazníka je převede
+  do dalšího měsíce (rollover).
+- **Hodinová sazba**: firemní výchozí (nastavení Organizace) + volitelný override
+  u zákazníka — nutné umět odlišit.
+- **Výkaz práce** má fakturační režim: **„v paušálu"** (nic neúčtuje) /
+  **„z předplacených hodin"** (odečítá z balíku) / **„účtovat zvlášť"** (vícepráce
+  × sazba — jednorázovky nesmí lézt do paušálu). Chytrý default podle kontextu:
+  práce na paušální službě → v paušálu; jinak z balíku; bez balíku → účtovat zvlášť.
+  Režim jde u záznamu ručně přepnout.
+- **Měsíční „fakturace" zákazníka** = Σ paušálů + (přečerpání balíku + „účtovat
+  zvlášť" hodiny) × sazba. Dva pohledy: **čas** (vykázáno / z balíku zbývá)
+  a **peníze** (složení fakturace).
+- Rozpočty, sazby a spendy smí měnit jen **manažer** (do zavedení RBAC = admin);
+  výkaz může zadat kdokoli, schvaluje odpovědná osoba zákazníka.
 
 ## Lekce z v1 (závazné)
 
