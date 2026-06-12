@@ -74,7 +74,7 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .page-actions { display: flex; gap: .6rem; align-items: center; }
 .date-line { color: var(--muted); font-size: .8125rem; margin-bottom: .35rem; }
 
-.record-name { display: block; font-size: 1.45rem; font-weight: 700; margin: .75rem 0 .25rem; letter-spacing: -.01em; line-height: 1.25; }
+.record-name { display: block; font-size: 1.45rem; font-weight: 700; margin: .45rem 0 .15rem; letter-spacing: -.01em; line-height: 1.25; }
 .section-title { font-size: .975rem; font-weight: 650; margin: 1.75rem 0 .75rem; }
 .sub { color: var(--muted); font-size: .8125rem; }
 
@@ -193,12 +193,12 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .stat span { color: var(--muted); font-size: .78rem; }
 
 /* ---------- Fakta (levý sloupec detailu) ---------- */
-.fact { padding: .45rem 0; }
+.fact { padding: .22rem 0; }
 .fact .val { font-weight: 500; }
-.fact .lbl { display: block; color: var(--muted); font-size: .73rem; margin-top: .1rem; }
-.side-section { border-top: 1px solid var(--line); margin-top: 1.1rem; padding-top: 1rem; }
-.side-section h4 { font-size: .85rem; font-weight: 650; margin: 0 0 .7rem; display: flex; justify-content: space-between; align-items: center; }
-.person-row { display: flex; align-items: center; gap: .7rem; padding: .35rem 0; }
+.fact .lbl { display: block; color: var(--muted); font-size: .73rem; margin-top: .05rem; }
+.side-section { border-top: 1px solid var(--line); margin-top: .7rem; padding-top: .6rem; }
+.side-section h4 { font-size: .85rem; font-weight: 650; margin: 0 0 .4rem; display: flex; justify-content: space-between; align-items: center; }
+.person-row { display: flex; align-items: center; gap: .7rem; padding: .25rem 0; }
 .person-row .nm { font-weight: 600; font-size: .85rem; }
 .person-row .sub { display: block; }
 
@@ -346,7 +346,7 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 @media (hover: none) {
   .hover-row .row-actions, .hover-area .area-actions { opacity: 1; }
 }
-.quick-add { display: flex; gap: .25rem; margin-top: .5rem; }
+.quick-add { display: flex; gap: .25rem; margin-top: .3rem; }
 
 /* Nenápadný akční odkaz (kontextové „Přiřadit…", „Vyplnit údaje"…) — vždy podtržený,
    ať je jasné, že jde o akci. Umisťuje se POD nadpis sekce. */

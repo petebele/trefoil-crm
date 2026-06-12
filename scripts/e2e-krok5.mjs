@@ -110,6 +110,10 @@ try {
   ok('modál Upravit firmu předvyplněn', r.text.includes('Upravit firmu') && r.text.includes('value="TestE2E Firma K5"'));
   await req(`${fbase}/upravit`, { method: 'POST', form: { name: 'TestE2E Firma K5', website: 'https://example.test', ico: '', dic: '', address: '', status: 'active', owner_id: '', note: '' } });
   ok('úprava firmy uložena + event', db.prepare('SELECT website FROM clients WHERE id = ?').get(client.id).website === 'https://example.test');
+  const evtBefore = db.prepare('SELECT COUNT(*) c FROM events WHERE entity_id = ?').get(client.id).c;
+  await req(`${fbase}/upravit`, { method: 'POST', form: { name: 'TestE2E Firma K5', website: 'https://example.test', ico: '', dic: '', address: '', status: 'active', owner_id: '', note: '' } });
+  const evtAfter = db.prepare('SELECT COUNT(*) c FROM events WHERE entity_id = ?').get(client.id).c;
+  ok('uložení beze změn → žádný zápis do Historie', evtAfter === evtBefore);
   r = await req(`/osoby/${osoba.id}/modal/upravit`);
   ok('modál Upravit osobu předvyplněn', r.text.includes('Upravit osobu') && r.text.includes('value="TestE2E Osoba K5"'));
 

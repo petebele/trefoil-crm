@@ -22,6 +22,7 @@ import {
   updateCatalogService,
   setCatalogServiceActive,
   isServiceMode,
+  normalizeMeta,
   SERVICE_MODE_LABELS,
   type ServiceMeta,
 } from '../domain/services';
@@ -433,13 +434,17 @@ adminRoutes.post('/administrace/tym/:id', async (c) => {
     return c.redirect('/administrace?tab=tym&err=lastadmin');
   }
 
-  await updateTeamMember(tenant.id, id, { name, email, isAdmin, password });
   const changes: string[] = [];
   if (member.name !== name) changes.push(`jméno → ${name}`);
   if (member.login_email !== email) changes.push(`e-mail → ${email}`);
   if ((member.is_admin === 1) !== isAdmin) changes.push(`role → ${isAdmin ? 'Admin' : 'Uživatel'}`);
   if (password) changes.push('změna hesla');
-  await logEvent(tenant.id, 'person', id, person.id, `Uživatel ${name} upraven${changes.length ? `: ${changes.join(', ')}` : ''}`);
+
+  // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
+  if (changes.length) {
+    await updateTeamMember(tenant.id, id, { name, email, isAdmin, password });
+    await logEvent(tenant.id, 'person', id, person.id, `Uživatel ${name} upraven: ${changes.join(', ')}`);
+  }
   return c.redirect('/administrace?tab=tym');
 });
 
@@ -516,7 +521,11 @@ adminRoutes.post('/administrace/sluzby/:id', async (c) => {
   const name = String(body.name ?? '').trim();
   if (!name) return c.redirect('/administrace?tab=sluzby&err=povinne');
 
-  const meta = metaFromBody(body as Record<string, unknown>);
+  const meta = normalizeMeta(metaFromBody(body as Record<string, unknown>));
+  // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
+  if (service.label === name && JSON.stringify(service.meta) === JSON.stringify(meta)) {
+    return c.redirect('/administrace?tab=sluzby');
+  }
   const ok = await updateCatalogService(tenant.id, id, name, meta);
   if (!ok) return c.redirect('/administrace?tab=sluzby&err=nazev');
 

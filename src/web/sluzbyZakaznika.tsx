@@ -421,8 +421,19 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid', async (c) => {
   const body = await c.req.parseBody();
   const input = serviceInputFromBody(body as Record<string, unknown>, svc.mode);
 
-  await updateClientService(g.t, svc.id, input);
-  await logEvent(g.t, 'client', g.clientId, g.person.id, serviceEventText('Upravena', svc.label, input));
+  // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
+  const effMonthly = input.mode === 'subscription' ? input.monthlyAmount : null;
+  const unchanged =
+    (svc.detail ?? null) === input.detail &&
+    (svc.description ?? null) === input.description &&
+    svc.mode === input.mode &&
+    (svc.rate ?? null) === input.rate &&
+    (svc.monthly_amount ?? null) === effMonthly &&
+    (svc.owner_id ?? null) === input.ownerId;
+  if (!unchanged) {
+    await updateClientService(g.t, svc.id, input);
+    await logEvent(g.t, 'client', g.clientId, g.person.id, serviceEventText('Upravena', svc.label, input));
+  }
   return c.redirect(`${g.base}?tab=sluzby`);
 });
 
@@ -451,6 +462,16 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/pausal', async (c) => {
   const hours = num(body.hours);
   const price = num(body.price);
   const rollover = String(body.rollover ?? '') === '1';
+
+  // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
+  const cl = g.client;
+  if (
+    (cl.hours_budget_monthly ?? null) === hours &&
+    (cl.retainer_price ?? null) === (hours === null ? null : price) &&
+    (cl.hours_rollover === 1) === (hours === null ? false : rollover)
+  ) {
+    return c.redirect(`${g.base}?tab=sluzby`);
+  }
 
   await setClientRetainer(g.t, g.clientId, { hours, price, rollover });
   await logEvent(

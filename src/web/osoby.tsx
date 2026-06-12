@@ -203,13 +203,16 @@ osobyRoutes.post('/osoby/:id/upravit', async (c) => {
   if (!name) return c.redirect(`/osoby/${p.id}`);
   const note = String(body.note ?? '').trim() || null;
 
-  await updatePersonField(t, p.id, 'name', name);
-  await updatePersonField(t, p.id, 'note', note);
-
   const changes: string[] = [];
   if (p.name !== name) changes.push('jméno');
   if ((p.note ?? null) !== note) changes.push('poznámka');
-  await logEvent(t, 'person', p.id, person.id, changes.length ? `Osoba upravena (${changes.join(', ')})` : 'Osoba upravena (beze změn)');
+
+  // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
+  if (changes.length) {
+    await updatePersonField(t, p.id, 'name', name);
+    await updatePersonField(t, p.id, 'note', note);
+    await logEvent(t, 'person', p.id, person.id, `Osoba upravena (${changes.join(', ')})`);
+  }
   return c.redirect(`/osoby/${p.id}`);
 });
 
@@ -239,10 +242,10 @@ osobyRoutes.get('/osoby/:id', async (c) => {
         {/* A) Levý panel */}
         <aside class="card">
           <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
-          <div style="margin-top:.7rem">
+          <div style="margin-top:.45rem">
             <FieldDisplay base={base} field="name" label="Jméno" value={p.name} kind="title" />
           </div>
-          <div style="margin:.6rem 0 1rem">
+          <div style="margin:.4rem 0 .6rem">
             <TagsSection base={base} tags={tags} />
           </div>
 
@@ -374,9 +377,11 @@ osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
 
   let value: string | null = String((await c.req.parseBody()).value ?? '').trim() || null;
   if (field === 'name' && !value) value = p.name;
-  await updatePersonField(t, id, field, value);
   const meta = FIELD_META[field]!;
-  await logEvent(t, 'person', id, person.id, `${meta.label}: ${value ?? '—'}`);
+  if (value !== (p[field] ?? null)) {
+    await updatePersonField(t, id, field, value);
+    await logEvent(t, 'person', id, person.id, `${meta.label}: ${value ?? '—'}`);
+  }
   if (field === 'note') return c.html(noteBox(`/osoby/${id}`, value));
   return c.html(<FieldDisplay base={`/osoby/${id}`} field={field} label={meta.label} value={value} kind={meta.kind} />);
 });
@@ -466,11 +471,12 @@ osobyRoutes.post('/osoby/:id/kontakt/:cid', async (c) => {
   const id = c.req.param('id');
   if (!(await getCustomerPerson(t, id))) return c.notFound();
   const body = await c.req.parseBody();
+  const old = (await listContacts(t, 'person', id)).find((x) => x.id === c.req.param('cid'));
   const updated = await updateContact(t, c.req.param('cid'), {
     value: String(body.value ?? ''),
     label: String(body.label ?? '').trim() || null,
   });
-  if (updated) {
+  if (updated && (!old || old.value !== updated.value || (old.label ?? null) !== (updated.label ?? null))) {
     await logEvent(t, 'person', id, person.id, `Upraven kontakt: ${CONTACT_TYPE_LABELS[updated.type]} ${updated.value}${updated.label ? ` (${updated.label})` : ''}`);
   }
   return contactsFragment(c, t, id);
