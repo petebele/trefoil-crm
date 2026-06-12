@@ -368,6 +368,7 @@ adminRoutes.get('/administrace', async (c) => {
         hx-target="this"
         hx-swap="outerHTML"
         hx-trigger="live-update from:body"
+        hx-disinherit="*"
         style="margin-top:1rem"
       >
         {err && ERRORS[err] ? <div class="form-error">{ERRORS[err]}</div> : null}
