@@ -20,16 +20,17 @@ Nástěnka/Služby/Historie):
   (tmavý „Admin" / šedý „Uživatel"), stav (aktivní/deaktivovaný). Akce na řádku skryté,
   zobrazí se najetím (hover-row vzor). Nad tabulkou modré tlačítko **Přidat uživatele**.
 - **Služby** — tabulka katalogu: název, popis (šedě, zkrácený), režim (chip Předplatné /
-  Paušál), výchozí cena, hodiny v ceně, stav. Hover akce na řádku. Nad tabulkou modré
-  tlačítko **Přidat službu**.
+  Paušál / Nepředplacená), výchozí cena, hodiny v ceně, stav. Hover akce na řádku.
+  Nad tabulkou modré tlačítko **Přidat službu**.
 
 Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
 
 - *Uživatel*: jméno, přihlašovací e-mail, role (Admin/Uživatel), heslo (při založení je
   povinné — nastaví ho admin a předá kolegovi; pozvánky e-mailem přijdou později).
   Při úpravě je heslo volitelné („vyplňte jen pro změnu").
-- *Služba*: název, popis, režim (**Předplatné** / **Paušál s hodinami**), výchozí cena
-  (Kč/měs — u předplatného volitelná), výchozí hodiny v ceně (jen u paušálu).
+- *Služba*: název, popis, režim (**Předplatné** / **Paušál s hodinami** /
+  **Nepředplacená**), výchozí cena (Kč/měs — u předplatného volitelná, u nepředplacené
+  není), výchozí hodiny v ceně (jen u paušálu).
 
 ## 3. Pole a data
 
@@ -37,8 +38,9 @@ Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
   (vidí Administraci, spravuje tým/služby/moduly) a **Uživatel** (vše ostatní). Jemnější
   práva (RBAC z datového modelu) až později — teď je nepotřebujeme.
 - **Služba v katalogu**: Název, Popis, **Režim** (Předplatné = fixní položka bez hodin,
-  např. SaaS/licence; Paušál s hodinami = cena + počet hodin v ceně), **výchozí cena**
-  (Kč/měs; u předplatného volitelná) a **výchozí hodiny v ceně** (jen u paušálu).
+  např. SaaS/licence; Paušál s hodinami = cena + počet hodin v ceně; Nepředplacená =
+  platí se vykázaná práce × sazba klienta), **výchozí cena** (Kč/měs; u předplatného
+  volitelná, u nepředplacené žádná) a **výchozí hodiny v ceně** (jen u paušálu).
   Vše jsou výchozí hodnoty pro celou firmu; **u konkrétního zákazníka půjde při
   aktivaci služby všechno změnit** (Krok 5) — viz fakturační model v `DATOVY-MODEL.md`.
 - Katalog je Seznam `service_catalog`; Popis, Režim, Cena a Hodiny se ukládají jako
