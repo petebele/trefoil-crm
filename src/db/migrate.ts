@@ -65,13 +65,36 @@ export async function migrate(): Promise<void> {
     .addColumn('status', 'text', (c) => c.notNull().defaultTo('lead'))
     .addColumn('owner_id', 'text', (c) => c.references('persons.id'))
     .addColumn('note', 'text')
+    .addColumn('hours_budget_monthly', 'real')
+    .addColumn('retainer_price', 'real')
+    .addColumn('hours_rollover', 'integer', (c) => c.notNull().defaultTo(0))
     .addColumn('created_at', 'text', (c) => c.notNull())
     .addColumn('updated_at', 'text', (c) => c.notNull())
     .addColumn('deleted_at', 'text')
     .execute();
   await db.schema.createIndex('clients_tenant').ifNotExists().on('clients').columns(['tenant_id']).execute();
-  // starší DB bez sloupce address (idempotentně)
+  // starší DB bez novějších sloupců (idempotentně)
   await sql`ALTER TABLE clients ADD COLUMN address text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN hours_budget_monthly real`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN retainer_price real`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN hours_rollover integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
+
+  // --- modul Služby (Krok 5: služby u zákazníka) ---
+  await db.schema
+    .createTable('services')
+    .ifNotExists()
+    .addColumn('id', 'text', (c) => c.primaryKey())
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('client_id', 'text', (c) => c.notNull().references('clients.id'))
+    .addColumn('catalog_item_id', 'text', (c) => c.notNull().references('list_items.id'))
+    .addColumn('mode', 'text', (c) => c.notNull().defaultTo('retainer'))
+    .addColumn('rate', 'real')
+    .addColumn('monthly_amount', 'real')
+    .addColumn('owner_id', 'text', (c) => c.references('persons.id'))
+    .addColumn('status', 'text', (c) => c.notNull().defaultTo('active'))
+    .addColumn('created_at', 'text', (c) => c.notNull())
+    .execute();
+  await db.schema.createIndex('services_client').ifNotExists().on('services').columns(['client_id']).execute();
 
   await db.schema
     .createTable('person_clients')

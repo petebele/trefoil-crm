@@ -29,6 +29,8 @@ import {
   ModalContactRows,
   type FieldKind,
 } from './components';
+import { servicesOfPersonFirms, SERVICE_STATUS_LABELS } from '../domain/clientServices';
+import { SERVICE_MODE_LABELS } from '../domain/services';
 
 export const osobyRoutes = new Hono<AppEnv>();
 
@@ -175,13 +177,14 @@ osobyRoutes.get('/osoby/:id', async (c) => {
   if (!p) return c.notFound();
   const tab = c.req.query('tab') ?? 'nastenka';
 
-  const [contacts, tags, allTags, labels, firms, events] = await Promise.all([
+  const [contacts, tags, allTags, labels, firms, events, firmServices] = await Promise.all([
     listContacts(t, 'person', p.id),
     listEntityTags(t, 'person', p.id),
     itemsByKey(t, 'client_tags'),
     itemsByKey(t, 'contact_labels'),
     clientsOfPerson(t, p.id),
     listEvents(t, 'person', p.id),
+    servicesOfPersonFirms(t, p.id),
   ]);
   const base = `/osoby/${p.id}`;
 
@@ -229,7 +232,27 @@ osobyRoutes.get('/osoby/:id', async (c) => {
         <section id="stred" hx-get={`${base}?tab=${tab}`} hx-select="#stred" hx-target="this" hx-swap="outerHTML" hx-trigger="live-update from:body" hx-disinherit="*">
           <DetailTabs base={base} active={tab} />
           {tab === 'sluzby' ? (
-            <div class="card"><EmptyState text="Připravujeme — modul Služby & rozpočty (Krok 5)." /></div>
+            <div class="card">
+              <div class="card-head"><h3>Služby firem této osoby</h3></div>
+              {firmServices.length === 0 ? (
+                <EmptyState text="Žádné běžící služby. Služby se přidělují na detailu firmy (záložka Služby)." />
+              ) : (
+                <div>
+                  {firmServices.map((s) => (
+                    <div style="display:flex;gap:.7rem;align-items:center;padding:.55rem 0;border-top:1px solid var(--line)">
+                      <span style="flex:1">
+                        <span style="font-weight:600">{s.label}</span>
+                        <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
+                          {SERVICE_MODE_LABELS[s.mode]}
+                        </span>
+                        {s.status === 'paused' ? <span class="chip chip-soft-orange" style="margin-left:.35rem">{SERVICE_STATUS_LABELS.paused}</span> : null}
+                      </span>
+                      <a class="subtle-action" href={`/firmy/${s.client_id}?tab=sluzby`}>{s.client_name}</a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text="Funkčnost projektů teprve promyslíme." /></div>
           ) : tab === 'historie' ? (

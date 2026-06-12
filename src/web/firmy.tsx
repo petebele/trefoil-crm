@@ -37,6 +37,9 @@ import {
   type FieldKind,
 } from './components';
 import { IconPhone, IconMail } from './icons';
+import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
+import { listClientServices } from '../domain/clientServices';
+import { listCatalog } from '../domain/services';
 
 export const firmyRoutes = new Hono<AppEnv>();
 
@@ -238,7 +241,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   if (!client) return c.notFound();
   const tab = c.req.query('tab') ?? 'nastenka';
 
-  const [contacts, tags, allTags, labels, statusItems, coworkers, people, persons, events] = await Promise.all([
+  const [contacts, tags, allTags, labels, statusItems, coworkers, people, persons, events, services, catalog] = await Promise.all([
     listContacts(t, 'client', client.id),
     listEntityTags(t, 'client', client.id),
     itemsByKey(t, 'client_tags'),
@@ -248,6 +251,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
     peopleOfClient(t, client.id),
     listCustomerPersons(t),
     listEvents(t, 'client', client.id),
+    listClientServices(t, client.id),
+    listCatalog(t),
   ]);
   const base = `/firmy/${client.id}`;
   const linkedIds = new Set(people.map((p) => p.id));
@@ -334,7 +339,15 @@ firmyRoutes.get('/firmy/:id', async (c) => {
         <section id="stred" hx-get={`${base}?tab=${tab}`} hx-select="#stred" hx-target="this" hx-swap="outerHTML" hx-trigger="live-update from:body" hx-disinherit="*">
           <DetailTabs base={base} active={tab} />
           {tab === 'sluzby' ? (
-            <div class="card"><EmptyState text="Připravujeme — modul Služby & rozpočty (Krok 5)." /></div>
+            <SluzbyZakaznikaTab
+              base={base}
+              client={client}
+              services={services}
+              catalog={catalog}
+              coworkers={coworkers}
+              isAdmin={person.is_admin === 1}
+              err={c.req.query('err')}
+            />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text="Funkčnost projektů teprve promyslíme." /></div>
           ) : tab === 'historie' ? (

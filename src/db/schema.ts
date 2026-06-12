@@ -15,6 +15,7 @@ export interface Database {
   list_items: ListItemsTable;
   entity_list_items: EntityListItemsTable;
   events: EventsTable;
+  services: ServicesTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -57,9 +58,26 @@ export interface ClientsTable {
   status: string; // hodnota ze Seznamu client_statuses
   owner_id: string | null; // odpovědná osoba (kolega)
   note: string | null;
+  hours_budget_monthly: number | null; // paušál hodin (h/měs) — jeden na zákazníka
+  retainer_price: number | null; // cena paušálu (Kč/měs)
+  hours_rollover: number; // 0/1 — převádět nevyčerpané hodiny do dalšího měsíce
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+/** Služba přidělená zákazníkovi — režim/sazba/osoba per klient (výchozí z katalogu). */
+export interface ServicesTable {
+  id: string;
+  tenant_id: string;
+  client_id: string;
+  catalog_item_id: string; // položka Seznamu service_catalog
+  mode: 'subscription' | 'retainer' | 'payg';
+  rate: number | null; // hodinová sazba Kč/h (override katalogu)
+  monthly_amount: number | null; // částka předplatného Kč/měs (jen subscription)
+  owner_id: string | null; // odpovědná osoba za službu u TOHOTO klienta
+  status: 'active' | 'paused' | 'ended';
+  created_at: string;
 }
 
 /** Vazba osoba ↔ firma (osoba může působit u více firem). */
