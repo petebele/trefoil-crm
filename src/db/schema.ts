@@ -102,6 +102,7 @@ export interface ListItemsTable {
   color: string | null;
   sort_order: number;
   active: number;
+  meta: string | null; // JSON snippet s detaily položky (konvence: rozšiřitelnost bez nových sloupců)
 }
 
 /** Nalepení položky Seznamu na záznam (štítky). */

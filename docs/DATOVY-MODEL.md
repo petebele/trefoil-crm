@@ -70,11 +70,12 @@ podklad `Komunikace\Strategie\Retainer management a fakturace - PSOHUB 20260612.
   u zákazníka** je převede do dalšího měsíce (rollover, zatím bez stropů).
 - **Hodinová sazba**: firemní výchozí (nastavení Organizace) + volitelný override
   u zákazníka — nutné umět odlišit.
-- **Výkaz práce** se vždy váže na klienta + jeho službu; způsob účtování **plyne
-  z režimu služby** (paušál → odečítá hodiny, nepředplacená → × sazba, předplatné
-  → v ceně). Navíc ruční přepínač **„neúčtovat"** (goodwill — čas se eviduje,
-  peníze ne). Přečerpání hodin paušálu se viditelně označí a počítá jako vícepráce
-  × sazba; při schvalování jde přepnout na „neúčtovat".
+- **Výkaz práce** se vždy váže na klienta + jeho službu a má **vlastní pole „účtování"**:
+  předvyplní se defaultem podle režimu služby (paušál → z hodin paušálu, nepředplacená
+  → × sazba, předplatné → v ceně), ale **u každé položky jde ručně změnit** na kteroukoli
+  z možností: **z hodin paušálu** / **účtovat zvlášť** (× sazba) / **neúčtovat** (v ceně,
+  goodwill — čas se eviduje, peníze ne). Přečerpání hodin paušálu se viditelně označí
+  a počítá jako vícepráce × sazba; při schvalování jde přepnout na „neúčtovat".
 - **Měsíční „fakturace" zákazníka** = Σ předplatných (s cenou) + Σ paušálů
   + (přečerpání paušálů + hodiny nepředplacených služeb) × sazba. Dva pohledy:
   **čas** (vykázáno / z hodin služby zbývá) a **peníze** (složení fakturace

@@ -21,7 +21,7 @@ export async function itemsByKey(tenantId: string, key: string) {
     .execute();
 }
 
-function slugify(s: string): string {
+export function slugify(s: string): string {
   return (
     s
       .trim()
@@ -69,6 +69,7 @@ export async function ensureItemByLabel(tenantId: string, key: string, label: st
       color: null,
       sort_order: 99,
       active: 1,
+      meta: null,
     })
     .execute();
   return db.selectFrom('list_items').selectAll().where('id', '=', id).executeTakeFirstOrThrow();

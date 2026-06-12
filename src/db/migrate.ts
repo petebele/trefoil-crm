@@ -126,8 +126,11 @@ export async function migrate(): Promise<void> {
     .addColumn('color', 'text')
     .addColumn('sort_order', 'integer', (c) => c.notNull().defaultTo(0))
     .addColumn('active', 'integer', (c) => c.notNull().defaultTo(1))
+    .addColumn('meta', 'text')
     .execute();
   await db.schema.createIndex('list_items_list').ifNotExists().on('list_items').columns(['list_id']).execute();
+  // starší DB bez sloupce meta (idempotentně)
+  await sql`ALTER TABLE list_items ADD COLUMN meta text`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('entity_list_items')

@@ -22,6 +22,7 @@ const DEFAULT_LISTS: Array<{
     ],
   },
   { key: 'client_tags', label: 'Štítky zákazníků', items: [] },
+  { key: 'service_catalog', label: 'Katalog služeb', items: [] },
   {
     key: 'contact_labels',
     label: 'Štítky kontaktů',
@@ -77,6 +78,7 @@ export async function seedTenantLists(tenantId: string): Promise<void> {
             color: it.color ?? null,
             sort_order: order,
             active: 1,
+            meta: null,
           })
           .execute();
       }
