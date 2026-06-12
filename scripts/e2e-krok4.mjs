@@ -115,7 +115,7 @@ try {
   const meta = s ? JSON.parse(s.meta) : {};
   ok('služba v DB s JSON meta', !!s && meta.mode === 'retainer' && meta.price === 12000 && meta.description === 'Kampaně vč. úprav');
   r = await req('/administrace?tab=sluzby');
-  ok('služba v tabulce (chip, cena)', r.text.includes('TestE2E Správa PPC') && r.text.includes('Paušál hodin') && r.text.includes('Kč/měs'));
+  ok('služba v tabulce (chip, sazba Kč/h)', r.text.includes('TestE2E Správa PPC') && r.text.includes('Paušál hodin') && r.text.includes('Kč/h'));
 
   // duplicitní název
   r = await req('/administrace/sluzby', { method: 'POST', form: { name: 'TestE2E Správa PPC', mode: 'payg' } });

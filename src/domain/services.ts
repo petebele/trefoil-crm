@@ -24,10 +24,10 @@ export function isServiceMode(s: string): s is ServiceMode {
 export interface ServiceMeta {
   description: string | null;
   mode: ServiceMode;
-  /** Výchozí měsíční cena v Kč (u předplatného volitelná, u samostatné fakturace žádná). */
+  /** Výchozí cena = hodinová sazba práce na službě (Kč/h), volitelná. */
   price: number | null;
-  // Pozor: paušál hodin se NEnastavuje u služby — patří k zákazníkovi (jeden paušál
-  // může pokrývat víc služeb). Implementuje Krok 5.
+  // Pozor: paušál hodin i měsíční částky (předplatné, cena paušálu) se NEnastavují
+  // u služby — patří k zákazníkovi (jeden paušál může pokrývat víc služeb). Krok 5.
 }
 
 export interface CatalogService {
@@ -53,12 +53,12 @@ function parseMeta(raw: string | null): ServiceMeta {
   }
 }
 
-/** Podle režimu nechá jen smysluplné hodnoty (samostatná fakturace nemá cenu předem). */
+/** Očista hodnot před uložením (sazba Kč/h dává smysl u všech režimů). */
 export function normalizeMeta(meta: ServiceMeta): ServiceMeta {
   return {
     description: meta.description?.trim() || null,
     mode: meta.mode,
-    price: meta.mode === 'payg' ? null : meta.price,
+    price: meta.price,
   };
 }
 

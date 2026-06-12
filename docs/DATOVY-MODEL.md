@@ -55,13 +55,13 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 **Fakturační model (hybrid — finální podoba 12. 6. 2026, vzor Accelo/Productive,
 podklad `Komunikace\Strategie\Retainer management a fakturace - PSOHUB 20260612.md`):**
 
-- **Služba u zákazníka** má tři **režimy účtování** (výchozí režim a cena z katalogu,
+- **Služba u zákazníka** má tři **režimy účtování** (výchozí režim a sazba z katalogu,
   u zákazníka vše přepsatelné — stejná služba může být u každého klienta jinak):
   - **Předplatné v aplikaci** — individuální částka předplatného (typicky SaaS/licence,
-    různý rozsah = různá částka). Cena **volitelná**: vyplněná se propisuje do měsíčního
-    reportu/fakturace, prázdná = jen evidence, že službu má.
+    různý rozsah = různá částka). Částka se nastavuje **u zákazníka** (volitelně):
+    vyplněná se propisuje do měsíčního reportu/fakturace, prázdná = jen evidence.
   - **Domluvený paušál hodin** — čas práce se odečítá z domluveného paušálu hodin.
-  - **Samostatná fakturace** — práci účtujeme samostatně (× hodinová sazba klienta).
+  - **Samostatná fakturace** — práci účtujeme samostatně (× hodinová sazba).
     Pro klienty bez paušálu (platí, co se vyčerpá) i pro jednorázovky, které nesmí
     lézt do paušálu.
 - **Paušál hodin patří k zákazníkovi, NE ke službě v katalogu** — nastavuje se
@@ -70,8 +70,8 @@ podklad `Komunikace\Strategie\Retainer management a fakturace - PSOHUB 20260612.
   (společný vs. per-služba) určí spec Kroku 5.
 - **Nevyčerpané hodiny paušálu defaultně propadají**; zaškrtávátko u zákazníka
   je převede do dalšího měsíce (rollover, zatím bez stropů).
-- **Hodinová sazba**: firemní výchozí (nastavení Organizace) + volitelný override
-  u zákazníka — nutné umět odlišit.
+- **Hodinová sazba**: výchozí cena služby v katalogu je **vždy Kč/h** (sazba práce
+  na službě, volitelná); u zákazníka jde přepsat — nutné umět odlišit.
 - **Výkaz práce** se vždy váže na klienta + jeho službu a má **vlastní pole „účtování"**:
   předvyplní se defaultem podle režimu služby (paušál hodin → z paušálu, samostatná
   fakturace → × sazba, předplatné → v ceně), ale **u každé položky jde ručně změnit**

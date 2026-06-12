@@ -29,9 +29,9 @@ Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
   povinné — nastaví ho admin a předá kolegovi; pozvánky e-mailem přijdou později).
   Při úpravě je heslo volitelné („vyplňte jen pro změnu").
 - *Služba*: název, popis, výchozí režim účtování (**Domluvený paušál hodin** /
-  **Samostatná fakturace** / **Předplatné v aplikaci**), výchozí cena (Kč/měs —
-  u předplatného volitelná, u samostatné fakturace není). Paušál hodin se v katalogu
-  **nenastavuje** — patří k zákazníkovi (Krok 5).
+  **Samostatná fakturace** / **Předplatné v aplikaci**), výchozí cena (**vždy Kč/h** —
+  hodinová sazba práce na službě, volitelná). Paušál hodin ani měsíční částky se
+  v katalogu **nenastavují** — patří k zákazníkovi (Krok 5).
 
 ## 3. Pole a data
 
@@ -41,10 +41,10 @@ Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
 - **Služba v katalogu**: Název, Popis, **výchozí režim účtování** (Domluvený paušál
   hodin = čas práce se odečítá z paušálu; Samostatná fakturace = práci účtujeme
   samostatně; Předplatné v aplikaci = individuální částka předplatného) a **výchozí
-  cena** (Kč/měs; u předplatného volitelná, u samostatné fakturace žádná).
+  cena** (**vždy Kč/h** — hodinová sazba práce na službě, volitelná).
   Vše jsou výchozí hodnoty pro celou firmu; **u konkrétního zákazníka půjde při
-  přidělení služby všechno změnit** (Krok 5). **Paušál hodin patří k zákazníkovi**
-  (jeden paušál může pokrývat více služeb) — viz fakturační model v `DATOVY-MODEL.md`.
+  přidělení služby všechno změnit** (Krok 5). **Paušál hodin i měsíční částky patří
+  k zákazníkovi** (jeden paušál může pokrývat více služeb) — viz `DATOVY-MODEL.md`.
 - Katalog je Seznam `service_catalog`; Popis, Režim a Cena se ukládají jako
   doplňkové údaje (JSON meta) — **první reálné využití dohodnuté konvence**
   „detaily jako JSON snippety".
@@ -60,8 +60,8 @@ Přidání i úprava přes **velký modál** (jednotné pravidlo zadávání):
   a budoucích výkazech zůstává). Deaktivovaného jde znovu aktivovat.
 - Služba se také **deaktivuje, nemaže** — nenabízí se nově, ale u zákazníků, kde běží,
   zůstává. Aktivace ji vrátí do nabídky.
-- Validace: e-mail uživatele unikátní; název služby povinný a unikátní; cena nezáporné
-  číslo; u předplatného může být cena prázdná (jen evidence).
+- Validace: e-mail uživatele unikátní; název služby povinný a unikátní; cena (Kč/h)
+  nezáporné číslo, volitelná.
 
 ## 5. Akce (kontextové)
 

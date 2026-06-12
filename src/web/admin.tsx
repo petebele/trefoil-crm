@@ -54,7 +54,7 @@ const ERRORS: Record<string, string> = {
 };
 
 function fmtPrice(n: number | null): string {
-  return n === null ? '—' : `${n.toLocaleString('cs-CZ')} Kč/měs`;
+  return n === null ? '—' : `${n.toLocaleString('cs-CZ')} Kč/h`;
 }
 
 // ---------- záložka Moduly ----------
@@ -294,14 +294,14 @@ function ServiceModal(props: { service: CatalogService | null }) {
           </select>
         </div>
         <div class="field">
-          <label>Výchozí cena (Kč/měsíc)</label>
+          <label>Výchozí cena (Kč/h)</label>
           <input class="input" type="number" name="price" min="0" step="1" value={s?.meta.price ?? ''} />
-          <span class="help">U předplatného volitelná (prázdná = jen evidence). U samostatné fakturace se neuvádí.</span>
+          <span class="help">Hodinová sazba práce na službě, volitelná.</span>
         </div>
         <p class="sub" style="font-size:.78rem">
           Tohle jsou výchozí hodnoty pro celou firmu — při přidělení služby konkrétnímu zákazníkovi
-          půjde vše nastavit jinak. Paušál hodin se nastavuje u zákazníka (může být společný pro
-          více služeb).
+          půjde vše nastavit jinak. Paušál hodin a měsíční částky (předplatné) se nastavují
+          u zákazníka.
         </p>
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">{s ? 'Uložit změny' : 'Vytvořit službu'}</button>
