@@ -1,9 +1,11 @@
 import { db } from '../db';
 import { newId, now } from '../lib/util';
+import { broadcast } from '../realtime';
 
 /**
  * Obecný log událostí (Historie): kdo, kdy, u čeho, co se stalo.
  * Každá akce v modulech zapisuje událost — dohledatelnost podle ID.
+ * Zároveň se událost vysílá realtime všem otevřeným oknům (zásada živé spolupráce).
  */
 export async function logEvent(
   tenantId: string,
@@ -16,6 +18,7 @@ export async function logEvent(
     .insertInto('events')
     .values({ id: newId(), tenant_id: tenantId, entity_kind: entityKind, entity_id: entityId, person_id: personId, action, created_at: now() })
     .execute();
+  broadcast({ kind: entityKind, id: entityId });
 }
 
 /** Události záznamu (Historie detailu), nejnovější první, včetně jména autora. */

@@ -345,9 +345,18 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 }
 .quick-add { display: flex; gap: .25rem; margin-top: .5rem; }
 
-/* Nenápadný akční odkaz (kontextové „Přiřadit…", „+ štítek") */
-.subtle-action { font-size: .78rem; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
-.subtle-action:hover { text-decoration: underline; }
+/* Nenápadný akční odkaz (kontextové „Přiřadit…", „Vyplnit údaje"…) — vždy podtržený,
+   ať je jasné, že jde o akci. Umisťuje se POD nadpis sekce. */
+.subtle-action {
+  font-size: .78rem; color: var(--accent); background: none; border: none; cursor: pointer;
+  padding: 0; font-family: inherit;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.subtle-action:hover { color: var(--accent-hover); }
+/* details/summary jako akční odkaz — bez rozbalovací šipky */
+summary.subtle-action { list-style: none; }
+summary.subtle-action::-webkit-details-marker { display: none; }
+summary.subtle-action::marker { content: ''; }
 
 /* ---------- Modální karta ---------- */
 .modal-card {

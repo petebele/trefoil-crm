@@ -257,8 +257,8 @@ osobyRoutes.get('/osoby/:id', async (c) => {
           </div>
         </aside>
 
-        {/* B) Střední panel */}
-        <section>
+        {/* B) Střední panel — živá zóna (realtime) */}
+        <section id="stred" hx-get={`${base}?tab=${tab}`} hx-select="#stred" hx-target="this" hx-swap="outerHTML" hx-trigger="live-update from:body">
           <DetailTabs base={base} active={tab} />
           {tab === 'sluzby' ? (
             <div class="card"><EmptyState text="Připravujeme — modul Služby & rozpočty (Krok 5)." /></div>

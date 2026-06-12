@@ -1,4 +1,17 @@
 // Conviu CRM — drobné chování UI (bez závislostí).
+
+// Realtime: poslouchej události ze serveru (SSE) a dej vědět živým zónám
+// (elementy s hx-trigger="live-update from:body" se samy překreslí).
+if (document.querySelector('.topbar')) {
+  try {
+    var liveSource = new EventSource('/live');
+    liveSource.onmessage = function () {
+      document.body.dispatchEvent(new Event('live-update'));
+    };
+  } catch (e) {
+    /* starý prohlížeč bez SSE — aplikace funguje dál bez živých aktualizací */
+  }
+}
 // Rozbalovací menu: klik na [data-menu-toggle] přepne .open, klik mimo zavře.
 document.addEventListener('click', function (e) {
   var toggle = e.target.closest('[data-menu-toggle]');

@@ -300,6 +300,9 @@ Jednoduché výběry (stav, osoba) aplikují volbu hned klikem na položku — b
 - **Výjimka — prázdná sekce:** když v sekci nic není, přidávací akce je **viditelná rovnou**
   (jinak by ji nikdo nenašel) — „Přiřadit odpovědnou osobu", „+ štítek", ikonky kontaktů.
 - **Dotyková zařízení** (bez hoveru): `.row-actions` jsou vždy viditelné (media `hover: none`).
+- **Jednota akčních odkazů:** `.subtle-action` je **vždy podtržený** (je jasné, že jde o akci)
+  a umisťuje se **pod nadpis sekce** — u všech sekcí stejně („Přiřadit odpovědnou osobu",
+  „Vyplnit údaje", „Přidat poznámku", „Přidat osobu"). Jako `<summary>` bez rozbalovací šipky.
 - **Rychlé přidání kontaktů:** řádek ikonek `.quick-add` (telefon/e-mail/web/+), každá otevře
   dropdown panel s minimálním formulářem. Žádné trvale viditelné selecty mimo filtry/řazení.
 

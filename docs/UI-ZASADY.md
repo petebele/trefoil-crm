@@ -108,6 +108,14 @@ Dle §4; nad tabulí H1 + přepínač Pipeline/List(/Dashboard) + souhrn vpravo
 - **Responzivita**: tabulky scrollují vodorovně; detail se na mobilu skládá: levý sloupec → střed → pravý;
   kanban scrolluje vodorovně.
 
+## 6b. Realtime spolupráce (zásada)
+
+Změny se **okamžitě projeví všem**: každá doménová událost (`logEvent`) se vysílá přes SSE
+stream `/live` všem otevřeným oknům; **živé zóny** v UI (`hx-trigger="live-update from:body"`)
+se samy překreslí. Pravidla: živou zónou je vše, kde se zobrazuje dění ostatních (feedy,
+úkoly, Nástěnka…); živá zóna nesmí obsahovat rozepsaný formulář (přepsal by se uživateli
+pod rukama). Nové moduly vznikají rovnou s živými zónami.
+
 ## 7. Implementace v našem stacku
 
 - **Katalog komponent**: přesné kódy a pravidla každého prvku → `docs/KOMPONENTY.md`,

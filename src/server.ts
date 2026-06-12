@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { streamSSE } from 'hono/streaming';
+import { addClient, removeClient } from './realtime';
 import type { AppEnv } from './types';
 import { db } from './db';
 import { getSessionPerson } from './auth/session';
@@ -47,6 +49,20 @@ app.use('*', async (c, next) => {
   if (person && path === '/login') return c.redirect('/');
 
   return next();
+});
+
+// Realtime: SSE stream událostí pro otevřená okna (viz src/realtime.ts)
+app.get('/live', (c) => {
+  if (!c.get('person')) return c.redirect('/login');
+  return streamSSE(c, async (stream) => {
+    const send = (data: string) => void stream.writeSSE({ data });
+    addClient(send);
+    stream.onAbort(() => removeClient(send));
+    while (true) {
+      await stream.sleep(25_000);
+      await stream.writeSSE({ event: 'ping', data: '' });
+    }
+  });
 });
 
 app.route('/', setupRoutes);

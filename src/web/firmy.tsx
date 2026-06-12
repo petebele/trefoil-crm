@@ -225,24 +225,24 @@ function FirmFieldsSection(props: { base: string; client: { website: string | nu
   const filled = defs.filter(([, , , v]) => v);
   const missing = defs.filter(([, , , v]) => !v);
   return (
-    <div class="side-section">
-      <h4>
-        Firemní údaje
-        {missing.length ? (
-          <button type="button" class="subtle-action" data-reveal="missingFirmFields" style="font-weight:400">
-            Vyplnit údaje
-          </button>
-        ) : null}
-      </h4>
+    <div class={`side-section ${filled.length ? 'hover-area' : ''}`}>
+      <h4>Firemní údaje</h4>
       {filled.map(([f, label, kind, v]) => (
         <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
       ))}
       {missing.length ? (
-        <div id="missingFirmFields" class="hidden">
-          {missing.map(([f, label, kind, v]) => (
-            <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
-          ))}
-        </div>
+        <>
+          <div id="missingFirmFields" class="hidden">
+            {missing.map(([f, label, kind, v]) => (
+              <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
+            ))}
+          </div>
+          <span class={filled.length ? 'area-actions' : ''}>
+            <button type="button" class="subtle-action" data-reveal="missingFirmFields">
+              Vyplnit údaje
+            </button>
+          </span>
+        </>
       ) : null}
     </div>
   );
@@ -368,8 +368,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
           </div>
         </aside>
 
-        {/* B) Střední panel */}
-        <section>
+        {/* B) Střední panel — živá zóna (realtime) */}
+        <section id="stred" hx-get={`${base}?tab=${tab}`} hx-select="#stred" hx-target="this" hx-swap="outerHTML" hx-trigger="live-update from:body">
           <DetailTabs base={base} active={tab} />
           {tab === 'sluzby' ? (
             <div class="card"><EmptyState text="Připravujeme — modul Služby & rozpočty (Krok 5)." /></div>
