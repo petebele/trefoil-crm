@@ -12,11 +12,15 @@ if (document.querySelector('.topbar')) {
     /* starý prohlížeč bez SSE — aplikace funguje dál bez živých aktualizací */
   }
 }
-// Rozbalovací menu: klik na [data-menu-toggle] přepne .open, klik mimo zavře.
+// Rozbalovací menu/panel: klik na [data-menu-toggle] přepne .open, klik mimo zavře.
+// Klik DOVNITŘ otevřeného panelu (pole, našeptávač…) ho nechává otevřený.
 document.addEventListener('click', function (e) {
   var toggle = e.target.closest('[data-menu-toggle]');
+  var insideMenu = e.target.closest('.menu');
   document.querySelectorAll('.menu.open').forEach(function (menu) {
-    if (!toggle || menu.id !== toggle.getAttribute('data-menu-toggle')) menu.classList.remove('open');
+    if (toggle ? menu.id !== toggle.getAttribute('data-menu-toggle') : menu !== insideMenu) {
+      menu.classList.remove('open');
+    }
   });
   if (toggle) {
     var menu = document.getElementById(toggle.getAttribute('data-menu-toggle'));

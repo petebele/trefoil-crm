@@ -33,6 +33,7 @@ import {
   EventRow,
   Picker,
   ModalShell,
+  ModalContactRows,
   type FieldKind,
 } from './components';
 import { IconPhone, IconMail } from './icons';
@@ -56,44 +57,12 @@ const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
   note: { label: 'Poznámka', kind: 'textarea' },
 };
 
-// ---------- nová firma ----------
+// ---------- nová firma (jednotně přes velký modál) ----------
 
-function ContactRowsFields() {
-  return (
-    <>
-      <div class="field">
-        <label>Kontakty <span class="help" style="display:inline;margin-left:.4rem">telefon, e-mail, web — další přidáš tlačítkem nebo později na detailu</span></label>
-        <div id="contactRows">
-          <template id="contactRowTpl">
-            <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
-              <select class="input" name="c_type" style="max-width:6.5rem">
-                <option value="phone">Telefon</option>
-                <option value="email">E-mail</option>
-                <option value="web">Web</option>
-                <option value="other">Jiné</option>
-              </select>
-              <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
-              <input class="input" name="c_label" list="contactLabels" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
-            </div>
-          </template>
-          <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
-            <select class="input" name="c_type" style="max-width:6.5rem">
-              <option value="phone">Telefon</option>
-              <option value="email">E-mail</option>
-              <option value="web">Web</option>
-              <option value="other">Jiné</option>
-            </select>
-            <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
-            <input class="input" name="c_label" list="contactLabels" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
-          </div>
-        </div>
-        <button class="btn btn-ghost" type="button" data-add-row="contactRowTpl">+ další kontakt</button>
-      </div>
-    </>
-  );
-}
+// Stará stránka nahrazena jednotným velkým modálem.
+firmyRoutes.get('/firmy/nova', (c) => c.redirect('/zakaznici'));
 
-firmyRoutes.get('/firmy/nova', async (c) => {
+firmyRoutes.get('/firmy/modal/nova', async (c) => {
   const person = c.get('person')!;
   const t = person.tenant_id;
   const [statusItems, coworkers, labels] = await Promise.all([
@@ -103,49 +72,42 @@ firmyRoutes.get('/firmy/nova', async (c) => {
   ]);
 
   return c.html(
-    <Layout title="Nová firma" person={person} modules={c.get('modules')} active="zakaznici">
-      <h1>Nová firma</h1>
-      <div class="card" style="max-width:36rem;margin-top:1rem">
-        <form method="post" action="/firmy">
-          <div class="field">
-            <label>Název firmy <span class="req">*</span></label>
-            <input class="input" name="name" required autofocus />
-          </div>
-          <div class="field"><label>Web</label><input class="input" name="website" placeholder="https://…" /></div>
-          <div class="field"><label>IČO</label><input class="input" name="ico" /></div>
-          <div class="field"><label>DIČ</label><input class="input" name="dic" /></div>
-          <div class="field">
-            <label>Stav</label>
-            <select class="input" name="status">
-              {statusItems.map((s) => (
-                <option value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-          <div class="field">
-            <label>Odpovědná osoba</label>
-            <select class="input" name="owner_id">
-              <option value="">— nikdo —</option>
-              {coworkers.map((u) => (
-                <option value={u.id} selected={u.id === person.id}>{u.name}</option>
-              ))}
-            </select>
-          </div>
-          <ContactRowsFields />
-          <datalist id="contactLabels">
-            {labels.map((l) => (
-              <option value={l.label}></option>
+    <ModalShell title="Nová firma">
+      <form method="post" action="/firmy">
+        <div class="field">
+          <label>Název firmy <span class="req">*</span></label>
+          <input class="input" name="name" required autofocus />
+        </div>
+        <div class="field"><label>Web</label><input class="input" name="website" placeholder="https://…" /></div>
+        <div class="field"><label>IČO</label><input class="input" name="ico" /></div>
+        <div class="field"><label>DIČ</label><input class="input" name="dic" /></div>
+        <div class="field"><label>Adresa</label><textarea class="input" name="address" rows={2}></textarea></div>
+        <div class="field">
+          <label>Stav</label>
+          <select class="input" name="status">
+            {statusItems.map((s) => (
+              <option value={s.value}>{s.label}</option>
             ))}
-          </datalist>
-          <div class="field"><label>Štítky <span class="help" style="display:inline;margin-left:.4rem">oddělené čárkou</span></label><input class="input" name="tags" placeholder="VIP, E-shop…" /></div>
-          <div class="field"><label>Poznámka</label><textarea class="input" name="note"></textarea></div>
-          <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Vytvořit firmu</button>
-            <a class="btn btn-ghost" href="/zakaznici">Zrušit</a>
-          </div>
-        </form>
-      </div>
-    </Layout>,
+          </select>
+        </div>
+        <div class="field">
+          <label>Odpovědná osoba</label>
+          <select class="input" name="owner_id">
+            <option value="">— nikdo —</option>
+            {coworkers.map((u) => (
+              <option value={u.id} selected={u.id === person.id}>{u.name}</option>
+            ))}
+          </select>
+        </div>
+        <ModalContactRows labels={labels} />
+        <div class="field"><label>Štítky <span class="help" style="display:inline;margin-left:.4rem">oddělené čárkou</span></label><input class="input" name="tags" placeholder="VIP, E-shop…" /></div>
+        <div class="field"><label>Poznámka</label><textarea class="input" name="note"></textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Vytvořit firmu</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+        </div>
+      </form>
+    </ModalShell>,
   );
 });
 
@@ -211,6 +173,8 @@ firmyRoutes.post('/firmy', async (c) => {
     ownerId: String(body.owner_id ?? '').trim() || null,
     note: String(body.note ?? '').trim() || null,
   });
+  const address = String(body.address ?? '').trim() || null;
+  if (address) await updateClientField(t, id, 'address', address);
   await logEvent(t, 'client', id, person.id, 'Firma založena');
   await saveTagsFromForm(t, 'client', id, body.tags, person.id);
   await saveContactsFromForm(t, 'client', id, body, person.id, 'client', id);
@@ -652,37 +616,7 @@ firmyRoutes.get('/firmy/:id/osoba/modal', async (c) => {
             ))}
           </select>
         </div>
-        <div class="field">
-          <label>Kontakty</label>
-          <template id="modalContactRow">
-            <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
-              <select class="input" name="c_type" style="max-width:6.5rem">
-                <option value="phone">Telefon</option>
-                <option value="email">E-mail</option>
-                <option value="web">Web</option>
-                <option value="other">Jiné</option>
-              </select>
-              <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
-              <input class="input" name="c_label" list="contactLabelsModal" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
-            </div>
-          </template>
-          <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
-            <select class="input" name="c_type" style="max-width:6.5rem">
-              <option value="phone">Telefon</option>
-              <option value="email" selected>E-mail</option>
-              <option value="web">Web</option>
-              <option value="other">Jiné</option>
-            </select>
-            <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
-            <input class="input" name="c_label" list="contactLabelsModal" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
-          </div>
-          <button class="btn btn-ghost" type="button" data-add-row="modalContactRow">+ další kontakt</button>
-          <datalist id="contactLabelsModal">
-            {labels.map((l) => (
-              <option value={l.label}></option>
-            ))}
-          </datalist>
-        </div>
+        <ModalContactRows labels={labels} />
         <div class="field"><label>Štítky <span class="help" style="display:inline;margin-left:.4rem">oddělené čárkou</span></label><input class="input" name="tags" /></div>
         <div class="field"><label>Poznámka</label><textarea class="input" name="note"></textarea></div>
         <div class="form-actions">

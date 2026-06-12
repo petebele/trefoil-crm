@@ -146,8 +146,8 @@ function RowsTable(props: { rows: Row[]; statusItems: Array<{ value: string; lab
               <EmptyState text="Nic nenalezeno. Zkus jiné hledání." />
             ) : (
               <EmptyState text="Zatím tu nikdo není.">
-                <a class="btn btn-sm btn-primary" href="/firmy/nova" style="margin-right:.4rem">Přidat firmu</a>
-                <a class="btn btn-sm" href="/osoby/nova">Přidat osobu</a>
+                <button class="btn btn-sm btn-primary" type="button" style="margin-right:.4rem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat firmu</button>
+                <button class="btn btn-sm" type="button" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat osobu</button>
               </EmptyState>
             )}
           </td>
@@ -190,8 +190,8 @@ zakazniciRoutes.get('/zakaznici', async (c) => {
       <div class="page-head">
         <h1>Zákazníci</h1>
         <div class="page-actions">
-          <a class="btn btn-primary" href="/osoby/nova">Přidat osobu</a>
-          <a class="btn btn-primary" href="/firmy/nova">Přidat firmu</a>
+          <button class="btn btn-primary" type="button" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat osobu</button>
+          <button class="btn btn-primary" type="button" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat firmu</button>
         </div>
       </div>
 

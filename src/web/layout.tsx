@@ -4,7 +4,7 @@ import { MODULES } from '../modules';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
 
 /** Verze statických souborů — zvednout při změně theme.css/app.js (cache-busting). */
-const ASSET_V = '7';
+const ASSET_V = '8';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -78,15 +78,19 @@ export function Layout(props: {
             </div>
 
             <div class="top-right">
-              <div class="menu" id="addMenu">
+              <div class="menu align-right" id="addMenu">
                 {enabled.has('zakaznici') ? (
                   <>
                     <button class="btn" type="button" data-menu-toggle="addMenu" aria-haspopup="true">
                       Přidat <IconPlus />
                     </button>
                     <div class="menu-list" role="menu">
-                      <a class="menu-item" href="/firmy/nova" role="menuitem">Nová firma</a>
-                      <a class="menu-item" href="/osoby/nova" role="menuitem">Nová osoba</a>
+                      <button class="menu-item" type="button" role="menuitem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">
+                        Nová firma
+                      </button>
+                      <button class="menu-item" type="button" role="menuitem" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">
+                        Nová osoba
+                      </button>
                     </div>
                   </>
                 ) : (

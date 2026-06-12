@@ -95,6 +95,35 @@ export function ModalShell(props: { title: string; children?: Child }) {
   );
 }
 
+/** Opakovatelné řádky kontaktů pro modální formuláře (sdílené firma/osoba). */
+export function ModalContactRows(props: { labels: Array<{ label: string }> }) {
+  const row = (
+    <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
+      <select class="input" name="c_type" style="max-width:6.5rem">
+        <option value="phone">Telefon</option>
+        <option value="email" selected>E-mail</option>
+        <option value="web">Web</option>
+        <option value="other">Jiné</option>
+      </select>
+      <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
+      <input class="input" name="c_label" list="contactLabelsModal" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
+    </div>
+  );
+  return (
+    <div class="field">
+      <label>Kontakty</label>
+      <template id="modalContactRow">{row}</template>
+      {row}
+      <button class="btn btn-ghost" type="button" data-add-row="modalContactRow">+ další kontakt</button>
+      <datalist id="contactLabelsModal">
+        {props.labels.map((l) => (
+          <option value={l.label}></option>
+        ))}
+      </datalist>
+    </div>
+  );
+}
+
 // ---------- Inline editace (katalog §18 — kompaktní ✓/✕) ----------
 
 export type FieldKind = 'text' | 'textarea' | 'title';
