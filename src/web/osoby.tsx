@@ -18,16 +18,14 @@ import {
   avColor,
   relTime,
   EmptyState,
-  FieldDisplay,
-  FieldEdit,
+  TitleBox,
+  NoteSection,
   TagsSection,
   ContactsSection,
-  ContactEditRow,
   DetailTabs,
   EventRow,
   ModalShell,
   ModalContactRows,
-  type FieldKind,
 } from './components';
 import { servicesOfPersonFirms, SERVICE_STATUS_LABELS } from '../domain/clientServices';
 import { SERVICE_MODE_LABELS } from '../domain/services';
@@ -42,23 +40,11 @@ const requireModule: MiddlewareHandler<AppEnv> = async (c, next) => {
 osobyRoutes.use('/osoby', requireModule);
 osobyRoutes.use('/osoby/*', requireModule);
 
-const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
-  name: { label: 'Jméno', kind: 'title' },
-  note: { label: 'Poznámka', kind: 'textarea' },
+/** Pole editovatelná malým panelem (jméno v hlavičce, poznámka v sekci). */
+const FIELD_META: Record<string, { label: string }> = {
+  name: { label: 'Jméno' },
+  note: { label: 'Poznámka' },
 };
-
-/** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
-function noteBox(base: string, value: string | null) {
-  return value ? (
-    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" noLabel />
-  ) : (
-    <div class="field-wrap" id="f-note">
-      <button type="button" class="subtle-action" hx-get={`${base}/pole/note/edit`} hx-target="#f-note" hx-swap="outerHTML">
-        Přidat poznámku
-      </button>
-    </div>
-  );
-}
 
 // ---------- nová osoba ----------
 
@@ -243,7 +229,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
         <aside class="card">
           <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
           <div style="margin-top:.45rem">
-            <FieldDisplay base={base} field="name" label="Jméno" value={p.name} kind="title" />
+            <TitleBox base={base} label="Jméno a příjmení" value={p.name} />
           </div>
           <div style="margin:.4rem 0 .6rem">
             <TagsSection base={base} tags={tags} />
@@ -267,7 +253,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
             ) : null}
           </div>
 
-          <div class="side-section"><h4>Poznámka</h4>{noteBox(base, p.note)}</div>
+          <NoteSection base={base} value={p.note} />
 
           <div class="side-section" style="border-top-style:dashed;display:flex;gap:1rem;align-items:center">
             <button class="subtle-action" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
@@ -343,28 +329,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
   );
 });
 
-// ---------- inline pole ----------
-
-osobyRoutes.get('/osoby/:id/pole/:field', async (c) => {
-  const person = c.get('person')!;
-  const field = c.req.param('field');
-  if (!isEditablePersonField(field)) return c.notFound();
-  const p = await getCustomerPerson(person.tenant_id, c.req.param('id'));
-  if (!p) return c.notFound();
-  if (field === 'note') return c.html(noteBox(`/osoby/${p.id}`, p.note));
-  const meta = FIELD_META[field]!;
-  return c.html(<FieldDisplay base={`/osoby/${p.id}`} field={field} label={meta.label} value={p[field]} kind={meta.kind} />);
-});
-
-osobyRoutes.get('/osoby/:id/pole/:field/edit', async (c) => {
-  const person = c.get('person')!;
-  const field = c.req.param('field');
-  if (!isEditablePersonField(field)) return c.notFound();
-  const p = await getCustomerPerson(person.tenant_id, c.req.param('id'));
-  if (!p) return c.notFound();
-  const meta = FIELD_META[field]!;
-  return c.html(<FieldEdit base={`/osoby/${p.id}`} field={field} label={meta.label} value={p[field]} kind={meta.kind} noLabel={field === 'note'} />);
-});
+// ---------- editace jednoho pole (malé panely — žádný inline edit) ----------
 
 osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
   const person = c.get('person')!;
@@ -382,8 +347,8 @@ osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
     await updatePersonField(t, id, field, value);
     await logEvent(t, 'person', id, person.id, `${meta.label}: ${value ?? '—'}`);
   }
-  if (field === 'note') return c.html(noteBox(`/osoby/${id}`, value));
-  return c.html(<FieldDisplay base={`/osoby/${id}`} field={field} label={meta.label} value={value} kind={meta.kind} />);
+  if (field === 'note') return c.html(<NoteSection base={`/osoby/${id}`} value={value} />);
+  return c.html(<TitleBox base={`/osoby/${id}`} label="Jméno a příjmení" value={value ?? p.name} />);
 });
 
 // ---------- štítky ----------
@@ -452,17 +417,6 @@ osobyRoutes.get('/osoby/:id/kontakty', async (c) => {
   const id = c.req.param('id');
   if (!(await getCustomerPerson(person.tenant_id, id))) return c.notFound();
   return contactsFragment(c, person.tenant_id, id);
-});
-
-osobyRoutes.get('/osoby/:id/kontakt/:cid/edit', async (c) => {
-  const person = c.get('person')!;
-  const t = person.tenant_id;
-  const id = c.req.param('id');
-  if (!(await getCustomerPerson(t, id))) return c.notFound();
-  const contacts = await listContacts(t, 'person', id);
-  const contact = contacts.find((x) => x.id === c.req.param('cid'));
-  if (!contact) return c.notFound();
-  return c.html(<ContactEditRow base={`/osoby/${id}`} contact={contact} />);
 });
 
 osobyRoutes.post('/osoby/:id/kontakt/:cid', async (c) => {

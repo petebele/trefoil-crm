@@ -247,24 +247,31 @@ Chyba formuláře: `<div class="form-error">Neplatný e-mail nebo heslo.</div>` 
 
 Otevírání řeší `public/app.js` (klik na `[data-menu-toggle]` přepne `.open`, klik mimo zavře).
 
-## 18. Inline editace `.editable`
+## 18. Úprava jednoho pole = malý panel (inline editace ZRUŠENA)
 
-**Kdy:** údaje v levém panelu detailu — mění se na místě, žádné tlačítko Upravit.
+**Kdy:** úprava jednoho údaje v panelech detailu (název, poznámka, kontakt…).
+**Inline editace na místě se nepoužívá** — není stylová a vše ostatní řeší malé/velké
+modály, tak i jedno pole. Vzor: textová akce „Upravit" (hover, v řádku nadpisu nebo
+řádku údaje) otevře **malý panel** (§19) s polem a tlačítkem Uložit; odpověď serveru
+vymění celý blok (htmx `hx-target` na obal).
 
 ```html
-<!-- zobrazení: klik (htmx) vymění za kompaktní formulář -->
-<div class="editable" role="button" tabindex="0"
-     hx-get="/firmy/ID/pole/nazev/edit" hx-target="closest .field-wrap" hx-swap="outerHTML">
-  Borovec-elektro.cz
-</div>
-
-<!-- editace: input + ikonky ✓ / ✕ (žádná velká tlačítka) -->
-<form class="inline-form" hx-post="/firmy/ID/pole/nazev" hx-target="closest .field-wrap" hx-swap="outerHTML">
-  <input class="input" name="value" value="…">
-  <button class="icon-btn" type="submit" aria-label="Uložit">✓</button>
-  <button class="icon-btn" type="button" aria-label="Zrušit" hx-get="/firmy/ID/pole/nazev">✕</button>
-</form>
+<span class="row-actions">
+  <div class="menu" id="nameEdit" style="display:inline-block">
+    <button class="subtle-action" data-menu-toggle="nameEdit">Upravit</button>
+    <div class="menu-list panel">
+      <form hx-post="/firmy/ID/pole/name" hx-target="#f-name" hx-swap="outerHTML">
+        <input class="input" name="value" value="…">
+        <button class="btn btn-sm btn-primary">Uložit</button>
+      </form>
+    </div>
+  </div>
+</span>
 ```
+
+**Akce = text, ne ikonka.** Akční odkazy („Upravit", „Smazat", „Změnit", „Odebrat")
+jsou textové `.subtle-action`; ikonky zůstávají jen v řádku rychlého přidání
+(telefon/e-mail/web/štítek/osoba) a pro zavření modálu (✕).
 
 Hover ukáže ✎; prázdná hodnota se zobrazuje jako „— doplnit —" (šedě, kurzívou).
 Pro výběrové hodnoty (stav, osoba) NEpoužívej select v editaci — použij dropdown panel (§19).

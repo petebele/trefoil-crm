@@ -23,19 +23,17 @@ import {
   avColor,
   relTime,
   EmptyState,
-  FieldDisplay,
-  FieldEdit,
+  TitleBox,
+  NoteSection,
   StatusBox,
   OwnerBox,
   TagsSection,
   ContactsSection,
-  ContactEditRow,
   DetailTabs,
   EventRow,
   Picker,
   ModalShell,
   ModalContactRows,
-  type FieldKind,
 } from './components';
 import { IconPhone, IconMail, IconUsers } from './icons';
 import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
@@ -52,13 +50,14 @@ const requireModule: MiddlewareHandler<AppEnv> = async (c, next) => {
 firmyRoutes.use('/firmy', requireModule);
 firmyRoutes.use('/firmy/*', requireModule);
 
-const FIELD_META: Record<string, { label: string; kind: FieldKind }> = {
-  name: { label: 'Název', kind: 'title' },
-  website: { label: 'Web', kind: 'text' },
-  ico: { label: 'IČO', kind: 'text' },
-  dic: { label: 'DIČ', kind: 'text' },
-  address: { label: 'Adresa', kind: 'textarea' },
-  note: { label: 'Poznámka', kind: 'textarea' },
+/** Pole editovatelná malým panelem (název v hlavičce, poznámka v sekci). */
+const FIELD_META: Record<string, { label: string }> = {
+  name: { label: 'Název' },
+  website: { label: 'Web' },
+  ico: { label: 'IČO' },
+  dic: { label: 'DIČ' },
+  address: { label: 'Adresa' },
+  note: { label: 'Poznámka' },
 };
 
 // ---------- nová firma (jednotně přes velký modál) ----------
@@ -339,19 +338,6 @@ function personAddPicker(base: string, persons: Array<{ id: string; name: string
   );
 }
 
-/** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
-function noteBox(base: string, value: string | null) {
-  return value ? (
-    <FieldDisplay base={base} field="note" label="Poznámka" value={value} kind="textarea" noLabel />
-  ) : (
-    <div class="field-wrap" id="f-note">
-      <button type="button" class="subtle-action" hx-get={`${base}/pole/note/edit`} hx-target="#f-note" hx-swap="outerHTML">
-        Přidat poznámku
-      </button>
-    </div>
-  );
-}
-
 // ---------- detail firmy ----------
 
 firmyRoutes.get('/firmy/:id', async (c) => {
@@ -389,7 +375,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             <StatusBox base={base} value={client.status} items={statusItems} />
           </div>
           <div style="margin-top:.45rem">
-            <FieldDisplay base={base} field="name" label="Název" value={client.name} kind="title" />
+            <TitleBox base={base} label="Název firmy" value={client.name} />
           </div>
           <div style="margin:.4rem 0 .6rem">
             <TagsSection base={base} tags={tags} />
@@ -414,7 +400,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             coworkers={coworkers}
           />
 
-          <div class="side-section"><h4>Poznámka</h4>{noteBox(base, client.note)}</div>
+          <NoteSection base={base} value={client.note} />
 
           <div class="side-section" style="border-top-style:dashed;display:flex;gap:1rem;align-items:center">
             <button class="subtle-action" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
@@ -482,34 +468,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   );
 });
 
-// ---------- inline pole ----------
-
-firmyRoutes.get('/firmy/:id/pole/:field', async (c) => {
-  const person = c.get('person')!;
-  const field = c.req.param('field');
-  if (!isEditableClientField(field)) return c.notFound();
-  const client = await getClient(person.tenant_id, c.req.param('id'));
-  if (!client) return c.notFound();
-  if (field === 'status') {
-    const items = await itemsByKey(person.tenant_id, 'client_statuses');
-    return c.html(<StatusBox base={`/firmy/${client.id}`} value={client.status} items={items} />);
-  }
-  if (field === 'note') return c.html(noteBox(`/firmy/${client.id}`, client.note));
-  const meta = FIELD_META[field];
-  if (!meta) return c.notFound();
-  return c.html(<FieldDisplay base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} />);
-});
-
-firmyRoutes.get('/firmy/:id/pole/:field/edit', async (c) => {
-  const person = c.get('person')!;
-  const field = c.req.param('field');
-  if (!isEditableClientField(field)) return c.notFound();
-  const client = await getClient(person.tenant_id, c.req.param('id'));
-  if (!client) return c.notFound();
-  const meta = FIELD_META[field];
-  if (!meta) return c.notFound();
-  return c.html(<FieldEdit base={`/firmy/${client.id}`} field={field} label={meta.label} value={client[field]} kind={meta.kind} noLabel={field === 'note'} />);
-});
+// ---------- editace jednoho pole (malé panely — žádný inline edit) ----------
 
 firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {
   const person = c.get('person')!;
@@ -541,8 +500,9 @@ firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {
     await updateClientField(t, id, field, value);
     await logEvent(t, 'client', id, person.id, `${meta.label}: ${value ?? '—'}`);
   }
-  if (field === 'note') return c.html(noteBox(`/firmy/${id}`, value));
-  return c.html(<FieldDisplay base={`/firmy/${id}`} field={field} label={meta.label} value={value} kind={meta.kind} />);
+  if (field === 'note') return c.html(<NoteSection base={`/firmy/${id}`} value={value} />);
+  if (field === 'name') return c.html(<TitleBox base={`/firmy/${id}`} label="Název firmy" value={value ?? client.name} />);
+  return c.html(<span>{value ?? '—'}</span>);
 });
 
 // ---------- odpovědná osoba ----------
@@ -645,17 +605,6 @@ firmyRoutes.get('/firmy/:id/kontakty', async (c) => {
   const id = c.req.param('id');
   if (!(await getClient(person.tenant_id, id))) return c.notFound();
   return contactsFragment(c, person.tenant_id, id);
-});
-
-firmyRoutes.get('/firmy/:id/kontakt/:cid/edit', async (c) => {
-  const person = c.get('person')!;
-  const t = person.tenant_id;
-  const id = c.req.param('id');
-  if (!(await getClient(t, id))) return c.notFound();
-  const contacts = await listContacts(t, 'client', id);
-  const contact = contacts.find((x) => x.id === c.req.param('cid'));
-  if (!contact) return c.notFound();
-  return c.html(<ContactEditRow base={`/firmy/${id}`} contact={contact} />);
 });
 
 firmyRoutes.post('/firmy/:id/kontakt/:cid', async (c) => {

@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
-import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil, IconTag } from './icons';
+import { IconPhone, IconMail, IconGlobe, IconPlus, IconTag } from './icons';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
 
@@ -124,65 +124,43 @@ export function ModalContactRows(props: { labels: Array<{ label: string }> }) {
   );
 }
 
-// ---------- Inline editace (katalog §18 — kompaktní ✓/✕) ----------
+// ---------- Úprava jednoho pole = malý panel (žádná inline editace, katalog §18) ----------
 
-export type FieldKind = 'text' | 'textarea' | 'title';
-
-export function FieldDisplay(props: {
-  base: string;
-  field: string;
-  label: string;
-  value: string | null;
-  kind: FieldKind;
-  noLabel?: boolean; // sekce má vlastní h4 nadpis — nezdvojovat malý popisek
-}) {
-  const { base, field, label, value, kind } = props;
+/** Velký název záznamu + skrytá textová akce „Upravit" (malý panel s polem). */
+export function TitleBox(props: { base: string; label: string; value: string }) {
   return (
-    <div class="field-wrap" id={`f-${field}`}>
-      {kind === 'title' || props.noLabel ? null : <div class="sub" style="font-size:.73rem">{label}</div>}
-      <div
-        class="editable"
-        role="button"
-        tabindex={0}
-        aria-label={`${label} — upravit`}
-        hx-get={`${base}/pole/${field}/edit`}
-        hx-target={`#f-${field}`}
-        hx-swap="outerHTML"
-      >
-        {value ? (
-          kind === 'title' ? <span class="record-name" style="margin:0">{value}</span> : <span style="white-space:pre-wrap">{value}</span>
-        ) : (
-          <span class="sub" style="font-style:italic">— doplnit —</span>
-        )}
-      </div>
+    <div class="hover-row" id="f-name" style="display:flex;align-items:baseline;gap:.5rem">
+      <span class="record-name" style="margin:0;flex:1">{props.value}</span>
+      <span class="row-actions">
+        <Picker id="nameEdit" trigger="Upravit" triggerLabel={`${props.label} — upravit`}>
+          <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
+            <div class="opt-group" style="padding-left:0">{props.label}</div>
+            <input class="input" name="value" value={props.value} required autofocus aria-label={props.label} />
+            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+          </form>
+        </Picker>
+      </span>
     </div>
   );
 }
 
-export function FieldEdit(props: {
-  base: string;
-  field: string;
-  label: string;
-  value: string | null;
-  kind: FieldKind;
-  noLabel?: boolean;
-}) {
-  const { base, field, label, value, kind } = props;
-  const action = `${base}/pole/${field}`;
+/** Sekce Poznámka — text + akce v řádku nadpisu (malý panel s textareou). */
+export function NoteSection(props: { base: string; value: string | null }) {
   return (
-    <div class="field-wrap" id={`f-${field}`}>
-      {props.noLabel ? null : <div class="sub" style="font-size:.73rem">{label}</div>}
-      <form class="inline-form" hx-post={action} hx-target={`#f-${field}`} hx-swap="outerHTML">
-        {kind === 'textarea' ? (
-          <textarea class="input" name="value" rows={3} autofocus>{value ?? ''}</textarea>
-        ) : (
-          <input class="input" name="value" value={value ?? ''} autofocus />
-        )}
-        <button class="icon-btn" type="submit" aria-label="Uložit">✓</button>
-        <button class="icon-btn" type="button" aria-label="Zrušit" hx-get={action} hx-target={`#f-${field}`} hx-swap="outerHTML">
-          ✕
-        </button>
-      </form>
+    <div class="side-section hover-area" id="f-note">
+      <h4>
+        Poznámka
+        <span class={props.value ? 'area-actions' : ''}>
+          <Picker id="noteEdit" trigger={props.value ? 'Upravit' : 'Přidat poznámku'} triggerLabel="Poznámka — upravit">
+            <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
+              <div class="opt-group" style="padding-left:0">Poznámka</div>
+              <textarea class="input" name="value" rows={4} autofocus aria-label="Poznámka">{props.value ?? ''}</textarea>
+              <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+            </form>
+          </Picker>
+        </span>
+      </h4>
+      {props.value ? <p style="white-space:pre-wrap;margin:0;font-size:.88rem">{props.value}</p> : null}
     </div>
   );
 }
@@ -269,7 +247,7 @@ export function OwnerBox(props: {
         <div class="person-row hover-row">
           <span class={`av av-sm ${avColor(props.owner.name)}`}>{initials(props.owner.name)}</span>
           <span class="nm" style="flex:1">{props.owner.name}</span>
-          <span class="row-actions">{picker(<IconPencil />, 'icon-btn', 'Změnit odpovědnou osobu')}</span>
+          <span class="row-actions">{picker('Změnit', undefined, 'Změnit odpovědnou osobu')}</span>
         </div>
       ) : (
         picker('Přiřadit osobu')
@@ -434,7 +412,7 @@ export function ContactsSection(props: {
                 class="m0 row-actions"
                 onsubmit="return confirm('Odebrat osobu z této firmy?')"
               >
-                <button type="submit" class="icon-btn" aria-label={`Odebrat ${p.name}`}>✕</button>
+                <button type="submit" class="subtle-action" aria-label={`Odebrat ${p.name} z firmy`}>Odebrat</button>
               </form>
             ) : null}
           </div>
@@ -463,27 +441,25 @@ export function ContactsSection(props: {
                 <ContactValue c={c} />
               </span>
               {c.label ? <span class="meta-lbl">{c.label}</span> : null}
-              <span class="row-actions" style="margin-left:auto;white-space:nowrap">
+              <span class="row-actions" style="margin-left:auto;white-space:nowrap;display:flex;gap:.7rem">
+                <Picker id={`cEdit-${c.id}`} trigger="Upravit" triggerLabel="Upravit kontakt">
+                  <form hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
+                    <div class="opt-group" style="padding-left:0">{CONTACT_TYPE_LABELS[c.type]}</div>
+                    <input class="input" name="value" value={c.value} required aria-label="Hodnota kontaktu" />
+                    <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder="Štítek (Práce…)" autocomplete="off" aria-label="Štítek kontaktu" />
+                    <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+                  </form>
+                </Picker>
                 <button
                   type="button"
-                  class="icon-btn"
-                  aria-label="Upravit kontakt"
-                  hx-get={`${props.base}/kontakt/${c.id}/edit`}
-                  hx-target={`#c-${c.id}`}
-                  hx-swap="outerHTML"
-                >
-                  <IconPencil />
-                </button>
-                <button
-                  type="button"
-                  class="icon-btn"
+                  class="subtle-action"
                   aria-label="Smazat kontakt"
                   hx-post={`${props.base}/kontakt/${c.id}/smazat`}
                   hx-confirm="Smazat tento kontakt?"
                   hx-target="#contacts"
                   hx-swap="outerHTML"
                 >
-                  ✕
+                  Smazat
                 </button>
               </span>
             </div>
@@ -497,21 +473,6 @@ export function ContactsSection(props: {
         ))}
       </datalist>
     </div>
-  );
-}
-
-/** Editace jednoho kontaktu na místě (✎). */
-export function ContactEditRow(props: { base: string; contact: PersonContactsTable }) {
-  const c = props.contact;
-  return (
-    <form class="inline-form" id={`c-${c.id}`} hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML">
-      <input class="input" name="value" value={c.value} style="flex:2" aria-label="Hodnota kontaktu" autofocus />
-      <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder="Štítek" style="flex:1" aria-label="Štítek kontaktu" />
-      <button class="icon-btn" type="submit" aria-label="Uložit">✓</button>
-      <button class="icon-btn" type="button" aria-label="Zrušit" hx-get={`${props.base}/kontakty`} hx-target="#contacts" hx-swap="outerHTML">
-        ✕
-      </button>
-    </form>
   );
 }
 
