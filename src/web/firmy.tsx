@@ -16,7 +16,7 @@ import {
 } from '../domain/clients';
 import { listCustomerPersons, createCustomerPerson, listCoworkers } from '../domain/people';
 import { itemsByKey, listEntityTags, addEntityTag, removeEntityTag } from '../domain/lists';
-import { listContacts, addContact, updateContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
+import { listContacts, contactsForOwners, addContact, updateContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
 import { logEvent, listEvents } from '../domain/events';
 import {
   initials,
@@ -37,7 +37,7 @@ import {
   ModalContactRows,
   type FieldKind,
 } from './components';
-import { IconPhone, IconMail } from './icons';
+import { IconPhone, IconMail, IconUsers } from './icons';
 import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
 import { listClientServices } from '../domain/clientServices';
 import { listCatalog } from '../domain/services';
@@ -305,6 +305,37 @@ function FirmFieldsSection(props: { base: string; client: { website: string | nu
   );
 }
 
+/** Panel „přidat osobu k firmě" — ikonka v rychlém přidání sekce Kontakty. */
+function personAddPicker(base: string, persons: Array<{ id: string; name: string }>, linkedIds: Set<string>) {
+  return (
+    <Picker id="personAdd" trigger={<IconUsers />} triggerClass="icon-btn" triggerLabel="Přidat osobu k firmě">
+      <form method="post" action={`${base}/osoba`} class="m0">
+        <div class="opt-group" style="padding-left:0">Najít existující</div>
+        <input class="input" name="existing" list="existingPersons" placeholder="Hledat osobu…" autocomplete="off" aria-label="Najít existující osobu" />
+        <datalist id="existingPersons">
+          {persons.filter((p) => !linkedIds.has(p.id)).map((p) => (
+            <option value={p.name}></option>
+          ))}
+        </datalist>
+        <div class="opt-group" style="padding-left:0">… nebo nová</div>
+        <input class="input" name="new_name" placeholder="Jméno a příjmení" aria-label="Jméno nové osoby" />
+        <div id="personAddPhone" class="hidden">
+          <input class="input" name="new_phone" placeholder="Telefon" aria-label="Telefon nové osoby" />
+        </div>
+        <div id="personAddEmail" class="hidden">
+          <input class="input" name="new_email" placeholder="E-mail" aria-label="E-mail nové osoby" />
+        </div>
+        <div class="quick-add" style="margin:.15rem 0 .5rem">
+          <button type="button" class="icon-btn" data-reveal="personAddPhone" aria-label="Přidat pole telefonu" title="Telefon"><IconPhone /></button>
+          <button type="button" class="icon-btn" data-reveal="personAddEmail" aria-label="Přidat pole e-mailu" title="E-mail"><IconMail /></button>
+          <button type="button" class="icon-btn" aria-label="Kompletní editace osoby" title="Kompletní editace" hx-get={`${base}/osoba/modal`} hx-target="#modal" hx-swap="innerHTML">…</button>
+        </div>
+        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Přidat</button>
+      </form>
+    </Picker>
+  );
+}
+
 /** Poznámka: vyplněná = inline editace; prázdná = jen akce „Přidat poznámku". */
 function noteBox(base: string, value: string | null) {
   return value ? (
@@ -342,6 +373,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   ]);
   const base = `/firmy/${client.id}`;
   const linkedIds = new Set(people.map((p) => p.id));
+  const peopleContacts = await contactsForOwners(t, 'person', people.map((p) => p.id));
+  const peopleWith = people.map((p) => ({ ...p, contacts: peopleContacts.filter((x) => x.owner_id === p.id) }));
 
   return c.html(
     <Layout title={client.name} person={person} modules={c.get('modules')} active="zakaznici">
@@ -359,7 +392,16 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             <TagsSection base={base} tags={tags} />
           </div>
 
-          <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
+          <ContactsSection
+            base={base}
+            contacts={contacts}
+            labels={labels}
+            allTags={allTags}
+            assignedTags={tags}
+            people={peopleWith}
+            personAdd={personAddPicker(base, persons, linkedIds)}
+            unlinkBase={base}
+          />
 
           <FirmFieldsSection base={base} client={client} />
 
@@ -368,49 +410,6 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             owner={coworkers.find((u) => u.id === client.owner_id) ?? null}
             coworkers={coworkers}
           />
-
-          <div class="side-section hover-area">
-            <h4>Lidé a kontakty</h4>
-            {people.map((p) => (
-              <div class="person-row hover-row">
-                <span class={`av av-sm ${avColor(p.name)}`}>{initials(p.name)}</span>
-                <span style="flex:1">
-                  <a class="nm" href={`/osoby/${p.id}`} style="color:inherit">{p.name}</a>
-                  <span class="sub">{p.role_at_client ?? 'Kontakt'}</span>
-                </span>
-                <form method="post" action={`${base}/osoba/${p.id}/odebrat`} class="m0 row-actions" onsubmit="return confirm('Odebrat osobu z této firmy?')">
-                  <button type="submit" class="icon-btn" aria-label={`Odebrat ${p.name}`}>✕</button>
-                </form>
-              </div>
-            ))}
-            <span class={people.length > 0 ? 'area-actions' : ''}>
-              <Picker id="personAdd" trigger="Nová osoba" triggerLabel="Přidat osobu k firmě">
-                <form method="post" action={`${base}/osoba`} class="m0">
-                  <div class="opt-group" style="padding-left:0">Najít existující</div>
-                  <input class="input" name="existing" list="existingPersons" placeholder="Hledat osobu…" autocomplete="off" aria-label="Najít existující osobu" />
-                  <datalist id="existingPersons">
-                    {persons.filter((p) => !linkedIds.has(p.id)).map((p) => (
-                      <option value={p.name}></option>
-                    ))}
-                  </datalist>
-                  <div class="opt-group" style="padding-left:0">… nebo nová</div>
-                  <input class="input" name="new_name" placeholder="Jméno a příjmení" aria-label="Jméno nové osoby" />
-                  <div id="personAddPhone" class="hidden">
-                    <input class="input" name="new_phone" placeholder="Telefon" aria-label="Telefon nové osoby" />
-                  </div>
-                  <div id="personAddEmail" class="hidden">
-                    <input class="input" name="new_email" placeholder="E-mail" aria-label="E-mail nové osoby" />
-                  </div>
-                  <div class="quick-add" style="margin:.15rem 0 .5rem">
-                    <button type="button" class="icon-btn" data-reveal="personAddPhone" aria-label="Přidat pole telefonu" title="Telefon"><IconPhone /></button>
-                    <button type="button" class="icon-btn" data-reveal="personAddEmail" aria-label="Přidat pole e-mailu" title="E-mail"><IconMail /></button>
-                    <button type="button" class="icon-btn" aria-label="Kompletní editace osoby" title="Kompletní editace" hx-get={`${base}/osoba/modal`} hx-target="#modal" hx-swap="innerHTML">…</button>
-                  </div>
-                  <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Přidat</button>
-                </form>
-              </Picker>
-            </span>
-          </div>
 
           <div class="side-section"><h4>Poznámka</h4>{noteBox(base, client.note)}</div>
 
@@ -591,14 +590,29 @@ firmyRoutes.post('/firmy/:id/stitek/:itemId/smazat', async (c) => {
 // ---------- kontakty ----------
 
 async function contactsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, clientId: string) {
-  const [contacts, labels, allTags, assignedTags] = await Promise.all([
+  const [contacts, labels, allTags, assignedTags, people, persons] = await Promise.all([
     listContacts(tenantId, 'client', clientId),
     itemsByKey(tenantId, 'contact_labels'),
     itemsByKey(tenantId, 'client_tags'),
     listEntityTags(tenantId, 'client', clientId),
+    peopleOfClient(tenantId, clientId),
+    listCustomerPersons(tenantId),
   ]);
+  const base = `/firmy/${clientId}`;
+  const linkedIds = new Set(people.map((p) => p.id));
+  const peopleContacts = await contactsForOwners(tenantId, 'person', people.map((p) => p.id));
+  const peopleWith = people.map((p) => ({ ...p, contacts: peopleContacts.filter((x) => x.owner_id === p.id) }));
   return c.html(
-    <ContactsSection base={`/firmy/${clientId}`} contacts={contacts} labels={labels} allTags={allTags} assignedTags={assignedTags} />,
+    <ContactsSection
+      base={base}
+      contacts={contacts}
+      labels={labels}
+      allTags={allTags}
+      assignedTags={assignedTags}
+      people={peopleWith}
+      personAdd={personAddPicker(base, persons, linkedIds)}
+      unlinkBase={base}
+    />,
   );
 }
 

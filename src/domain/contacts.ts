@@ -102,6 +102,23 @@ export async function removeContact(tenantId: string, id: string): Promise<Perso
   return row;
 }
 
+/** Všechny kontakty pro množinu vlastníků (např. osoby firmy v sekci Kontakty). */
+export async function contactsForOwners(
+  tenantId: string,
+  ownerKind: 'person' | 'client',
+  ids: string[],
+): Promise<PersonContactsTable[]> {
+  if (ids.length === 0) return [];
+  return db
+    .selectFrom('person_contacts')
+    .selectAll()
+    .where('tenant_id', '=', tenantId)
+    .where('owner_kind', '=', ownerKind)
+    .where('owner_id', 'in', ids)
+    .orderBy('created_at')
+    .execute();
+}
+
 /** První e-mail a telefon pro množinu vlastníků (řádky přehledu). */
 export async function primaryContactsFor(tenantId: string, ownerKind: 'person' | 'client', ids: string[]) {
   const map = new Map<string, { email?: string; emailLabel?: string | null; phone?: string; phoneLabel?: string | null }>();

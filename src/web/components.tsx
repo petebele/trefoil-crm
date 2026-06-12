@@ -337,12 +337,36 @@ function QuickAddPanel(props: { base: string; type: PersonContactsTable['type'];
   );
 }
 
+/** Hodnota kontaktu jako odkaz (mailto/tel/web), jinak text. */
+function ContactValue(props: { c: PersonContactsTable }) {
+  const c = props.c;
+  if (c.type === 'email') return <a href={`mailto:${c.value}`}>{c.value}</a>;
+  if (c.type === 'phone') return <a href={`tel:${c.value.replace(/\s/g, '')}`} style="color:inherit;text-decoration:none">{c.value}</a>;
+  if (c.type === 'web')
+    return <a href={c.value.startsWith('http') ? c.value : `https://${c.value}`} target="_blank" rel="noreferrer">{c.value}</a>;
+  return <>{c.value}</>;
+}
+
+/** Osoba přiřazená k firmě vč. svých kontaktů (integrovaná sekce Kontakty firmy). */
+export interface PersonWithContacts {
+  id: string;
+  name: string;
+  role_at_client: string | null;
+  contacts: PersonContactsTable[];
+}
+
 export function ContactsSection(props: {
   base: string;
   contacts: PersonContactsTable[];
   labels: Array<{ label: string }>;
   allTags: Array<{ label: string }>;
   assignedTags?: Array<{ label: string }>;
+  /** Firma: přiřazené osoby se zobrazí PŘED firemními kontakty. */
+  people?: PersonWithContacts[];
+  /** Firma: panel „přidat osobu" (ikonka v rychlém přidání). */
+  personAdd?: Child;
+  /** Firma: base pro odebrání vazby osoby (POST …/osoba/:id/odebrat). */
+  unlinkBase?: string;
 }) {
   const assigned = new Set((props.assignedTags ?? []).map((t) => t.label));
   const availableTags = props.allTags.filter((t) => !assigned.has(t.label));
@@ -352,23 +376,58 @@ export function ContactsSection(props: {
     .map((t) => ({ type: t, rows: props.contacts.filter((c) => c.type === t) }))
     .filter((g) => g.rows.length > 0);
 
-  const hasContacts = props.contacts.length > 0;
+  const people = props.people ?? [];
+  const hasContacts = props.contacts.length > 0 || people.length > 0;
+  const groupLabel = (text: string) => (
+    <span style="display:block;color:var(--muted);font-size:.73rem;margin:.4rem 0 .1rem">{text}</span>
+  );
   return (
     <div id="contacts" class={`side-section ${hasContacts ? 'hover-area' : ''}`} style="border-top:none;margin-top:.4rem;padding-top:0">
       <h4>Kontakty</h4>
+
+      {people.length > 0 && groups.length > 0 ? groupLabel('Osoby') : null}
+      {people.map((p) => (
+        <div style="padding:.2rem 0">
+          <div class="person-row hover-row" style="padding:0">
+            <span class={`av av-sm ${avColor(p.name)}`}>{initials(p.name)}</span>
+            <span style="flex:1">
+              <a class="nm" href={`/osoby/${p.id}`} style="color:inherit">{p.name}</a>
+              <span class="sub">{p.role_at_client ?? 'Kontakt'}</span>
+            </span>
+            {props.unlinkBase ? (
+              <form
+                method="post"
+                action={`${props.unlinkBase}/osoba/${p.id}/odebrat`}
+                class="m0 row-actions"
+                onsubmit="return confirm('Odebrat osobu z této firmy?')"
+              >
+                <button type="submit" class="icon-btn" aria-label={`Odebrat ${p.name}`}>✕</button>
+              </form>
+            ) : null}
+          </div>
+          {p.contacts.length > 0 ? (
+            <div style="margin-left:2.05rem">
+              {p.contacts.map((c) => (
+                <div style="display:flex;align-items:baseline;gap:.45rem;font-size:.83rem;padding:.05rem 0">
+                  <span class="val" style="font-weight:400">
+                    <ContactValue c={c} />
+                  </span>
+                  {c.label ? <span class="meta-lbl">{c.label}</span> : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ))}
+
+      {people.length > 0 && groups.length > 0 ? groupLabel('Firma') : null}
       {groups.map((g) => (
         <div class="fact">
           <span class="lbl" style="margin-bottom:.15rem">{CONTACT_TYPE_LABELS[g.type]}</span>
           {g.rows.map((c) => (
             <div class="hover-row" id={`c-${c.id}`} style="display:flex;align-items:baseline;gap:.45rem">
               <span class="val">
-                {c.type === 'email' ? (
-                  <a href={`mailto:${c.value}`}>{c.value}</a>
-                ) : c.type === 'web' ? (
-                  <a href={c.value.startsWith('http') ? c.value : `https://${c.value}`} target="_blank" rel="noreferrer">{c.value}</a>
-                ) : (
-                  c.value
-                )}
+                <ContactValue c={c} />
               </span>
               {c.label ? <span class="meta-lbl">{c.label}</span> : null}
               <span class="row-actions" style="margin-left:auto;white-space:nowrap">
@@ -398,9 +457,10 @@ export function ContactsSection(props: {
           ))}
         </div>
       ))}
-      {props.contacts.length === 0 ? <p class="sub m0" style="padding:.3rem 0">Zatím žádný kontakt.</p> : null}
+      {!hasContacts ? <p class="sub m0" style="padding:.3rem 0">Zatím žádný kontakt.</p> : null}
 
-      <div class={`quick-add ${hasContacts ? 'area-actions' : ''}`} role="group" aria-label="Rychlé přidání kontaktu nebo štítku">
+      <div class={`quick-add ${hasContacts ? 'area-actions' : ''}`} role="group" aria-label="Rychlé přidání kontaktu, štítku nebo osoby">
+        {props.personAdd ?? null}
         <QuickAddPanel base={props.base} type="phone" labels={props.labels} />
         <QuickAddPanel base={props.base} type="email" labels={props.labels} />
         <QuickAddPanel base={props.base} type="web" labels={props.labels} />

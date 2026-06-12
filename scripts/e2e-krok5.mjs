@@ -105,6 +105,16 @@ try {
   r = await req(`/osoby/${osoba.id}?tab=sluzby`);
   ok('osoba: služby firem read-only s odkazem', r.text.includes('TestE2E Služba K5') && r.text.includes(`/firmy/${client.id}?tab=sluzby`) && !r.text.includes('Přidělit službu'));
 
+  // --- integrovaná sekce Kontakty: osoby s údaji + firemní kontakty ---
+  await req(`/osoby/${osoba.id}/kontakt`, { method: 'POST', form: { type: 'email', value: 'osoba-k5@test.cz', label: '' } });
+  await req(`${fbase}/kontakt`, { method: 'POST', form: { type: 'email', value: 'firma-k5@test.cz', label: '' } });
+  r = await req(fbase);
+  ok(
+    'Kontakty: osoba s údaji před firemními, bez staré sekce',
+    r.text.includes('osoba-k5@test.cz') && r.text.includes('firma-k5@test.cz') &&
+    r.text.includes('>Osoby</span>') && r.text.includes('>Firma</span>') && !r.text.includes('Lidé a kontakty'),
+  );
+
   // --- velké modály úpravy firmy a osoby ---
   r = await req(`${fbase}/modal/upravit`);
   ok('modál Upravit firmu předvyplněn', r.text.includes('Upravit firmu') && r.text.includes('value="TestE2E Firma K5"'));
