@@ -16,6 +16,7 @@ export interface Database {
   entity_list_items: EntityListItemsTable;
   events: EventsTable;
   services: ServicesTable;
+  work_records: WorkRecordsTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -132,6 +133,24 @@ export interface EntityListItemsTable {
   entity_kind: 'client' | 'person';
   entity_id: string;
   list_item_id: string;
+}
+
+/** Výkaz práce — čas na zákazníka+službu; schválením se zamkne a počítá do peněz. */
+export interface WorkRecordsTable {
+  id: string;
+  tenant_id: string;
+  client_id: string;
+  service_id: string; // služba zákazníka (services)
+  worker_id: string; // kdo pracoval
+  description: string; // úkon
+  note: string | null;
+  minutes: number;
+  performed_at: string; // den práce (YYYY-MM-DD)
+  billing: 'retainer_hours' | 'billed' | 'free'; // z paušálu / účtovat zvlášť / neúčtovat
+  status: 'pending' | 'approved';
+  approved_by_id: string | null;
+  approved_at: string | null;
+  created_at: string;
 }
 
 /** Obecný log událostí (Historie) — kdo, kdy, u čeho, co se stalo. */

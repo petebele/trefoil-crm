@@ -14,6 +14,7 @@ import { zakazniciRoutes } from './web/zakaznici';
 import { firmyRoutes } from './web/firmy';
 import { osobyRoutes } from './web/osoby';
 import { sluzbyZakaznikaRoutes } from './web/sluzbyZakaznika';
+import { vykazyRoutes } from './web/vykazy';
 
 export const app = new Hono<AppEnv>();
 
@@ -72,5 +73,6 @@ app.route('/', dashboardRoutes);
 app.route('/', adminRoutes);
 app.route('/', zakazniciRoutes);
 app.route('/', sluzbyZakaznikaRoutes);
+app.route('/', vykazyRoutes);
 app.route('/', firmyRoutes);
 app.route('/', osobyRoutes);

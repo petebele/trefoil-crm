@@ -101,6 +101,28 @@ export async function migrate(): Promise<void> {
   await sql`ALTER TABLE services ADD COLUMN detail text`.execute(db).catch(() => {});
   await sql`ALTER TABLE services ADD COLUMN description text`.execute(db).catch(() => {});
 
+  // --- modul Výkazy práce (Krok 6) ---
+  await db.schema
+    .createTable('work_records')
+    .ifNotExists()
+    .addColumn('id', 'text', (c) => c.primaryKey())
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('client_id', 'text', (c) => c.notNull().references('clients.id'))
+    .addColumn('service_id', 'text', (c) => c.notNull().references('services.id'))
+    .addColumn('worker_id', 'text', (c) => c.notNull().references('persons.id'))
+    .addColumn('description', 'text', (c) => c.notNull())
+    .addColumn('note', 'text')
+    .addColumn('minutes', 'integer', (c) => c.notNull())
+    .addColumn('performed_at', 'text', (c) => c.notNull())
+    .addColumn('billing', 'text', (c) => c.notNull().defaultTo('retainer_hours'))
+    .addColumn('status', 'text', (c) => c.notNull().defaultTo('pending'))
+    .addColumn('approved_by_id', 'text')
+    .addColumn('approved_at', 'text')
+    .addColumn('created_at', 'text', (c) => c.notNull())
+    .execute();
+  await db.schema.createIndex('work_records_client').ifNotExists().on('work_records').columns(['client_id', 'performed_at']).execute();
+  await db.schema.createIndex('work_records_worker').ifNotExists().on('work_records').columns(['worker_id', 'performed_at']).execute();
+
   await db.schema
     .createTable('person_clients')
     .ifNotExists()

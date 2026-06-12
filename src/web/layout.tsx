@@ -79,18 +79,27 @@ export function Layout(props: {
 
             <div class="top-right">
               <div class="menu align-right" id="addMenu">
-                {enabled.has('zakaznici') ? (
+                {enabled.has('zakaznici') || enabled.has('vykazy') ? (
                   <>
                     <button class="btn" type="button" data-menu-toggle="addMenu" aria-haspopup="true">
                       Přidat <IconPlus />
                     </button>
                     <div class="menu-list" role="menu">
-                      <button class="menu-item" type="button" role="menuitem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">
-                        Nová firma
-                      </button>
-                      <button class="menu-item" type="button" role="menuitem" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">
-                        Nová osoba
-                      </button>
+                      {enabled.has('zakaznici') ? (
+                        <>
+                          <button class="menu-item" type="button" role="menuitem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">
+                            Nová firma
+                          </button>
+                          <button class="menu-item" type="button" role="menuitem" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">
+                            Nová osoba
+                          </button>
+                        </>
+                      ) : null}
+                      {enabled.has('vykazy') ? (
+                        <button class="menu-item" type="button" role="menuitem" hx-get="/vykazy/modal/novy" hx-target="#modal" hx-swap="innerHTML">
+                          Výkaz práce
+                        </button>
+                      ) : null}
                     </div>
                   </>
                 ) : (

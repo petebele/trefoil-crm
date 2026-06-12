@@ -39,6 +39,7 @@ import { IconPhone, IconMail, IconUsers } from './icons';
 import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
 import { listClientServices } from '../domain/clientServices';
 import { listCatalog } from '../domain/services';
+import { listForClientMonth, clientMonthMoney, monthKey } from '../domain/workRecords';
 
 export const firmyRoutes = new Hono<AppEnv>();
 
@@ -365,6 +366,14 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   const peopleContacts = await contactsForOwners(t, 'person', people.map((p) => p.id));
   const peopleWith = people.map((p) => ({ ...p, contacts: peopleContacts.filter((x) => x.owner_id === p.id) }));
 
+  // výkazy práce v záložce Služby (jen se zapnutým modulem)
+  const rawMonth = c.req.query('mesic') ?? '';
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(rawMonth) ? rawMonth : monthKey(new Date());
+  const vykazyData =
+    tab === 'sluzby' && c.get('modules').has('vykazy')
+      ? { person, records: await listForClientMonth(t, client.id, month), money: await clientMonthMoney(t, client, month), month }
+      : undefined;
+
   return c.html(
     <Layout title={client.name} person={person} modules={c.get('modules')} active="zakaznici">
       <div class="detail-grid">
@@ -424,6 +433,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
               coworkers={coworkers}
               isAdmin={person.is_admin === 1}
               err={c.req.query('err')}
+              vykazy={vykazyData}
             />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text="Funkčnost projektů teprve promyslíme." /></div>

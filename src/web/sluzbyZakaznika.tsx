@@ -17,6 +17,8 @@ import {
   type ClientServiceInput,
 } from '../domain/clientServices';
 import type { ClientsTable, PersonsTable } from '../db/schema';
+import { WorkRecordRow, MonthNav } from './vykazy';
+import { fmtMinutes, type WorkRecord, type MonthMoney } from '../domain/workRecords';
 
 /**
  * Záložka Služby v detailu zákazníka (Krok 5): paušál hodin, přidělené služby
@@ -197,6 +199,8 @@ export function SluzbyZakaznikaTab(props: {
   coworkers: Array<{ id: string; name: string }>;
   isAdmin: boolean;
   err?: string;
+  /** Výkazy práce (jen se zapnutým modulem vykazy). */
+  vykazy?: { person: PersonsTable; records: WorkRecord[]; money: MonthMoney; month: string };
 }) {
   const { base, client, services, isAdmin } = props;
   const available = props.catalog.filter((it) => it.active === 1);
@@ -223,6 +227,14 @@ export function SluzbyZakaznikaTab(props: {
     } else if (s.mode === 'payg') {
       lines.push({ label: name, amount: null, note: s.rate !== null ? `dle výkazů × ${kc(s.rate)} Kč/h` : 'dle vykázané práce' });
     }
+  }
+  const v = props.vykazy;
+  if (v && v.money.billedCost + v.money.overageCost > 0) {
+    lines.push({
+      label: `Vícepráce dle schválených výkazů (${fmtMinutes(v.money.billedMinutes + v.money.overageMinutes)})`,
+      amount: Math.round(v.money.billedCost + v.money.overageCost),
+      note: null,
+    });
   }
   const total = lines.reduce((sum, l) => sum + (l.amount ?? 0), 0);
 
@@ -306,6 +318,52 @@ export function SluzbyZakaznikaTab(props: {
         ) : null}
       </div>
 
+      {v ? (
+        <div class="card hover-area" style="margin-top:1rem">
+          <div class="card-head">
+            <h3>Výkazy</h3>
+            <span style="display:flex;gap:1rem;align-items:center">
+              <MonthNav month={v.month} hrefFor={(m) => `${base}?tab=sluzby&mesic=${m}`} />
+              <span class={v.records.length > 0 ? 'area-actions' : ''}>
+                <button
+                  class="subtle-action"
+                  type="button"
+                  hx-get={`/vykazy/modal/novy?klient=${client.id}&back=${encodeURIComponent(`${base}?tab=sluzby&mesic=${v.month}`)}`}
+                  hx-target="#modal"
+                  hx-swap="innerHTML"
+                >
+                  Vykázat práci
+                </button>
+              </span>
+            </span>
+          </div>
+          <p class="sub" style="margin:0 0 .4rem">
+            Vykázáno <b>{fmtMinutes(v.money.totalMinutes)}</b>
+            {v.money.budgetMinutes !== null ? (
+              <>
+                {' · '}paušál: čerpáno <b>{fmtMinutes(Math.min(v.money.usedRetainerMinutes, v.money.budgetMinutes))}</b> z {fmtMinutes(v.money.budgetMinutes)}
+                {v.money.carryMinutes > 0 ? ` (z toho převedeno ${fmtMinutes(v.money.carryMinutes)})` : ''}
+                {v.money.overageMinutes > 0 ? (
+                  <span style="color:var(--red);font-weight:600"> · přečerpáno {fmtMinutes(v.money.overageMinutes)}</span>
+                ) : (
+                  <> · zbývá <b>{fmtMinutes(Math.max(0, v.money.budgetMinutes - v.money.usedRetainerMinutes))}</b></>
+                )}
+              </>
+            ) : null}
+            {v.money.pendingCount > 0 ? ` · ${v.money.pendingCount} čeká na schválení` : ''}
+          </p>
+          {v.records.length === 0 ? (
+            <EmptyState text="Tento měsíc zatím nikdo nevykázal žádnou práci." />
+          ) : (
+            <div>
+              {v.records.map((r) => (
+                <WorkRecordRow r={r} person={v.person} ownerId={client.owner_id} back={`${base}?tab=sluzby&mesic=${v.month}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
       {lines.length > 0 ? (
         <div class="card" style="margin-top:1rem">
           <div class="card-head"><h3>Měsíčně celkem</h3></div>
@@ -316,12 +374,13 @@ export function SluzbyZakaznikaTab(props: {
             </div>
           ))}
           <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;border-top:2px solid var(--line);font-weight:700">
-            <span>Pevné platby celkem</span>
+            <span>{v ? `Celkem za ${v.month}` : 'Pevné platby celkem'}</span>
             <span>{kc(total)} Kč/měs</span>
           </div>
           <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">
-            Jen pevné měsíční platby (paušál + předplatná). Samostatně účtovaná práce
-            a vícepráce nad paušál se doplní z výkazů práce (připravujeme).
+            {v
+              ? 'Pevné platby (paušál + předplatná) + vícepráce ze schválených výkazů zvoleného měsíce.'
+              : 'Jen pevné měsíční platby (paušál + předplatná). Vícepráce se doplní z výkazů práce (zapněte modul Výkazy).'}
           </p>
         </div>
       ) : null}

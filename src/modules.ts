@@ -45,7 +45,7 @@ export const MODULES: ModuleDef[] = [
     desc: 'Záznamy odvedené práce s časem, schvalováním a podklady pro fakturaci.',
     icon: 'clock',
     path: '/vykazy',
-    built: false,
+    built: true,
   },
   {
     key: 'zakazky',
