@@ -31,8 +31,11 @@ import {
   ContactEditRow,
   DetailTabs,
   EventRow,
+  Picker,
+  ModalShell,
   type FieldKind,
 } from './components';
+import { IconPhone, IconMail } from './icons';
 
 export const firmyRoutes = new Hono<AppEnv>();
 
@@ -214,36 +217,37 @@ firmyRoutes.post('/firmy', async (c) => {
   return c.redirect(`/firmy/${id}`);
 });
 
-/** Firemní údaje: vyplněná pole inline-editovatelná; prázdná skrytá za „Vyplnit údaje". */
+/** Firemní údaje: hodnoty jako text; zadání/úprava přes typizovaný malý modál. */
 function FirmFieldsSection(props: { base: string; client: { website: string | null; ico: string | null; dic: string | null; address: string | null } }) {
+  const c = props.client;
   const defs = [
-    ['website', 'Web', 'text', props.client.website],
-    ['ico', 'IČO', 'text', props.client.ico],
-    ['dic', 'DIČ', 'text', props.client.dic],
-    ['address', 'Adresa', 'textarea', props.client.address],
+    ['Web', c.website],
+    ['IČO', c.ico],
+    ['DIČ', c.dic],
+    ['Adresa', c.address],
   ] as const;
-  const filled = defs.filter(([, , , v]) => v);
-  const missing = defs.filter(([, , , v]) => !v);
+  const filled = defs.filter(([, v]) => v);
   return (
-    <div class={`side-section ${filled.length ? 'hover-area' : ''}`}>
+    <div class={`side-section ${filled.length ? 'hover-area' : ''}`} id="firm-udaje">
       <h4>Firemní údaje</h4>
-      {filled.map(([f, label, kind, v]) => (
-        <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
+      {filled.map(([label, v]) => (
+        <div class="fact">
+          <span class="val" style="white-space:pre-wrap">{v}</span>
+          <span class="lbl">{label}</span>
+        </div>
       ))}
-      {missing.length ? (
-        <>
-          <div id="missingFirmFields" class="hidden">
-            {missing.map(([f, label, kind, v]) => (
-              <FieldDisplay base={props.base} field={f} label={label} value={v} kind={kind} />
-            ))}
-          </div>
-          <span class={filled.length ? 'area-actions' : ''}>
-            <button type="button" class="subtle-action" data-reveal="missingFirmFields">
-              Vyplnit údaje
-            </button>
-          </span>
-        </>
-      ) : null}
+      <span class={filled.length ? 'area-actions' : ''}>
+        <Picker id="firmUdaje" trigger={filled.length ? 'Upravit údaje' : 'Zadat údaje'} triggerLabel="Firemní údaje — zadat nebo upravit">
+          <form hx-post={`${props.base}/udaje`} hx-target="#firm-udaje" hx-swap="outerHTML" class="m0">
+            <div class="opt-group" style="padding-left:0">Firemní údaje</div>
+            <input class="input" name="website" value={c.website ?? ''} placeholder="Web" aria-label="Web" />
+            <input class="input" name="ico" value={c.ico ?? ''} placeholder="IČO" aria-label="IČO" />
+            <input class="input" name="dic" value={c.dic ?? ''} placeholder="DIČ" aria-label="DIČ" />
+            <textarea class="input" name="address" placeholder="Adresa" aria-label="Adresa" rows={2}>{c.address ?? ''}</textarea>
+            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+          </form>
+        </Picker>
+      </span>
     </div>
   );
 }
@@ -270,7 +274,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   if (!client) return c.notFound();
   const tab = c.req.query('tab') ?? 'nastenka';
 
-  const [contacts, tags, allTags, labels, statusItems, coworkers, people, persons, roles, events] = await Promise.all([
+  const [contacts, tags, allTags, labels, statusItems, coworkers, people, persons, events] = await Promise.all([
     listContacts(t, 'client', client.id),
     listEntityTags(t, 'client', client.id),
     itemsByKey(t, 'client_tags'),
@@ -279,7 +283,6 @@ firmyRoutes.get('/firmy/:id', async (c) => {
     listCoworkers(t),
     peopleOfClient(t, client.id),
     listCustomerPersons(t),
-    itemsByKey(t, 'roles_at_client'),
     listEvents(t, 'client', client.id),
   ]);
   const base = `/firmy/${client.id}`;
@@ -312,51 +315,46 @@ firmyRoutes.get('/firmy/:id', async (c) => {
           />
 
           <div class="side-section hover-area">
-            <h4>Lidé</h4>
+            <h4>Lidé a kontakty</h4>
             {people.map((p) => (
-              <div class="person-row">
+              <div class="person-row hover-row">
                 <span class={`av av-sm ${avColor(p.name)}`}>{initials(p.name)}</span>
                 <span style="flex:1">
                   <a class="nm" href={`/osoby/${p.id}`} style="color:inherit">{p.name}</a>
                   <span class="sub">{p.role_at_client ?? 'Kontakt'}</span>
                 </span>
-                <form method="post" action={`${base}/osoba/${p.id}/odebrat`} class="m0" onsubmit="return confirm('Odebrat osobu z této firmy?')">
-                  <button type="submit" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:.75rem" aria-label={`Odebrat ${p.name}`}>✕</button>
+                <form method="post" action={`${base}/osoba/${p.id}/odebrat`} class="m0 row-actions" onsubmit="return confirm('Odebrat osobu z této firmy?')">
+                  <button type="submit" class="icon-btn" aria-label={`Odebrat ${p.name}`}>✕</button>
                 </form>
               </div>
             ))}
-            <details style="margin-top:.4rem" class={people.length > 0 ? 'area-actions' : ''}>
-              <summary class="subtle-action" style="cursor:pointer;list-style-position:inside">Přidat osobu</summary>
-              <form method="post" action={`${base}/osoba`} style="margin-top:.6rem">
-                <div class="field" style="margin-bottom:.6rem">
-                  <label>Existující osoba</label>
-                  <select class="input" name="person_id">
-                    <option value="">— vyber —</option>
+            <span class={people.length > 0 ? 'area-actions' : ''}>
+              <Picker id="personAdd" trigger="Nová osoba" triggerLabel="Přidat osobu k firmě">
+                <form method="post" action={`${base}/osoba`} class="m0">
+                  <div class="opt-group" style="padding-left:0">Najít existující</div>
+                  <input class="input" name="existing" list="existingPersons" placeholder="Hledat osobu…" autocomplete="off" aria-label="Najít existující osobu" />
+                  <datalist id="existingPersons">
                     {persons.filter((p) => !linkedIds.has(p.id)).map((p) => (
-                      <option value={p.id}>{p.name}</option>
+                      <option value={p.name}></option>
                     ))}
-                  </select>
-                </div>
-                <div class="field" style="margin-bottom:.6rem">
-                  <label>… nebo nová osoba</label>
-                  <input class="input" name="new_name" placeholder="Jméno a příjmení" />
-                </div>
-                <div class="field" style="margin-bottom:.6rem">
-                  <label>Role u firmy</label>
-                  <select class="input" name="role">
-                    <option value="">— role —</option>
-                    {roles.map((r) => (
-                      <option value={r.label}>{r.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style="display:flex;gap:.4rem;margin-bottom:.6rem">
-                  <input class="input" name="new_phone" placeholder="Telefon (u nové)" style="flex:1" />
-                  <input class="input" name="new_email" placeholder="E-mail (u nové)" style="flex:1" />
-                </div>
-                <button class="btn btn-sm btn-primary" type="submit">Přidat</button>
-              </form>
-            </details>
+                  </datalist>
+                  <div class="opt-group" style="padding-left:0">… nebo nová</div>
+                  <input class="input" name="new_name" placeholder="Jméno a příjmení" aria-label="Jméno nové osoby" />
+                  <div id="personAddPhone" class="hidden">
+                    <input class="input" name="new_phone" placeholder="Telefon" aria-label="Telefon nové osoby" />
+                  </div>
+                  <div id="personAddEmail" class="hidden">
+                    <input class="input" name="new_email" placeholder="E-mail" aria-label="E-mail nové osoby" />
+                  </div>
+                  <div class="quick-add" style="margin:.15rem 0 .5rem">
+                    <button type="button" class="icon-btn" data-reveal="personAddPhone" aria-label="Přidat pole telefonu" title="Telefon"><IconPhone /></button>
+                    <button type="button" class="icon-btn" data-reveal="personAddEmail" aria-label="Přidat pole e-mailu" title="E-mail"><IconMail /></button>
+                    <button type="button" class="icon-btn" aria-label="Kompletní editace osoby" title="Kompletní editace" hx-get={`${base}/osoba/modal`} hx-target="#modal" hx-swap="innerHTML">…</button>
+                  </div>
+                  <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Přidat</button>
+                </form>
+              </Picker>
+            </span>
           </div>
 
           <div class="side-section"><h4>Poznámka</h4>{noteBox(base, client.note)}</div>
@@ -601,6 +599,123 @@ firmyRoutes.post('/firmy/:id/kontakt/:cid/smazat', async (c) => {
 
 // ---------- lidé (vazby) ----------
 
+// ---------- firemní údaje (malý modál) ----------
+
+firmyRoutes.post('/firmy/:id/udaje', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  const client = await getClient(t, id);
+  if (!client) return c.notFound();
+  const body = await c.req.parseBody();
+
+  const fields = [
+    ['website', 'Web', client.website],
+    ['ico', 'IČO', client.ico],
+    ['dic', 'DIČ', client.dic],
+    ['address', 'Adresa', client.address],
+  ] as const;
+  for (const [field, label, old] of fields) {
+    const value = String(body[field] ?? '').trim() || null;
+    if (value !== old) {
+      await updateClientField(t, id, field, value);
+      await logEvent(t, 'client', id, person.id, `${label}: ${value ?? '—'}`);
+    }
+  }
+  const updated = await getClient(t, id);
+  return c.html(<FirmFieldsSection base={`/firmy/${id}`} client={updated!} />);
+});
+
+// ---------- velký modál: kompletní nová osoba ----------
+
+firmyRoutes.get('/firmy/:id/osoba/modal', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  const client = await getClient(t, id);
+  if (!client) return c.notFound();
+  const [roles, labels] = await Promise.all([itemsByKey(t, 'roles_at_client'), itemsByKey(t, 'contact_labels')]);
+
+  return c.html(
+    <ModalShell title={`Nová osoba · ${client.name}`}>
+      <form method="post" action={`/firmy/${id}/osoba/komplet`}>
+        <div class="field">
+          <label>Jméno a příjmení <span class="req">*</span></label>
+          <input class="input" name="name" required autofocus />
+        </div>
+        <div class="field">
+          <label>Role u firmy</label>
+          <select class="input" name="role">
+            <option value="">— role —</option>
+            {roles.map((r) => (
+              <option value={r.label}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label>Kontakty</label>
+          <template id="modalContactRow">
+            <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
+              <select class="input" name="c_type" style="max-width:6.5rem">
+                <option value="phone">Telefon</option>
+                <option value="email">E-mail</option>
+                <option value="web">Web</option>
+                <option value="other">Jiné</option>
+              </select>
+              <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
+              <input class="input" name="c_label" list="contactLabelsModal" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
+            </div>
+          </template>
+          <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
+            <select class="input" name="c_type" style="max-width:6.5rem">
+              <option value="phone">Telefon</option>
+              <option value="email" selected>E-mail</option>
+              <option value="web">Web</option>
+              <option value="other">Jiné</option>
+            </select>
+            <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
+            <input class="input" name="c_label" list="contactLabelsModal" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
+          </div>
+          <button class="btn btn-ghost" type="button" data-add-row="modalContactRow">+ další kontakt</button>
+          <datalist id="contactLabelsModal">
+            {labels.map((l) => (
+              <option value={l.label}></option>
+            ))}
+          </datalist>
+        </div>
+        <div class="field"><label>Štítky <span class="help" style="display:inline;margin-left:.4rem">oddělené čárkou</span></label><input class="input" name="tags" /></div>
+        <div class="field"><label>Poznámka</label><textarea class="input" name="note"></textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Vytvořit osobu</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+        </div>
+      </form>
+    </ModalShell>,
+  );
+});
+
+firmyRoutes.post('/firmy/:id/osoba/komplet', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  const client = await getClient(t, id);
+  if (!client) return c.notFound();
+
+  const body = await c.req.parseBody({ all: true });
+  const name = String(body.name ?? '').trim();
+  if (!name) return c.redirect(`/firmy/${id}`);
+  const role = String(body.role ?? '').trim() || null;
+
+  const personId = await createCustomerPerson(t, { name, note: String(body.note ?? '').trim() || null });
+  await logEvent(t, 'person', personId, person.id, `Osoba založena (u firmy ${client.name})`);
+  await linkPersonToClient(t, personId, id, role);
+  await logEvent(t, 'client', id, person.id, `Přidána osoba ${name}${role ? ` (${role})` : ''}`);
+  await logEvent(t, 'person', personId, person.id, `Přiřazena k firmě ${client.name}${role ? ` (${role})` : ''}`);
+  await saveContactsFromForm(t, 'person', personId, body, person.id, 'person', id);
+  await saveTagsFromForm(t, 'person', personId, body.tags, person.id);
+  return c.redirect(`/firmy/${id}`);
+});
+
 firmyRoutes.post('/firmy/:id/osoba', async (c) => {
   const person = c.get('person')!;
   const t = person.tenant_id;
@@ -610,10 +725,15 @@ firmyRoutes.post('/firmy/:id/osoba', async (c) => {
 
   const body = await c.req.parseBody();
   const role = String(body.role ?? '').trim() || null;
+  const existingName = String(body.existing ?? '').trim();
   const newName = String(body.new_name ?? '').trim();
-  let personId = String(body.person_id ?? '').trim();
+  let personId = '';
 
-  if (newName) {
+  if (existingName) {
+    const all = await listCustomerPersons(t);
+    personId = all.find((p) => p.name.toLowerCase() === existingName.toLowerCase())?.id ?? '';
+  }
+  if (!personId && newName) {
     personId = await createCustomerPerson(t, { name: newName });
     await logEvent(t, 'person', personId, person.id, `Osoba založena (u firmy ${client.name})`);
     const phone = String(body.new_phone ?? '').trim();

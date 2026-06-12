@@ -45,6 +45,20 @@ document.addEventListener('input', function (e) {
   });
 });
 
+// Velký modál: zavření křížkem [data-modal-close], klikem na pozadí nebo klávesou Esc.
+document.addEventListener('click', function (e) {
+  if (e.target.closest('[data-modal-close]') || e.target.classList.contains('modal-overlay')) {
+    var m = document.getElementById('modal');
+    if (m) m.innerHTML = '';
+  }
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    var m = document.getElementById('modal');
+    if (m) m.innerHTML = '';
+  }
+});
+
 // Odkrytí skrytých polí: [data-reveal="idCile"] přepne .hidden (např. „Vyplnit údaje").
 document.addEventListener('click', function (e) {
   var t = e.target.closest('[data-reveal]');

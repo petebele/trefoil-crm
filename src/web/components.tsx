@@ -78,6 +78,23 @@ export function Picker(props: { id: string; trigger: Child; triggerClass?: strin
   );
 }
 
+// ---------- Velký modál (katalog §21) ----------
+
+/** Overlay na střed obrazovky pro kompletní editaci záznamu. Zavírá ✕ / Esc / klik mimo. */
+export function ModalShell(props: { title: string; children?: Child }) {
+  return (
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>{props.title}</h3>
+          <button type="button" class="icon-btn" data-modal-close aria-label="Zavřít">✕</button>
+        </div>
+        {props.children}
+      </div>
+    </div>
+  );
+}
+
 // ---------- Inline editace (katalog §18 — kompaktní ✓/✕) ----------
 
 export type FieldKind = 'text' | 'textarea' | 'title';
@@ -226,7 +243,7 @@ export function OwnerBox(props: {
           <span class="row-actions">{picker(<IconPencil />, 'icon-btn', 'Změnit odpovědnou osobu')}</span>
         </div>
       ) : (
-        picker('Přiřadit odpovědnou osobu')
+        picker('Přiřadit osobu')
       )}
     </div>
   );
@@ -308,7 +325,8 @@ export function ContactsSection(props: {
 
   const hasContacts = props.contacts.length > 0;
   return (
-    <div id="contacts" class={hasContacts ? 'hover-area' : ''}>
+    <div id="contacts" class={`side-section ${hasContacts ? 'hover-area' : ''}`} style="border-top:none;margin-top:.4rem;padding-top:0">
+      <h4>Kontakty</h4>
       {groups.map((g) => (
         <div class="fact">
           <span class="lbl" style="margin-bottom:.15rem">{CONTACT_TYPE_LABELS[g.type]}</span>

@@ -290,6 +290,28 @@ Pro výběrové hodnoty (stav, osoba) NEpoužívej select v editaci — použij 
 Otevírání řeší `data-menu-toggle` (app.js), `[data-filter-list]` filtruje `.opt` položky psaním.
 Jednoduché výběry (stav, osoba) aplikují volbu hned klikem na položku — bez Použít.
 
+**Zarovnání:** panel se otevírá **levým horním rohem k akci** (levý/střední panel stránky);
+akce v pravém panelu nebo horní liště používají `.menu.align-right` (pravý horní roh).
+Malý modál slouží pro **hlavní údaje**; ikonka „…" v něm otevírá velký modál (§21).
+
+## 21. Velký modál `.modal-overlay` (kompletní editace)
+
+**Kdy:** kompletní editace záznamu (osoba/firma se všemi kontakty a údaji). Otevírá se
+ikonkou „…" z malého modálu (nebo přímou akcí), na střed obrazovky, s pozadím.
+
+```html
+<!-- server vrací fragment do <div id="modal"> (htmx hx-get → hx-target="#modal") -->
+<div class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-head"><h3>Nová osoba · Firma</h3>
+      <button class="icon-btn" data-modal-close aria-label="Zavřít">✕</button></div>
+    …formulář dle §16…
+  </div>
+</div>
+```
+
+Zavření: ✕ (`data-modal-close`), klik na pozadí, klávesa Esc (app.js). Komponenta `ModalShell`.
+
 ## 20. Kontextové akce na řádcích + skrytý vzor přidávání
 
 - **Hodnoty jsou text**; akční ikonky (`.icon-btn` ✎ ✕) jsou v `.row-actions` a ukážou se až

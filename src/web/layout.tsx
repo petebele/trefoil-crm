@@ -4,7 +4,7 @@ import { MODULES } from '../modules';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
 
 /** Verze statických souborů — zvednout při změně theme.css/app.js (cache-busting). */
-const ASSET_V = '6';
+const ASSET_V = '7';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -95,7 +95,7 @@ export function Layout(props: {
                   </button>
                 )}
               </div>
-              <div class="menu" id="userMenu">
+              <div class="menu align-right" id="userMenu">
                 <div class="user" data-menu-toggle="userMenu" role="button" tabindex={0} aria-haspopup="true">
                   <span class="av av-i">{initials(person.name)}</span>
                   <span class="uname">
@@ -116,6 +116,7 @@ export function Layout(props: {
           </header>
         ) : null}
         <main class="page">{children}</main>
+        <div id="modal"></div>
       </body>
     </html>
   );
