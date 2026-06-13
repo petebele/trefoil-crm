@@ -1,7 +1,7 @@
-import { SKINS, skinInitScript } from './skins';
+import { SKINS, skinBootScript } from './skins';
 
 /** Verze statických souborů — zvednout při změně theme.css / app.js / skinů (cache-busting). */
-export const ASSET_V = '13';
+export const ASSET_V = '14';
 
 /**
  * Společné prvky <head> pro všechny stránky (vč. login a založení):
@@ -16,7 +16,7 @@ export function HeadAssets(props: { title: string }) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>{props.title}</title>
       {/* běží dřív než cokoli jiného → žádné bliknutí špatného motivu */}
-      <script dangerouslySetInnerHTML={{ __html: skinInitScript() }} />
+      <script dangerouslySetInnerHTML={{ __html: skinBootScript() }} />
       <link rel="stylesheet" href={`/static/theme.css?v=${ASSET_V}`} />
       {SKINS.map((s) => (
         <link rel="stylesheet" href={`/static/skins/${s.id}.css?v=${ASSET_V}`} data-skin-css={s.id} />

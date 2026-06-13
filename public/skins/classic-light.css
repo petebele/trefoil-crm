@@ -1,11 +1,11 @@
 /* ============================================================
-   Skin: Světlý — výchozí motiv (replika vizuálu Capsule CRM).
+   Skin: Klasický · světlý — výchozí motiv (replika vizuálu Capsule CRM).
    Pouze barevné tokeny; strukturu řeší theme.css.
-   Bloky `:root` i `:root[data-skin="light"]` => světlá je výchozí
-   i bez JavaScriptu.
+   Bloky `:root` i `:root[data-skin="classic-light"]` => tento skin je
+   výchozí i bez JavaScriptu.
    ============================================================ */
 :root,
-:root[data-skin="light"] {
+:root[data-skin="classic-light"] {
   color-scheme: light;
 
   /* Plochy a text */

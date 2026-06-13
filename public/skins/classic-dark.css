@@ -1,9 +1,8 @@
 /* ============================================================
-   Skin: Tmavý. Pouze barevné tokeny — strukturu řeší theme.css.
-   Aktivuje se atributem data-skin="dark" na <html> (nastaví skript
-   v hlavičce podle volby uživatele / systému).
+   Skin: Klasický · tmavý. Pouze barevné tokeny — strukturu řeší theme.css.
+   Aktivuje se atributem data-skin="classic-dark" na <html>.
    ============================================================ */
-:root[data-skin="dark"] {
+:root[data-skin="classic-dark"] {
   color-scheme: dark;
 
   /* Plochy a text */

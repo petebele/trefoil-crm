@@ -26,18 +26,28 @@ samostatná sada těchto tokenů. Strukturu (rozměry, rozvržení, komponenty) 
 `public/theme.css` a používá jen `var(--token)`; konkrétní barvy dodává aktivní skin
 z `public/skins/<id>.css`. Skin se aktivuje atributem `data-skin` na `<html>`.
 
-Zatím dva skiny: **`light`** (výchozí, hodnoty v tabulce níže) a **`dark`**. Přepínač je
-v uživatelském menu (sekce *Vzhled*); volba se ukládá do `localStorage['skin']`, bez volby
-se řídí systémem (`prefers-color-scheme`). Skript v `<head>` nastaví motiv ještě před
-vykreslením (žádné bliknutí). Registr skinů: `src/web/skins.ts`.
+Skiny jsou ve třech **rodinách**, každá světlá + tmavá (6 celkem):
+
+- **Klasický** (`classic-light` = výchozí, hodnoty v tabulce níže; `classic-dark`) — Capsule styl.
+- **Conviu** (`conviu-light`, `conviu-dark`) — značkové barvy dle conviu.cz: petrolejová modř
+  `#015280` (akcent), námořnická `#161931` (text/báze tmavého), zlatá `#f8ae0d`, zelená
+  `#7cb342` (úspěch), červená `#b3261e`.
+- **Vysoký kontrast** (`contrast-light`, `contrast-dark`) — přístupnost: bílé/černé plochy,
+  silné rámečky místo stínů, ztmavené/projasněné akcenty (AAA).
+
+Přepínač je v uživatelském menu jako **submenu „Vzhledy"** (vyskakovací, viz KOMPONENTY §23).
+Volba se ukládá do `localStorage['skin']`; bez volby se řídí systémem (`prefers-color-scheme`)
+— `DEFAULT_SKIN` / `DEFAULT_DARK_SKIN` v `skins.ts`. Skript v `<head>` nastaví motiv ještě před
+vykreslením (žádné bliknutí) a zveřejní konfiguraci do `window.__skins` (čte ji app.js).
+Registr skinů: `src/web/skins.ts`.
 
 **Přidání dalšího skinu**: nový soubor `public/skins/<id>.css` s blokem
 `:root[data-skin="<id>"] { …všechny tokeny… }` + položka v `SKINS` (`skins.ts`). Přepínač
 i načtení stylů se z registru vygenerují samy. Tokeny, které musí každý skin nastavit, jsou
-v `public/skins/light.css` (vč. ploch `--surface-2`/`--hover`/`--track`, avatarů `--av-*`,
-chipů `--chip-*`, `--shadow-color`, `--overlay`).
+v `public/skins/classic-light.css` (vč. ploch `--surface-2`/`--hover`/`--track`, avatarů
+`--av-*`, chipů `--chip-*`, `--shadow-color`, `--overlay`).
 
-| Token | Hodnota (light) | Použití |
+| Token | Hodnota (classic-light) | Použití |
 |---|---|---|
 | `--ink` | `#1e2235` | primární text (téměř černá, do modra) |
 | `--muted` | `#6b7280` | sekundární text, popisky, meta |

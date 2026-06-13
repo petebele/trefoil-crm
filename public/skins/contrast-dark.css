@@ -1,0 +1,45 @@
+/* ============================================================
+   Skin: Vysoký kontrast · tmavý — přístupnost (deep dark, OLED).
+   Černé plochy, světlé rámečky, bílý text, projasněné akcenty.
+   ============================================================ */
+:root[data-skin="contrast-dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text */
+  --ink: #ffffff;
+  --muted: #d2d2d2;        /* světlý, drží kontrast na černé */
+  --bg: #000000;
+  --card: #0d0d0d;
+  --line: #b4b4b4;         /* světlé rámečky oddělují plochy */
+  --surface-2: #2a2a2a;
+  --hover: #1b1b1b;
+  --track: #3a3a3a;
+
+  /* Akcent a stavové barvy (projasněné pro kontrast na černé) */
+  --accent: #4da3ff;
+  --accent-hover: #7bbcff;
+  --accent-soft: #11243c;
+  --teal: #2ed27a;
+  --teal-soft: #0e2417;
+  --teal-ink: #5fe39a;
+  --red: #ff5a52;
+  --red-soft: #3a1413;
+  --orange: #ffb22e;
+  --pink: #ff7aa8;
+
+  /* Avatary */
+  --av-g-bg: #0e2417; --av-g-ink: #5fe39a;
+  --av-p-bg: #2e0f1e; --av-p-ink: #ff9cc2;
+  --av-b-bg: #0b2138; --av-b-ink: #7bbcff;
+  --av-y-bg: #2e2207; --av-y-ink: #ffcf66;
+
+  /* Chipy */
+  --chip-bg: #222222;
+  --chip-orange-bg: #2e2207; --chip-orange-ink: #ffcf66;
+  --chip-dark-bg: #2a2a2a;   --chip-dark-ink: #f0f0f0;
+
+  /* Ostatní */
+  --btn-danger-border: #ff5a52;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .72);
+}

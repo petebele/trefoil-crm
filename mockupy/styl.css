@@ -1,18 +1,111 @@
 /* ============================================================
-   Conviu CRM v2 — styl mockupů (standalone). VYGENEROVÁNO:
-   skiny (light+dark tokeny) + struktura. V aplikaci jsou tokeny
+   Conviu CRM v2 — styl mockupů (standalone, VYGENEROVÁNO).
+   Všech 6 skinů (tokeny) + struktura. V aplikaci jsou tokeny
    v public/skins/*.css, struktura v public/theme.css.
-   Náhled tmavého: <html data-skin="dark"> v mockupu.
+   Náhled jiného skinu: <html data-skin="conviu-dark"> apod.
    ============================================================ */
 
 /* ============================================================
-   Skin: Světlý — výchozí motiv (replika vizuálu Capsule CRM).
+   Skin: Conviu · světlý — podle vizuálu conviu.cz.
+   Značkové barvy: petrolejová modř #015280 (akcent), námořnická #161931
+   (text), zlatá #f8ae0d, zelená #7cb342 (úspěch), červená #b3261e.
+   ============================================================ */
+:root[data-skin="conviu-light"] {
+  color-scheme: light;
+
+  /* Plochy a text */
+  --ink: #161931;          /* námořnická (blue1) */
+  --muted: #5a6275;
+  --bg: #f3f6f9;
+  --card: #ffffff;
+  --line: #e0e6ec;
+  --surface-2: #e8eef3;
+  --hover: #f6f9fb;
+  --track: #e2e9ef;
+
+  /* Akcent a stavové barvy */
+  --accent: #015280;       /* petrolejová modř (blue3) */
+  --accent-hover: #013d5f;
+  --accent-soft: #e2eef4;
+  --teal: #5f9b2f;         /* značková zelená = úspěch */
+  --teal-soft: #e9f3dd;
+  --teal-ink: #44721d;
+  --red: #b3261e;
+  --red-soft: #f7e1df;
+  --orange: #f8ae0d;       /* značková zlatá */
+  --pink: #cf4a7d;
+
+  /* Avatary */
+  --av-g-bg: #e3f0d4; --av-g-ink: #44721d;
+  --av-p-bg: #f7dde7; --av-p-ink: #a83a68;
+  --av-b-bg: #d7e7f1; --av-b-ink: #015280;
+  --av-y-bg: #fdecc3; --av-y-ink: #8a5e00;
+
+  /* Chipy */
+  --chip-bg: #e9edf2;
+  --chip-orange-bg: #fdecc3; --chip-orange-ink: #8a5e00;
+  --chip-dark-bg: #dde3ec;   --chip-dark-ink: #2a2d45;
+
+  /* Ostatní */
+  --btn-danger-border: #e6b6b3;
+  --shadow-color: 22, 25, 49;          /* stín laděný do námořnické */
+  --overlay: rgba(22, 25, 49, .42);
+}
+
+/* ============================================================
+   Skin: Conviu · tmavý — postavený na značkové námořnické #161931.
+   Akcent petrolejová projasněná pro tmavé pozadí, zlatá a zelená drží.
+   ============================================================ */
+:root[data-skin="conviu-dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text (báze = námořnická) */
+  --ink: #e8eaf6;
+  --muted: #99a1c2;
+  --bg: #12152b;
+  --card: #1c2042;
+  --line: #2c3157;
+  --surface-2: #262c52;
+  --hover: #1f2446;
+  --track: #2c3157;
+
+  /* Akcent a stavové barvy */
+  --accent: #46a6e0;       /* petrolejová projasněná */
+  --accent-hover: #64b7ea;
+  --accent-soft: #13314a;
+  --teal: #8bc34a;         /* značková zelená = úspěch */
+  --teal-soft: #1f3016;
+  --teal-ink: #a6d96a;
+  --red: #ef5350;
+  --red-soft: #3a1d1c;
+  --orange: #f9b62a;       /* značková zlatá */
+  --pink: #ec6a93;
+
+  /* Avatary */
+  --av-g-bg: #1f3016; --av-g-ink: #a6d96a;
+  --av-p-bg: #3a1f2c; --av-p-ink: #f0a0bf;
+  --av-b-bg: #12314c; --av-b-ink: #6fc0f0;
+  --av-y-bg: #3a2c10; --av-y-ink: #f2c766;
+
+  /* Chipy */
+  --chip-bg: #262c52;
+  --chip-orange-bg: #3a2c10; --chip-orange-ink: #f2c766;
+  --chip-dark-bg: #2c3157;   --chip-dark-ink: #c4c9e4;
+
+  /* Ostatní */
+  --btn-danger-border: #5a2e2c;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(4, 5, 16, .66);
+}
+
+/* ============================================================
+   Skin: Klasický · světlý — výchozí motiv (replika vizuálu Capsule CRM).
    Pouze barevné tokeny; strukturu řeší theme.css.
-   Bloky `:root` i `:root[data-skin="light"]` => světlá je výchozí
-   i bez JavaScriptu.
+   Bloky `:root` i `:root[data-skin="classic-light"]` => tento skin je
+   výchozí i bez JavaScriptu.
    ============================================================ */
 :root,
-:root[data-skin="light"] {
+:root[data-skin="classic-light"] {
   color-scheme: light;
 
   /* Plochy a text */
@@ -55,11 +148,10 @@
 }
 
 /* ============================================================
-   Skin: Tmavý. Pouze barevné tokeny — strukturu řeší theme.css.
-   Aktivuje se atributem data-skin="dark" na <html> (nastaví skript
-   v hlavičce podle volby uživatele / systému).
+   Skin: Klasický · tmavý. Pouze barevné tokeny — strukturu řeší theme.css.
+   Aktivuje se atributem data-skin="classic-dark" na <html>.
    ============================================================ */
-:root[data-skin="dark"] {
+:root[data-skin="classic-dark"] {
   color-scheme: dark;
 
   /* Plochy a text */
@@ -99,6 +191,98 @@
   --btn-danger-border: #5a2e30;
   --shadow-color: 0, 0, 0;
   --overlay: rgba(0, 0, 0, .62);
+}
+
+/* ============================================================
+   Skin: Vysoký kontrast · světlý — přístupnost (ostré světlo, slabší zrak).
+   Bílé plochy, téměř černé rámečky a text, ztmavené akcenty (AAA kontrast).
+   ============================================================ */
+:root[data-skin="contrast-light"] {
+  color-scheme: light;
+
+  /* Plochy a text */
+  --ink: #000000;
+  --muted: #2b2b2b;        /* tmavý, ne tlumený — drží kontrast */
+  --bg: #ffffff;
+  --card: #ffffff;
+  --line: #1a1a1a;         /* silné rámečky nahrazují jemné stíny */
+  --surface-2: #e4e4e4;
+  --hover: #ededed;
+  --track: #c9c9c9;
+
+  /* Akcent a stavové barvy (ztmavené pro kontrast na bílé) */
+  --accent: #0a3d91;
+  --accent-hover: #062a68;
+  --accent-soft: #d9e2f5;
+  --teal: #006b3c;
+  --teal-soft: #cdebdb;
+  --teal-ink: #00502d;
+  --red: #b00000;
+  --red-soft: #f6d4d4;
+  --orange: #8a4b00;
+  --pink: #97185a;
+
+  /* Avatary */
+  --av-g-bg: #cdebdb; --av-g-ink: #00502d;
+  --av-p-bg: #f6d2e0; --av-p-ink: #8a1450;
+  --av-b-bg: #d4e0f6; --av-b-ink: #0a3d91;
+  --av-y-bg: #f2e1bb; --av-y-ink: #6a4500;
+
+  /* Chipy */
+  --chip-bg: #dedede;
+  --chip-orange-bg: #f2e1bb; --chip-orange-ink: #6a4500;
+  --chip-dark-bg: #cccccc;   --chip-dark-ink: #111111;
+
+  /* Ostatní */
+  --btn-danger-border: #b00000;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .6);
+}
+
+/* ============================================================
+   Skin: Vysoký kontrast · tmavý — přístupnost (deep dark, OLED).
+   Černé plochy, světlé rámečky, bílý text, projasněné akcenty.
+   ============================================================ */
+:root[data-skin="contrast-dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text */
+  --ink: #ffffff;
+  --muted: #d2d2d2;        /* světlý, drží kontrast na černé */
+  --bg: #000000;
+  --card: #0d0d0d;
+  --line: #b4b4b4;         /* světlé rámečky oddělují plochy */
+  --surface-2: #2a2a2a;
+  --hover: #1b1b1b;
+  --track: #3a3a3a;
+
+  /* Akcent a stavové barvy (projasněné pro kontrast na černé) */
+  --accent: #4da3ff;
+  --accent-hover: #7bbcff;
+  --accent-soft: #11243c;
+  --teal: #2ed27a;
+  --teal-soft: #0e2417;
+  --teal-ink: #5fe39a;
+  --red: #ff5a52;
+  --red-soft: #3a1413;
+  --orange: #ffb22e;
+  --pink: #ff7aa8;
+
+  /* Avatary */
+  --av-g-bg: #0e2417; --av-g-ink: #5fe39a;
+  --av-p-bg: #2e0f1e; --av-p-ink: #ff9cc2;
+  --av-b-bg: #0b2138; --av-b-ink: #7bbcff;
+  --av-y-bg: #2e2207; --av-y-ink: #ffcf66;
+
+  /* Chipy */
+  --chip-bg: #222222;
+  --chip-orange-bg: #2e2207; --chip-orange-ink: #ffcf66;
+  --chip-dark-bg: #2a2a2a;   --chip-dark-ink: #f0f0f0;
+
+  /* Ostatní */
+  --btn-danger-border: #ff5a52;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .72);
 }
 
 /* ============================================================
@@ -394,14 +578,26 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
   box-shadow: 0 10px 30px rgba(var(--shadow-color), .10); padding: .35rem; z-index: 60;
   font-weight: 400; /* panel nedědí tučnost spouštěče (akce v h4/nadpisech) */
 }
-.menu.align-right .menu-list { left: auto; right: 0; }
-.menu.open .menu-list { display: block; }
+/* přímý potomek, aby se neovlivnily vnořené panely (submenu) */
+.menu.align-right > .menu-list { left: auto; right: 0; }
+.menu.open > .menu-list { display: block; }
 .menu-item {
   display: block; width: 100%; text-align: left; border: none; background: none;
   font: inherit; font-size: .85rem; color: var(--ink); cursor: pointer;
   padding: .5rem .7rem; border-radius: 6px;
 }
 .menu-item:hover { background: var(--bg); text-decoration: none; }
+
+/* Submenu (vyskakovací do strany) — položka rozbalovacího menu s podnabídkou,
+   např. „Vzhledy". Otevírá se najetím myší (hover) nebo klikem (app.js → .open). */
+.submenu { position: relative; }
+.menu-item.has-sub { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.menu-item.has-sub .sub-arrow { color: var(--muted); font-size: 1rem; line-height: 1; }
+.submenu-list { left: auto; right: 100%; top: -.4rem; margin-right: .4rem; min-width: 210px; }
+.submenu.open > .submenu-list { display: block; }
+@media (hover: hover) {
+  .submenu:hover > .submenu-list { display: block; }
+}
 
 /* Dropdown panel (Capsule styl): větší plovoucí panel s hledáním, položkami a akcemi */
 .menu-list.panel {

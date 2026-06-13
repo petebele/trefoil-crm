@@ -114,13 +114,20 @@ export function Layout(props: {
                   <IconChevron />
                 </div>
                 <div class="menu-list" role="menu">
-                  <div class="opt-group">Vzhled</div>
-                  {SKINS.map((s) => (
-                    <button class="opt" type="button" role="menuitemradio" aria-checked="false" data-skin-set={s.id}>
-                      <span>{s.label}</span>
-                      <span class="tick">✓</span>
+                  <div class="submenu">
+                    <button class="menu-item has-sub" type="button" data-submenu-toggle aria-haspopup="true">
+                      Vzhledy
+                      <span class="sub-arrow" aria-hidden="true">›</span>
                     </button>
-                  ))}
+                    <div class="menu-list submenu-list" role="menu" aria-label="Vzhledy">
+                      {SKINS.map((s) => (
+                        <button class="opt" type="button" role="menuitemradio" aria-checked="false" data-skin-set={s.id}>
+                          <span>{s.label}</span>
+                          <span class="tick">✓</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div class="menu-sep"></div>
                   <form method="post" action="/logout" class="m0">
                     <button class="menu-item" type="submit" role="menuitem">
