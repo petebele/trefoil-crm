@@ -96,8 +96,9 @@ try {
   await req(`/vykazy/${recC.id}/schvalit`, { method: 'POST', form: { back: '/' } });
   r = await req(`${fbase}?tab=sluzby&mesic=${month}`);
   // vícepráce = 0:30×1000 + 1:00×800 = 1300; celkem = paušál 5000 + 1300
-  ok('Měsíčně celkem: vícepráce 1 300 Kč', r.text.includes('Vícepráce dle schválených výkazů') && r.text.includes(`${kc(1300)} Kč`));
+  ok('Měsíčně celkem: vícepráce 1 300 Kč', r.text.includes('Vícepráce — schváleno') && r.text.includes(`${kc(1300)} Kč`));
   ok('Měsíčně celkem: součet 6 300 Kč', r.text.includes(`${kc(6300)} Kč/měs`));
+  ok('Měsíčně celkem: čerpání paušálu v řádku', r.text.includes('Paušál hodin (čerpáno'));
 
   // --- Můj výkaz + Přehled ---
   r = await req(`/vykazy?tab=muj&mesic=${month}`);
@@ -117,14 +118,15 @@ try {
   );
   cleanup.sessions.push(usid);
 
-  await req('/vykazy', { method: 'POST', form: { client_id: client.id, service_id: svcA.id, description: 'TestE2E od usera', note: '', hours: '0', mins: '30', performed_at: day(20), billing: 'free', back: '/' }, cookie: usid });
+  await req('/vykazy', { method: 'POST', form: { client_id: client.id, service_id: svcB.id, description: 'TestE2E od usera', note: '', hours: '0', mins: '30', performed_at: day(20), billing: 'billed', back: '/' }, cookie: usid });
   const recD = db.prepare("SELECT * FROM work_records WHERE client_id = ? AND description = 'TestE2E od usera'").get(client.id);
-  ok('uživatel vykázal (free, 30 min)', !!recD && recD.worker_id === user.id && recD.billing === 'free');
+  ok('uživatel vykázal (billed, 30 min, pending)', !!recD && recD.worker_id === user.id && recD.billing === 'billed' && recD.status === 'pending');
   r = await req(`/vykazy/${recD.id}/schvalit`, { method: 'POST', form: { back: '/' }, cookie: usid });
   const recD2 = db.prepare('SELECT status FROM work_records WHERE id = ?').get(recD.id);
   ok('uživatel (ne odpovědný) neschválí', recD2.status === 'pending');
   r = await req(`${fbase}?tab=sluzby&mesic=${month}`);
-  ok('čekající výkaz: poznámka u součtu', r.text.includes('čeká na schválení'));
+  // čekající 0:30 × 800 = 400 Kč → očekávaný měsíc 5000+1300+400 = 6700
+  ok('čekající vícepráce v součtu (rezervace)', r.text.includes('Vícepráce — čeká na schválení') && r.text.includes(`${kc(400)} Kč`) && r.text.includes(`${kc(6700)} Kč/měs`));
   r = await req(`/vykazy/${recA.id}/modal`, { cookie: usid });
   ok('cizí schválený výkaz needitovatelný', r.status === 302);
   await req(`/vykazy/${recD.id}/smazat`, { method: 'POST', form: { back: '/' }, cookie: usid });

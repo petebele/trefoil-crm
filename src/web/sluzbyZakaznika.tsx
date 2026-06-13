@@ -227,9 +227,12 @@ export function SluzbyZakaznikaTab(props: {
   // Pevné měsíční platby: paušál + předplatná. Samostatně účtovaná práce přijde z výkazů.
   const active = services.filter((s) => s.status === 'active');
   const lines: Array<{ label: string; amount: number | null; note: string | null }> = [];
+  const vMoney = props.vykazy?.money;
   if (hasRetainer) {
     lines.push({
-      label: `Paušál hodin (${kc(client.hours_budget_monthly!)} h/měs)`,
+      label: vMoney
+        ? `Paušál hodin (čerpáno ${fmtMinutes(vMoney.usedRetainerMinutes)} z ${fmtMinutes(vMoney.budgetMinutes ?? 0)})`
+        : `Paušál hodin (${kc(client.hours_budget_monthly!)} h/měs)`,
       amount: client.retainer_price,
       note: client.retainer_price === null ? 'cena nenastavena' : null,
     });
@@ -247,8 +250,16 @@ export function SluzbyZakaznikaTab(props: {
   const v = props.vykazy;
   if (v && v.money.billedCost + v.money.overageCost > 0) {
     lines.push({
-      label: `Vícepráce dle schválených výkazů (${fmtMinutes(v.money.billedMinutes + v.money.overageMinutes)})`,
+      label: `Vícepráce — schváleno (${fmtMinutes(v.money.billedMinutes + v.money.overageMinutes)})`,
       amount: Math.round(v.money.billedCost + v.money.overageCost),
+      note: null,
+    });
+  }
+  // čekající výkazy = rezervovaný čas a očekávané příjmy — do součtu patří také
+  if (v && v.money.pendingExtraMinutes > 0) {
+    lines.push({
+      label: `Vícepráce — čeká na schválení (${fmtMinutes(v.money.pendingExtraMinutes)})`,
+      amount: Math.round(v.money.pendingExtraCost),
       note: null,
     });
   }
@@ -396,16 +407,13 @@ export function SluzbyZakaznikaTab(props: {
             </div>
           ))}
           <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;border-top:2px solid var(--line);font-weight:700">
-            <span>{v ? `Celkem za ${v.month}` : 'Pevné platby celkem'}</span>
+            <span>{v ? `Očekávaný měsíc ${v.month}` : 'Pevné platby celkem'}</span>
             <span>{kc(total)} Kč/měs</span>
           </div>
           <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">
             {v
-              ? 'Pevné platby (paušál + předplatná) + vícepráce ze schválených výkazů zvoleného měsíce.'
+              ? 'Pevné platby (paušál + předplatná) + vícepráce z výkazů zvoleného měsíce — schválené i čekající (rezervovaný čas a očekávané příjmy). Práce „z paušálu" v rámci limitu nemění částku, jen čerpá hodiny.'
               : 'Jen pevné měsíční platby (paušál + předplatná). Vícepráce se doplní z výkazů práce (zapněte modul Výkazy).'}
-            {v && v.money.pendingCount > 0
-              ? ` ${v.money.pendingCount === 1 ? '1 výkaz čeká' : `${v.money.pendingCount} výkazy čekají`} na schválení a do součtu se zatím nepočítá.`
-              : ''}
           </p>
         </div>
       ) : null}

@@ -234,28 +234,23 @@ export interface MonthMoney {
   budgetMinutes: number | null; // paušál (vč. převedených), null = bez paušálu
   carryMinutes: number;
   usedRetainerMinutes: number; // schválené z paušálu
-  overageMinutes: number; // přečerpání
+  overageMinutes: number; // přečerpání (schválené)
   overageCost: number; // přečerpané minuty × sazba služby záznamu
   billedMinutes: number; // schválené „účtovat zvlášť"
   billedCost: number;
+  /** Očekávané navíc z ČEKAJÍCÍCH výkazů (rezervovaný čas a peníze). */
+  pendingExtraMinutes: number;
+  pendingExtraCost: number;
 }
 
-/** Měsíční souhrn výkazů zákazníka: hodiny (čerpání paušálu) i peníze (vícepráce). */
-export async function clientMonthMoney(tenantId: string, client: ClientsTable, month: string): Promise<MonthMoney> {
-  const records = await listForClientMonth(tenantId, client.id, month);
-  const approved = records.filter((r) => r.status === 'approved');
-
-  const carryMinutes = await carryoverMinutes(tenantId, client, month);
-  const budgetMinutes = client.hours_budget_monthly === null ? null : Math.round(client.hours_budget_monthly * 60) + carryMinutes;
-
-  // přečerpání: schválené paušálové minuty chronologicky; co přeteče, účtuje se sazbou služby záznamu
-  const retainerAsc = approved
+/** Vícepráce nad množinou záznamů: přečerpání paušálu (chronologicky) + účtované zvlášť. */
+function workCosts(records: WorkRecord[], allowance: number) {
+  const retainerAsc = records
     .filter((r) => r.billing === 'retainer_hours')
     .sort((a, b) => a.performed_at.localeCompare(b.performed_at) || a.created_at.localeCompare(b.created_at));
   let cumulative = 0;
   let overageMinutes = 0;
   let overageCost = 0;
-  const allowance = budgetMinutes ?? 0;
   for (const r of retainerAsc) {
     const over = Math.max(0, Math.min(r.minutes, cumulative + r.minutes - allowance));
     cumulative += r.minutes;
@@ -264,21 +259,40 @@ export async function clientMonthMoney(tenantId: string, client: ClientsTable, m
       overageCost += (over / 60) * (r.service_rate ?? 0);
     }
   }
-
-  const billed = approved.filter((r) => r.billing === 'billed');
+  const billed = records.filter((r) => r.billing === 'billed');
   const billedMinutes = billed.reduce((s, r) => s + r.minutes, 0);
   const billedCost = billed.reduce((s, r) => s + (r.minutes / 60) * (r.service_rate ?? 0), 0);
+  return { usedRetainerMinutes: cumulative, overageMinutes, overageCost, billedMinutes, billedCost };
+}
+
+/**
+ * Měsíční souhrn výkazů zákazníka: hodiny (čerpání paušálu) i peníze.
+ * Schválené = potvrzené; čekající = očekávané/rezervované (počítají se zvlášť).
+ */
+export async function clientMonthMoney(tenantId: string, client: ClientsTable, month: string): Promise<MonthMoney> {
+  const records = await listForClientMonth(tenantId, client.id, month);
+  const approved = records.filter((r) => r.status === 'approved');
+
+  const carryMinutes = await carryoverMinutes(tenantId, client, month);
+  const budgetMinutes = client.hours_budget_monthly === null ? null : Math.round(client.hours_budget_monthly * 60) + carryMinutes;
+  const allowance = budgetMinutes ?? 0;
+
+  const confirmed = workCosts(approved, allowance);
+  const expected = workCosts(records, allowance); // vč. čekajících
 
   return {
     totalMinutes: records.reduce((s, r) => s + r.minutes, 0),
     pendingCount: records.filter((r) => r.status === 'pending').length,
     budgetMinutes,
     carryMinutes,
-    usedRetainerMinutes: cumulative,
-    overageMinutes,
-    overageCost,
-    billedMinutes,
-    billedCost,
+    usedRetainerMinutes: confirmed.usedRetainerMinutes,
+    overageMinutes: confirmed.overageMinutes,
+    overageCost: confirmed.overageCost,
+    billedMinutes: confirmed.billedMinutes,
+    billedCost: confirmed.billedCost,
+    pendingExtraMinutes:
+      expected.overageMinutes + expected.billedMinutes - confirmed.overageMinutes - confirmed.billedMinutes,
+    pendingExtraCost: Math.max(0, expected.overageCost + expected.billedCost - confirmed.overageCost - confirmed.billedCost),
   };
 }
 
