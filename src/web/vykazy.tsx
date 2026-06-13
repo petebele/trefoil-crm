@@ -62,10 +62,13 @@ export function WorkRecordModal(props: {
   clients: Array<{ id: string; name: string }>; // pro výběr zákazníka (nový bez kontextu)
   services: ClientService[]; // běžící služby zvoleného zákazníka
   back: string;
+  preselectServiceId?: string; // „Vykázat" přímo ze služby
 }) {
   const r = props.record;
   const today = new Date().toISOString().slice(0, 10);
   const running = props.services.filter((s) => s.status !== 'ended');
+  const preselected = running.find((s) => s.id === props.preselectServiceId);
+  const billingDefault = r?.billing ?? (preselected ? defaultBilling(preselected.mode) : 'retainer_hours');
   return (
     <ModalShell title={r ? `Upravit výkaz · ${r.client_name}` : 'Vykázat práci'}>
       <form method="post" action={r ? `/vykazy/${r.id}` : '/vykazy'}>
@@ -108,7 +111,11 @@ export function WorkRecordModal(props: {
               <select class="input" name="service_id" required data-defaults>
                 <option value="">— vyberte službu —</option>
                 {running.map((s) => (
-                  <option value={s.id} selected={r?.service_id === s.id} data-set-billing={defaultBilling(s.mode)}>
+                  <option
+                    value={s.id}
+                    selected={(r ? r.service_id : props.preselectServiceId) === s.id}
+                    data-set-billing={defaultBilling(s.mode)}
+                  >
                     {s.label}
                     {s.detail ? ` · ${s.detail}` : ''}
                   </option>
@@ -140,9 +147,9 @@ export function WorkRecordModal(props: {
             <div class="field">
               <label>Účtování</label>
               <select class="input" name="billing">
-                <option value="retainer_hours" selected={r?.billing === 'retainer_hours'}>{BILLING_LABELS.retainer_hours}</option>
-                <option value="billed" selected={r?.billing === 'billed'}>{BILLING_LABELS.billed}</option>
-                <option value="free" selected={r?.billing === 'free'}>{BILLING_LABELS.free}</option>
+                <option value="retainer_hours" selected={billingDefault === 'retainer_hours'}>{BILLING_LABELS.retainer_hours}</option>
+                <option value="billed" selected={billingDefault === 'billed'}>{BILLING_LABELS.billed}</option>
+                <option value="free" selected={billingDefault === 'free'}>{BILLING_LABELS.free}</option>
               </select>
               <span class="help">Předvyplní se podle režimu služby; u každého výkazu jde změnit.</span>
             </div>
@@ -205,13 +212,13 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
   );
 }
 
-/** Přepínač měsíce (šipky + název) — odkazy zachovávají ostatní parametry. */
+/** Přepínač měsíce — šipky jako ikonová tlačítka, název měsíce mezi nimi. */
 export function MonthNav(props: { month: string; hrefFor: (m: string) => string }) {
   return (
-    <span style="display:inline-flex;gap:.5rem;align-items:center">
-      <a class="subtle-action" href={props.hrefFor(shiftMonth(props.month, -1))} aria-label="Předchozí měsíc">‹</a>
-      <b style="min-width:9rem;text-align:center;text-transform:capitalize">{monthLabel(props.month)}</b>
-      <a class="subtle-action" href={props.hrefFor(shiftMonth(props.month, 1))} aria-label="Další měsíc">›</a>
+    <span style="display:inline-flex;align-items:center;gap:.15rem;border:1px solid var(--line);border-radius:999px;padding:.1rem .35rem;background:var(--card)">
+      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, -1))} aria-label="Předchozí měsíc">‹</a>
+      <span style="min-width:8.5rem;text-align:center;text-transform:capitalize;font-weight:600;font-size:.85rem">{monthLabel(props.month)}</span>
+      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, 1))} aria-label="Další měsíc">›</a>
     </span>
   );
 }
@@ -332,8 +339,23 @@ vykazyRoutes.get('/vykazy', async (c) => {
 vykazyRoutes.get('/vykazy/modal/novy', async (c) => {
   const person = c.get('person')!;
   const t = person.tenant_id;
-  const back = c.req.query('back') || '/vykazy';
-  const clientId = c.req.query('klient') || c.req.query('client_pick') || '';
+  let back = c.req.query('back') || '';
+  let clientId = c.req.query('klient') || c.req.query('client_pick') || '';
+
+  // kontext: otevřeno z detailu zákazníka (htmx posílá aktuální URL) → předvybrat ho
+  const currentUrl = c.req.header('HX-Current-URL') ?? '';
+  if (!clientId) {
+    const m = /\/firmy\/([0-9a-fA-F-]{8,})/.exec(currentUrl);
+    if (m) clientId = m[1]!;
+  }
+  if (!back) {
+    try {
+      const u = new URL(currentUrl);
+      back = u.pathname + u.search;
+    } catch {
+      back = '/vykazy';
+    }
+  }
 
   const client = clientId ? await getClient(t, clientId) : null;
   const [clients, services] = await Promise.all([
@@ -341,7 +363,14 @@ vykazyRoutes.get('/vykazy/modal/novy', async (c) => {
     client ? listClientServices(t, client.id) : Promise.resolve([]),
   ]);
   return c.html(
-    <WorkRecordModal record={null} client={client ? { id: client.id, name: client.name } : null} clients={clients} services={services} back={back} />,
+    <WorkRecordModal
+      record={null}
+      client={client ? { id: client.id, name: client.name } : null}
+      clients={clients}
+      services={services}
+      back={back || '/vykazy'}
+      preselectServiceId={c.req.query('sluzba')}
+    />,
   );
 });
 
@@ -399,12 +428,15 @@ vykazyRoutes.post('/vykazy', async (c) => {
   if (!svc) return c.redirect(back);
 
   const id = await createWorkRecord(t, person.id, { ...input, clientId: client.id });
+  // kdo by výkaz stejně schvaloval (odpovědná osoba / admin), má ho rovnou schválený
+  const autoApprove = canApproveFor(person, client.owner_id ?? null);
+  if (autoApprove) await approveWorkRecord(t, id, person.id);
   await logEvent(
     t,
     'client',
     client.id,
     person.id,
-    `Vykázána práce: ${input.description} (${svc.label}${svc.detail ? ` · ${svc.detail}` : ''}, ${fmtMinutes(input.minutes)}, ${BILLING_LABELS[input.billing]}) #${id.slice(0, 8)}`,
+    `Vykázána práce: ${input.description} (${svc.label}${svc.detail ? ` · ${svc.detail}` : ''}, ${fmtMinutes(input.minutes)}, ${BILLING_LABELS[input.billing]}${autoApprove ? ', schváleno' : ''}) #${id.slice(0, 8)}`,
   );
   return c.redirect(back);
 });

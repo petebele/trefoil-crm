@@ -335,10 +335,14 @@ Zavření: ✕ (`data-modal-close`), klik na pozadí, klávesa Esc (app.js). Kom
 - **Dotyková zařízení** (bez hoveru): `.row-actions` jsou vždy viditelné (media `hover: none`).
 - **Jednota akčních odkazů:** `.subtle-action` je **vždy podtržený** (je jasné, že jde o akci).
 - **Akce sekce patří do řádku nadpisu (vpravo)** — `h4`/`.card-head` jsou flex
-  se `space-between`, takže akce využije existující výšku nadpisu a **skrytá akce
-  nerezervuje žádné svislé místo** ani při objevení nic neposune (skrývá se přes
-  `opacity`, ne `display`). Pod nadpisem smí být jen akce prázdné sekce, která je
-  viditelná trvale („Přiřadit osobu", „Přidat poznámku").
+  se `space-between`, takže akce využije existující výšku nadpisu a nerezervuje
+  žádné svislé místo.
+- **Sekční akce indikuje vždy viditelné ⋯ v pravém rohu** (komponenta `KebabMenu`) —
+  uživatel nesmí hádat, kde se skrývá menu. Jedna akce: ⋯ ji otevře rovnou (panel/
+  modál). Více akcí: ⋯ otevře malé menu textových položek. Skryté-do-najetí zůstávají
+  jen **řádkové** akce (`.hover-row` + `.row-actions`) a řádek rychlého přidání
+  v Kontaktech je viditelný trvale. Prázdná sekce má místo ⋯ viditelnou textovou akci
+  („Přiřadit osobu", „Zadat údaje", „Nastavit paušál hodin").
 - **Rychlé přidání kontaktů:** řádek ikonek `.quick-add` (telefon/e-mail/web/+), každá otevře
   dropdown panel s minimálním formulářem. Žádné trvale viditelné selecty mimo filtry/řazení.
 

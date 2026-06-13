@@ -59,9 +59,9 @@ export function StatusChip(props: { value: string; items: Array<{ value: string;
 // ---------- Dropdown panel (katalog §19) ----------
 
 /** Obal: trigger (subtle-action/ikonka) + plovoucí panel. Otevírání řeší app.js. */
-export function Picker(props: { id: string; trigger: Child; triggerClass?: string; triggerLabel?: string; children?: Child }) {
+export function Picker(props: { id: string; trigger: Child; triggerClass?: string; triggerLabel?: string; alignRight?: boolean; children?: Child }) {
   return (
-    <div class="menu" id={props.id} style="display:inline-block">
+    <div class={`menu ${props.alignRight ? 'align-right' : ''}`} id={props.id} style="display:inline-block">
       <button
         type="button"
         class={props.triggerClass ?? 'subtle-action'}
@@ -75,6 +75,19 @@ export function Picker(props: { id: string; trigger: Child; triggerClass?: strin
         {props.children}
       </div>
     </div>
+  );
+}
+
+/**
+ * ⋯ v pravém rohu sekce — vždy viditelný indikátor, že tu jsou akce/menu (katalog §20).
+ * Jedna akce: použij ⋯ rovnou jako spouštěč (hx-get / Picker trigger).
+ * Více akcí: KebabMenu s textovými položkami.
+ */
+export function KebabMenu(props: { id: string; label: string; children?: Child }) {
+  return (
+    <Picker id={props.id} trigger="⋯" triggerClass="icon-btn" triggerLabel={props.label} alignRight>
+      {props.children}
+    </Picker>
   );
 }
 
@@ -126,39 +139,41 @@ export function ModalContactRows(props: { labels: Array<{ label: string }> }) {
 
 // ---------- Úprava jednoho pole = malý panel (žádná inline editace, katalog §18) ----------
 
-/** Velký název záznamu + skrytá textová akce „Upravit" (malý panel s polem). */
+/** Velký název záznamu + ⋯ (malý panel s polem). */
 export function TitleBox(props: { base: string; label: string; value: string }) {
   return (
-    <div class="hover-row" id="f-name" style="display:flex;align-items:baseline;gap:.5rem">
+    <div id="f-name" style="display:flex;align-items:baseline;gap:.5rem">
       <span class="record-name" style="margin:0;flex:1">{props.value}</span>
-      <span class="row-actions">
-        <Picker id="nameEdit" trigger="Upravit" triggerLabel={`${props.label} — upravit`}>
-          <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
-            <div class="opt-group" style="padding-left:0">{props.label}</div>
-            <input class="input" name="value" value={props.value} required autofocus aria-label={props.label} />
-            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
-          </form>
-        </Picker>
-      </span>
+      <Picker id="nameEdit" trigger="⋯" triggerClass="icon-btn" triggerLabel={`${props.label} — upravit`} alignRight>
+        <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
+          <div class="opt-group" style="padding-left:0">{props.label}</div>
+          <input class="input" name="value" value={props.value} required autofocus aria-label={props.label} />
+          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+        </form>
+      </Picker>
     </div>
   );
 }
 
-/** Sekce Poznámka — text + akce v řádku nadpisu (malý panel s textareou). */
+/** Sekce Poznámka — text + ⋯ v nadpisu (malý panel s textareou). */
 export function NoteSection(props: { base: string; value: string | null }) {
   return (
-    <div class="side-section hover-area" id="f-note">
+    <div class="side-section" id="f-note">
       <h4>
         Poznámka
-        <span class={props.value ? 'area-actions' : ''}>
-          <Picker id="noteEdit" trigger={props.value ? 'Upravit' : 'Přidat poznámku'} triggerLabel="Poznámka — upravit">
-            <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
-              <div class="opt-group" style="padding-left:0">Poznámka</div>
-              <textarea class="input" name="value" rows={4} autofocus aria-label="Poznámka">{props.value ?? ''}</textarea>
-              <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
-            </form>
-          </Picker>
-        </span>
+        <Picker
+          id="noteEdit"
+          trigger={props.value ? '⋯' : 'Přidat poznámku'}
+          triggerClass={props.value ? 'icon-btn' : 'subtle-action'}
+          triggerLabel="Poznámka — upravit"
+          alignRight
+        >
+          <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
+            <div class="opt-group" style="padding-left:0">Poznámka</div>
+            <textarea class="input" name="value" rows={4} autofocus aria-label="Poznámka">{props.value ?? ''}</textarea>
+            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+          </form>
+        </Picker>
       </h4>
       {props.value ? <p style="white-space:pre-wrap;margin:0;font-size:.88rem">{props.value}</p> : null}
     </div>
@@ -205,7 +220,7 @@ export function OwnerBox(props: {
   coworkers: Array<{ id: string; name: string }>;
 }) {
   const picker = (trigger: Child, triggerClass?: string, label?: string) => (
-    <Picker id="ownerPicker" trigger={trigger} triggerClass={triggerClass} triggerLabel={label}>
+    <Picker id="ownerPicker" trigger={trigger} triggerClass={triggerClass} triggerLabel={label} alignRight={triggerClass === 'icon-btn'}>
       <input class="input" data-filter-list placeholder="Hledat kolegu…" aria-label="Hledat kolegu" />
       <div class="opt-group">Kolegové</div>
       {props.coworkers.map((u) => (
@@ -242,12 +257,14 @@ export function OwnerBox(props: {
 
   return (
     <div class="side-section" id="owner-box">
-      <h4>Odpovědná osoba</h4>
+      <h4>
+        Odpovědná osoba
+        {props.owner ? picker('⋯', 'icon-btn', 'Změnit odpovědnou osobu') : null}
+      </h4>
       {props.owner ? (
-        <div class="person-row hover-row">
+        <div class="person-row">
           <span class={`av av-sm ${avColor(props.owner.name)}`}>{initials(props.owner.name)}</span>
           <span class="nm" style="flex:1">{props.owner.name}</span>
-          <span class="row-actions">{picker('Změnit', undefined, 'Změnit odpovědnou osobu')}</span>
         </div>
       ) : (
         picker('Přiřadit osobu')
@@ -359,9 +376,9 @@ export function ContactsSection(props: {
   const groupLabel = (text: string) => (
     <span style="display:block;color:var(--muted);font-size:.73rem;margin:.4rem 0 .1rem">{text}</span>
   );
-  // Rychlé přidání žije v řádku nadpisu — skryté akce nerezervují žádné svislé místo.
+  // Rychlé přidání žije v řádku nadpisu a je VŽDY viditelné (indikace, že tu akce jsou).
   const quickAdd = (
-    <span class={`quick-add ${hasContacts ? 'area-actions' : ''}`} style="margin:0" role="group" aria-label="Rychlé přidání kontaktu, štítku nebo osoby">
+    <span class="quick-add" style="margin:0" role="group" aria-label="Rychlé přidání kontaktu, štítku nebo osoby">
       {props.personAdd ?? null}
       <QuickAddPanel base={props.base} type="phone" labels={props.labels} />
       <QuickAddPanel base={props.base} type="email" labels={props.labels} />

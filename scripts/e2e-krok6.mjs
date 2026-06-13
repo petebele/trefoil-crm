@@ -21,8 +21,8 @@ db.prepare('INSERT INTO sessions (id, person_id, expires_at, created_at) VALUES 
   sid, admin.id, new Date(Date.now() + 3600_000).toISOString(), new Date().toISOString(),
 );
 
-async function req(path, { method = 'GET', form, cookie = sid } = {}) {
-  const headers = { cookie: `sid=${cookie}` };
+async function req(path, { method = 'GET', form, cookie = sid, extraHeaders = {} } = {}) {
+  const headers = { cookie: `sid=${cookie}`, ...extraHeaders };
   let body;
   if (form) {
     body = new URLSearchParams(form).toString();
@@ -71,20 +71,17 @@ try {
   ok('modál: výběr zákazníka', r.text.includes('vyberte zákazníka'));
   r = await req(`/vykazy/modal/novy?klient=${client.id}`);
   ok('modál s klientem: služby + výchozí účtování', r.text.includes('TestE2E SEO K6') && r.text.includes('data-set-billing="retainer_hours"') && r.text.includes('data-set-billing="billed"'));
+  r = await req('/vykazy/modal/novy', { extraHeaders: { 'HX-Current-URL': `${BASE}${fbase}?tab=sluzby` } });
+  ok('kontext z lišty: klient předvybrán dle aktuální stránky', r.text.includes('TestE2E Firma K6') && !r.text.includes('vyberte zákazníka'));
+  r = await req(`/vykazy/modal/novy?klient=${client.id}&sluzba=${svcB.id}`);
+  ok('Vykázat ze služby: služba předvybraná + účtování dle ní', r.text.includes(`value="${svcB.id}" selected`) && r.text.includes('value="billed" selected'));
 
   // --- výkaz A: 1:30 z paušálu ---
   await req('/vykazy', { method: 'POST', form: { client_id: client.id, service_id: svcA.id, description: 'TestE2E optimalizace', note: '', hours: '1', mins: '30', performed_at: day(5), billing: 'retainer_hours', back: `${fbase}?tab=sluzby&mesic=${month}` } });
   const recA = db.prepare('SELECT * FROM work_records WHERE client_id = ?').get(client.id);
-  ok('výkaz A vytvořen (90 min, pending)', !!recA && recA.minutes === 90 && recA.status === 'pending' && recA.billing === 'retainer_hours');
+  ok('výkaz A: 90 min, rovnou schválen (zadal schvalovatel)', !!recA && recA.minutes === 90 && recA.status === 'approved' && recA.approved_by_id === admin.id && recA.billing === 'retainer_hours');
   r = await req(`${fbase}?tab=sluzby&mesic=${month}`);
-  ok('blok Výkazy: záznam + Čeká + pending se nepočítá', r.text.includes('TestE2E optimalizace') && r.text.includes('Čeká') && r.text.includes('1 čeká na schválení') && !r.text.includes('přečerpáno'));
-
-  // --- schválení A → čerpání 1:30 z 2:00 ---
-  await req(`/vykazy/${recA.id}/schvalit`, { method: 'POST', form: { back: '/' } });
-  const recA2 = db.prepare('SELECT status, approved_by_id FROM work_records WHERE id = ?').get(recA.id);
-  ok('schválení (zamknuto, schvalovatel)', recA2.status === 'approved' && recA2.approved_by_id === admin.id);
-  r = await req(`${fbase}?tab=sluzby&mesic=${month}`);
-  ok('čerpání: 1:30 z 2:00, zbývá 0:30', r.text.includes('čerpáno <b>1:30 h</b>') && r.text.includes('zbývá <b>0:30 h</b>'));
+  ok('čerpání hned po vykázání: 1:30 z 2:00, zbývá 0:30', r.text.includes('TestE2E optimalizace') && r.text.includes('čerpáno <b>1:30 h</b>') && r.text.includes('zbývá <b>0:30 h</b>'));
 
   // --- výkaz B: 1:00 z paušálu → přečerpání 0:30 ---
   await req('/vykazy', { method: 'POST', form: { client_id: client.id, service_id: svcA.id, description: 'TestE2E navíc', note: '', hours: '1', mins: '0', performed_at: day(12), billing: 'retainer_hours', back: '/' } });
@@ -104,11 +101,11 @@ try {
 
   // --- Můj výkaz + Přehled ---
   r = await req(`/vykazy?tab=muj&mesic=${month}`);
-  ok('Můj výkaz: 3 záznamy, 3:30 celkem', r.text.includes('TestE2E optimalizace') && r.text.includes('3:30 h'));
+  ok('Můj výkaz: testovací záznamy vidět', r.text.includes('TestE2E optimalizace') && r.text.includes('TestE2E jednorázovka'));
   r = await req(`/vykazy?tab=prehled&mesic=${month}`);
   ok('Přehled: souhrn pracovníka', r.text.includes(admin.name));
   r = await req(`/vykazy?tab=schvalovani`);
-  ok('Schvalování: prázdné po schválení', r.text.includes('Nic nečeká na schválení'));
+  ok('Schvalování: schválené TestE2E záznamy nečekají', !r.text.includes('TestE2E optimalizace') && !r.text.includes('TestE2E jednorázovka'));
 
   // --- práva: schválený záznam autor needituje; běžný uživatel neschválí ---
   await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E User K6', email: 'teste2e-k6@conviu.test', role: 'user', password: 'tajneheslo1' } });
@@ -126,6 +123,8 @@ try {
   r = await req(`/vykazy/${recD.id}/schvalit`, { method: 'POST', form: { back: '/' }, cookie: usid });
   const recD2 = db.prepare('SELECT status FROM work_records WHERE id = ?').get(recD.id);
   ok('uživatel (ne odpovědný) neschválí', recD2.status === 'pending');
+  r = await req(`${fbase}?tab=sluzby&mesic=${month}`);
+  ok('čekající výkaz: poznámka u součtu', r.text.includes('čeká na schválení'));
   r = await req(`/vykazy/${recA.id}/modal`, { cookie: usid });
   ok('cizí schválený výkaz needitovatelný', r.status === 302);
   await req(`/vykazy/${recD.id}/smazat`, { method: 'POST', form: { back: '/' }, cookie: usid });

@@ -280,13 +280,19 @@ function FirmFieldsSection(props: { base: string; client: { website: string | nu
     ['Adresa', c.address],
   ] as const;
   const filled = defs.filter(([, v]) => v);
-  // Akce v řádku nadpisu — skrytá akce nerezervuje žádné svislé místo.
+  // Akce v řádku nadpisu — ⋯ vždy viditelné (indikace), prázdná sekce má textovou akci.
   return (
-    <div class={`side-section ${filled.length ? 'hover-area' : ''}`} id="firm-udaje">
+    <div class="side-section" id="firm-udaje">
       <h4>
         Firemní údaje
-        <span class={filled.length ? 'area-actions' : ''}>
-          <Picker id="firmUdaje" trigger={filled.length ? 'Upravit údaje' : 'Zadat údaje'} triggerLabel="Firemní údaje — zadat nebo upravit">
+        <span>
+          <Picker
+            id="firmUdaje"
+            trigger={filled.length ? '⋯' : 'Zadat údaje'}
+            triggerClass={filled.length ? 'icon-btn' : 'subtle-action'}
+            triggerLabel="Firemní údaje — zadat nebo upravit"
+            alignRight={filled.length > 0}
+          >
             <form hx-post={`${props.base}/udaje`} hx-target="#firm-udaje" hx-swap="outerHTML" class="m0">
               <div class="opt-group" style="padding-left:0">Firemní údaje</div>
               <input class="input" name="website" value={c.website ?? ''} placeholder="Web" aria-label="Web" />

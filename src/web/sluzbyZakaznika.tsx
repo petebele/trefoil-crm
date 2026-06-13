@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types';
-import { ModalShell, EmptyState } from './components';
+import { ModalShell, EmptyState, KebabMenu } from './components';
 import { logEvent } from '../domain/events';
 import { getClient } from '../domain/clients';
 import { listCoworkers } from '../domain/people';
@@ -150,8 +150,9 @@ function serviceMoneyLine(s: ClientService): string {
   return s.rate !== null ? `sazba ${kc(s.rate)} Kč/h` : 'sazba neuvedena';
 }
 
-function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean }) {
+function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; vykazyMonth?: string }) {
   const { base, s, isAdmin } = props;
+  const vykazatBack = props.vykazyMonth ? `${base}?tab=sluzby&mesic=${props.vykazyMonth}` : `${base}?tab=sluzby`;
   return (
     <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.6' : ''}`}>
       <span style="flex:1">
@@ -172,19 +173,34 @@ function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean })
         </span>
         {s.description ? <span class="sub" style="display:block;font-size:.78rem">{s.description}</span> : null}
       </span>
-      {isAdmin && s.status !== 'ended' ? (
+      {s.status !== 'ended' ? (
         <span class="row-actions" style="white-space:nowrap;display:flex;gap:.8rem">
-          <button class="subtle-action" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
-            Upravit
-          </button>
-          <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
-            <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
-            <button class="subtle-action" type="submit">{s.status === 'paused' ? 'Obnovit' : 'Pozastavit'}</button>
-          </form>
-          <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit="return confirm('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')">
-            <input type="hidden" name="status" value="ended" />
-            <button class="subtle-action" type="submit">Ukončit</button>
-          </form>
+          {props.vykazyMonth && s.status === 'active' ? (
+            <button
+              class="subtle-action"
+              type="button"
+              hx-get={`/vykazy/modal/novy?klient=${s.client_id}&sluzba=${s.id}&back=${encodeURIComponent(vykazatBack)}`}
+              hx-target="#modal"
+              hx-swap="innerHTML"
+            >
+              Vykázat
+            </button>
+          ) : null}
+          {isAdmin ? (
+            <>
+              <button class="subtle-action" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
+                Upravit
+              </button>
+              <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
+                <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
+                <button class="subtle-action" type="submit">{s.status === 'paused' ? 'Obnovit' : 'Pozastavit'}</button>
+              </form>
+              <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit="return confirm('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')">
+                <input type="hidden" name="status" value="ended" />
+                <button class="subtle-action" type="submit">Ukončit</button>
+              </form>
+            </>
+          ) : null}
         </span>
       ) : null}
     </div>
@@ -242,20 +258,20 @@ export function SluzbyZakaznikaTab(props: {
     <>
       {props.err && ERRORS[props.err] ? <div class="form-error">{ERRORS[props.err]}</div> : null}
 
-      {/* Akce sekcí žijí v řádku nadpisu — skryté akce nerezervují žádné svislé místo. */}
-      <div class="card hover-area">
+      {/* Akce sekcí: ⋯ v pravém rohu (vždy viditelné), prázdná sekce má textovou akci. */}
+      <div class="card">
         <div class="card-head">
           <h3>Paušál hodin</h3>
           {isAdmin ? (
             hasRetainer ? (
-              <span class="area-actions" style="display:flex;gap:.8rem">
-                <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
-                  Upravit
+              <KebabMenu id="pausalMenu" label="Možnosti paušálu hodin">
+                <button class="opt" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
+                  Upravit paušál
                 </button>
                 <form method="post" action={`${base}/pausal`} class="m0" onsubmit="return confirm('Zrušit paušál hodin u tohoto zákazníka?')">
-                  <button class="subtle-action" type="submit" name="hours" value="">Zrušit</button>
+                  <button class="opt" type="submit" name="hours" value="">Zrušit paušál</button>
                 </form>
-              </span>
+              </KebabMenu>
             ) : (
               <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
                 Nastavit paušál hodin
@@ -277,15 +293,21 @@ export function SluzbyZakaznikaTab(props: {
         )}
       </div>
 
-      <div class="card hover-area" style="margin-top:1rem">
+      <div class="card" style="margin-top:1rem">
         <div class="card-head">
           <h3>Služby</h3>
           {isAdmin && available.length > 0 ? (
-            <span class={running.length > 0 ? 'area-actions' : ''}>
+            running.length > 0 ? (
+              <KebabMenu id="svcMenu" label="Možnosti služeb">
+                <button class="opt" type="button" hx-get={`${base}/sluzby/modal/nova`} hx-target="#modal" hx-swap="innerHTML">
+                  Přidělit službu
+                </button>
+              </KebabMenu>
+            ) : (
               <button class="subtle-action" type="button" hx-get={`${base}/sluzby/modal/nova`} hx-target="#modal" hx-swap="innerHTML">
                 Přidělit službu
               </button>
-            </span>
+            )
           ) : null}
         </div>
         {isAdmin && available.length === 0 ? (
@@ -299,7 +321,7 @@ export function SluzbyZakaznikaTab(props: {
         ) : (
           <div style="margin-top:.4rem">
             {running.map((s) => (
-              <ServiceRow base={base} s={s} isAdmin={isAdmin} />
+              <ServiceRow base={base} s={s} isAdmin={isAdmin} vykazyMonth={props.vykazy?.month} />
             ))}
           </div>
         )}
@@ -311,7 +333,7 @@ export function SluzbyZakaznikaTab(props: {
             </button>
             <div id="svcArchive" class="hidden">
               {archived.map((s) => (
-                <ServiceRow base={base} s={s} isAdmin={isAdmin} />
+                <ServiceRow base={base} s={s} isAdmin={isAdmin} vykazyMonth={props.vykazy?.month} />
               ))}
             </div>
           </div>
@@ -319,14 +341,14 @@ export function SluzbyZakaznikaTab(props: {
       </div>
 
       {v ? (
-        <div class="card hover-area" style="margin-top:1rem">
+        <div class="card" style="margin-top:1rem">
           <div class="card-head">
             <h3>Výkazy</h3>
-            <span style="display:flex;gap:1rem;align-items:center">
+            <span style="display:flex;gap:.6rem;align-items:center">
               <MonthNav month={v.month} hrefFor={(m) => `${base}?tab=sluzby&mesic=${m}`} />
-              <span class={v.records.length > 0 ? 'area-actions' : ''}>
+              <KebabMenu id="vykazyMenu" label="Možnosti výkazů">
                 <button
-                  class="subtle-action"
+                  class="opt"
                   type="button"
                   hx-get={`/vykazy/modal/novy?klient=${client.id}&back=${encodeURIComponent(`${base}?tab=sluzby&mesic=${v.month}`)}`}
                   hx-target="#modal"
@@ -334,7 +356,7 @@ export function SluzbyZakaznikaTab(props: {
                 >
                   Vykázat práci
                 </button>
-              </span>
+              </KebabMenu>
             </span>
           </div>
           <p class="sub" style="margin:0 0 .4rem">
@@ -381,6 +403,9 @@ export function SluzbyZakaznikaTab(props: {
             {v
               ? 'Pevné platby (paušál + předplatná) + vícepráce ze schválených výkazů zvoleného měsíce.'
               : 'Jen pevné měsíční platby (paušál + předplatná). Vícepráce se doplní z výkazů práce (zapněte modul Výkazy).'}
+            {v && v.money.pendingCount > 0
+              ? ` ${v.money.pendingCount === 1 ? '1 výkaz čeká' : `${v.money.pendingCount} výkazy čekají`} na schválení a do součtu se zatím nepočítá.`
+              : ''}
           </p>
         </div>
       ) : null}
