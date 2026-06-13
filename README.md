@@ -1,12 +1,9 @@
-# Conviu CRM (v2)
+# Trefoil CRM (v2)
 
-Interní CRM pro marketingovou agenturu **Conviu**. Budoucí adresa: `https://crm.conviu.com`.
+Interní CRM systém **Trefoil**. Budoucí adresa: `https://crm.trefoil.cz`.
 
 > **Stav: v2 ve výstavbě — spec-first.** Aplikace se staví znovu, krok po kroku;
 > před každým modulem vzniká krátká specifikace, která se schvaluje, teprve pak se staví.
->
-> Verze 1 (funkční prototyp + dokumenty) je archivovaná v repu
-> [`conviu-crm/conviu-crm`](https://github.com/conviu-crm/conviu-crm).
 
 ## Směr v2
 
@@ -33,4 +30,4 @@ Interní CRM pro marketingovou agenturu **Conviu**. Budoucí adresa: `https://cr
 ## Důležité
 
 - ⚠️ Repo nepatří na Google Disk (rozbíjí `node_modules`) — klon měj v běžné lokální složce,
-  např. `C:\Users\<user>\dev\conviu-crm-2`.
+  např. `C:\Users\<user>\dev\trefoil-crm`.

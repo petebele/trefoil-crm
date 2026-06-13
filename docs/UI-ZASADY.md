@@ -1,4 +1,4 @@
-# UI zásady Conviu CRM v2 — podle Capsule CRM
+# UI zásady Trefoil CRM v2 — podle Capsule CRM
 
 > Designový manuál v2. Vychází z vizuální analýzy 19 referenčních screenshotů Capsule CRM
 > (`D:\Download\capsule-crm`; 3 marketingové hlavičky přeskočeny — neobsahují UI navíc).
@@ -26,12 +26,15 @@ samostatná sada těchto tokenů. Strukturu (rozměry, rozvržení, komponenty) 
 `public/theme.css` a používá jen `var(--token)`; konkrétní barvy dodává aktivní skin
 z `public/skins/<id>.css`. Skin se aktivuje atributem `data-skin` na `<html>`.
 
-Skiny jsou ve třech **rodinách**, každá světlá + tmavá (6 celkem):
+Skiny jsou ve čtyřech **rodinách** (7 celkem):
 
 - **Klasický** (`classic-light` = výchozí, hodnoty v tabulce níže; `classic-dark`) — Capsule styl.
-- **Conviu** (`conviu-light`, `conviu-dark`) — značkové barvy dle conviu.cz: petrolejová modř
-  `#015280` (akcent), námořnická `#161931` (text/báze tmavého), zlatá `#f8ae0d`, zelená
-  `#7cb342` (úspěch), červená `#b3261e`.
+- **Trefoil** (`trefoil-light`, `trefoil-dark`) — barvy rostliny jetele: luční zelená a jetelová
+  růžová. Světlý: zelená `#2d6b31` = akcent (tlačítka, nav), růžová `#c0186a` = pink token.
+  Tmavý: neutrální báze, zelená (`surface-2`, hover, chipy) = podklady, růžová `#e04f7a` = akcent.
+- **OLED** (`oled-dark`) — pravá černá `#000000` (pixely vypnuté), šetří oči a baterii.
+  Text off-white `#c4ccc4` (ne čistá bílá — příliš krutý kontrast). Trefoil barvy přítomné
+  v desaturované, ztlumené podobě.
 - **Vysoký kontrast** (`contrast-light`, `contrast-dark`) — přístupnost: bílé/černé plochy,
   silné rámečky místo stínů, ztmavené/projasněné akcenty (AAA).
 

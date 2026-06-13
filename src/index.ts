@@ -13,7 +13,7 @@ await seed();
  */
 function listen(attempt = 1): void {
   const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
-    console.log(`\n  Conviu CRM běží na  http://localhost:${info.port}`);
+    console.log(`\n  Trefoil CRM běží na  http://localhost:${info.port}`);
     console.log(`  První spuštění tě provede založením organizace.\n`);
   });
   server.on('error', (err: NodeJS.ErrnoException) => {

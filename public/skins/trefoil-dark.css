@@ -1,0 +1,50 @@
+/* ============================================================
+   Skin: Trefoil · tmavý
+   Báze: neutrální tmavá #121412 (sotva znatelný zelený nádech).
+   Zelená (#5cb85f / surface-2 / hover): podklady a plochy.
+   Růžová (#e04f7a): interaktivní prvky — accent, odkazy, aktivní nav.
+   ============================================================ */
+:root[data-skin="trefoil-dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text — neutrální základ, zelený nádech se stupňuje */
+  --ink: #e6ece7;          /* text: sotva zelená bílá */
+  --muted: #8ca28d;        /* tlumená: mírně zelená */
+  --bg: #121412;           /* stránka: neutrální tmavá, stopa zeleně */
+  --card: #1a1d1a;         /* karta: stejný tón */
+  --line: #272d28;         /* rámečky: zelený nádech */
+  --surface-2: #1e2d1f;    /* aktivní plochy: zelená se projeví */
+  --hover: #182618;        /* hover řádků: zřetelná zelená */
+  --track: #243025;        /* dráha progress baru: zelená */
+
+  /* Akcent — RŮŽOVÁ (květ jetele) pro všechny interaktivní prvky */
+  --accent: #e04f7a;
+  --accent-hover: #ed6b8e;
+  --accent-soft: #2e1220;  /* tmavé růžové pozadí (vybraná položka, count badge) */
+
+  /* Zelená = úspěch / pozitivní stav */
+  --teal: #5cb85f;
+  --teal-soft: #182a19;
+  --teal-ink: #9dd09f;
+
+  --red: #ef5350;
+  --red-soft: #3d1414;
+  --orange: #ffa726;
+  --pink: #e04f7a;         /* jetelová růžová = alias accentu v této paletě */
+
+  /* Avatary */
+  --av-g-bg: #182a19; --av-g-ink: #9dd09f;
+  --av-p-bg: #36122a; --av-p-ink: #f48fb1;
+  --av-b-bg: #0c2640; --av-b-ink: #90caf9;
+  --av-y-bg: #3a280c; --av-y-ink: #ffe082;
+
+  /* Chipy — zelené povrchy (podklady) */
+  --chip-bg: #1e2d1f;
+  --chip-orange-bg: #3a280c; --chip-orange-ink: #ffe082;
+  --chip-dark-bg: #243025;   --chip-dark-ink: #c4ddc6;
+
+  /* Ostatní */
+  --btn-danger-border: #6d1f1f;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .70);
+}

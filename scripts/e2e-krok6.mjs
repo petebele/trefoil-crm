@@ -109,8 +109,8 @@ try {
   ok('Schvalování: schválené TestE2E záznamy nečekají', !r.text.includes('TestE2E optimalizace') && !r.text.includes('TestE2E jednorázovka'));
 
   // --- práva: schválený záznam autor needituje; běžný uživatel neschválí ---
-  await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E User K6', email: 'teste2e-k6@conviu.test', role: 'user', password: 'tajneheslo1' } });
-  const user = db.prepare("SELECT id FROM persons WHERE login_email = 'teste2e-k6@conviu.test'").get();
+  await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E User K6', email: 'teste2e-k6@trefoil.test', role: 'user', password: 'tajneheslo1' } });
+  const user = db.prepare("SELECT id FROM persons WHERE login_email = 'teste2e-k6@trefoil.test'").get();
   cleanup.persons.push(user.id);
   const usid = 'e2etest-' + randomUUID().replace(/-/g, '');
   db.prepare('INSERT INTO sessions (id, person_id, expires_at, created_at) VALUES (?, ?, ?, ?)').run(

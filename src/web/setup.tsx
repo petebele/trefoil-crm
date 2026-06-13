@@ -16,12 +16,12 @@ function SetupPage(props: { error?: string; orgName?: string; name?: string; ema
   return (
     <html lang="cs">
       <head>
-        <HeadAssets title="Založení organizace · Conviu CRM" />
+        <HeadAssets title="Založení organizace · Trefoil CRM" />
       </head>
       <body>
         <main class="page" style="max-width:560px">
           <div style="text-align:center;margin:2.5rem 0 1.5rem">
-            <h1>Vítej v Conviu CRM</h1>
+            <h1>Vítej v Trefoil CRM</h1>
             <p class="sub">Začneme založením tvé organizace. Zabere to minutu.</p>
           </div>
 
@@ -33,7 +33,7 @@ function SetupPage(props: { error?: string; orgName?: string; name?: string; ema
                 <label>
                   Název organizace <span class="req">*</span>
                 </label>
-                <input class="input" type="text" name="org_name" value={props.orgName ?? ''} placeholder="např. Conviu" required autofocus />
+                <input class="input" type="text" name="org_name" value={props.orgName ?? ''} placeholder="např. Trefoil" required autofocus />
                 <span class="help">Společnost nebo tým, který bude CRM používat. Kolegy pozveš později.</span>
               </div>
 

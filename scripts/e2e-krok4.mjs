@@ -57,20 +57,20 @@ try {
   ok('modál Nová služba', r.text.includes('Nová služba') && r.text.includes('name="mode"') && r.text.includes('Domluvený paušál hodin'));
 
   // --- Tým: create / login / práva / edit / deaktivace ---
-  r = await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E Žofie', email: 'teste2e@conviu.test', role: 'user', password: 'tajneheslo1' } });
+  r = await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E Žofie', email: 'teste2e@trefoil.test', role: 'user', password: 'tajneheslo1' } });
   ok('POST nový uživatel → redirect tym', r.status === 302 && r.location.includes('tab=tym') && !r.location.includes('err'));
-  const u = db.prepare("SELECT * FROM persons WHERE login_email = 'teste2e@conviu.test'").get();
+  const u = db.prepare("SELECT * FROM persons WHERE login_email = 'teste2e@trefoil.test'").get();
   if (u) createdPersons.push(u.id);
   ok('uživatel v DB s hashem', !!u && !!u.password_hash && u.is_admin === 0);
   r = await req('/administrace?tab=tym');
-  ok('uživatel v tabulce (UTF-8 jméno)', r.text.includes('TestE2E Žofie') && r.text.includes('teste2e@conviu.test'));
+  ok('uživatel v tabulce (UTF-8 jméno)', r.text.includes('TestE2E Žofie') && r.text.includes('teste2e@trefoil.test'));
 
   // duplicitní e-mail
-  r = await req('/administrace/tym', { method: 'POST', form: { name: 'Dup', email: 'teste2e@conviu.test', role: 'user', password: 'x12345678' } });
+  r = await req('/administrace/tym', { method: 'POST', form: { name: 'Dup', email: 'teste2e@trefoil.test', role: 'user', password: 'x12345678' } });
   ok('duplicitní e-mail → err=email', r.location.includes('err=email'));
 
   // login nového uživatele + že nevidí administraci
-  let res = await fetch(BASE + '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: 'teste2e@conviu.test', password: 'tajneheslo1' }).toString(), redirect: 'manual' });
+  let res = await fetch(BASE + '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: 'teste2e@trefoil.test', password: 'tajneheslo1' }).toString(), redirect: 'manual' });
   const setc = res.headers.get('set-cookie') ?? '';
   const usid = /sid=([^;]+)/.exec(setc)?.[1];
   ok('login nového uživatele', res.status === 302 && !!usid);
@@ -78,12 +78,12 @@ try {
   ok('běžný uživatel: /administrace → redirect', r.status === 302);
 
   // edit: jméno + role → admin
-  r = await req(`/administrace/tym/${u.id}`, { method: 'POST', form: { name: 'TestE2E Žofie Nová', email: 'teste2e@conviu.test', role: 'admin', password: '' } });
+  r = await req(`/administrace/tym/${u.id}`, { method: 'POST', form: { name: 'TestE2E Žofie Nová', email: 'teste2e@trefoil.test', role: 'admin', password: '' } });
   const u2 = db.prepare('SELECT * FROM persons WHERE id = ?').get(u.id);
   ok('edit uživatele (jméno+role, heslo beze změny)', u2.name === 'TestE2E Žofie Nová' && u2.is_admin === 1 && u2.password_hash === u.password_hash);
 
   // pojistka posledního admina: degradace TestE2E zpět + pokus o degradaci hlavního admina
-  await req(`/administrace/tym/${u.id}`, { method: 'POST', form: { name: u2.name, email: 'teste2e@conviu.test', role: 'user', password: '' } });
+  await req(`/administrace/tym/${u.id}`, { method: 'POST', form: { name: u2.name, email: 'teste2e@trefoil.test', role: 'user', password: '' } });
   r = await req(`/administrace/tym/${admin.id}`, { method: 'POST', form: { name: admin.name, email: db.prepare('SELECT login_email e FROM persons WHERE id=?').get(admin.id).e, role: 'user', password: '' } });
   const adminAfter = db.prepare('SELECT is_admin FROM persons WHERE id = ?').get(admin.id);
   ok('poslední admin nejde degradovat (err=lastadmin, role zachována)', r.location.includes('err=lastadmin') && adminAfter.is_admin === 1);
@@ -99,7 +99,7 @@ try {
   ok('deaktivace uživatele', r.status === 302 && u3.is_active === 0);
   r = await req('/', { cookie: usid });
   ok('deaktivovaný: stará session neplatí', r.status === 302 && r.location.includes('/login'));
-  res = await fetch(BASE + '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: 'teste2e@conviu.test', password: 'tajneheslo1' }).toString(), redirect: 'manual' });
+  res = await fetch(BASE + '/login', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ email: 'teste2e@trefoil.test', password: 'tajneheslo1' }).toString(), redirect: 'manual' });
   ok('deaktivovaný: login odmítnut', res.status === 401);
   await req(`/administrace/tym/${u.id}/aktivni`, { method: 'POST', form: { active: '1' } });
   ok('aktivace zpět', db.prepare('SELECT is_active FROM persons WHERE id = ?').get(u.id).is_active === 1);

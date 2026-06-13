@@ -7,7 +7,7 @@
  * `:root[data-skin="<id>"] { …tokeny… }` a (2) položka v SKINS níže. Nic víc —
  * přepínač v uživatelském menu i načtení stylů se z registru vygenerují samy.
  *
- * Rodiny: Conviu (značkový, dle conviu.cz), Klasický (Capsule styl), Vysoký
+ * Rodiny: Trefoil (značkový), Klasický (Capsule styl), Vysoký
  * kontrast (přístupnost). Každá má světlou a tmavou variantu.
  */
 export interface Skin {
@@ -16,8 +16,9 @@ export interface Skin {
 }
 
 export const SKINS: Skin[] = [
-  { id: 'conviu-light', label: 'Conviu · světlý' },
-  { id: 'conviu-dark', label: 'Conviu · tmavý' },
+  { id: 'trefoil-light', label: 'Trefoil · světlý' },
+  { id: 'trefoil-dark', label: 'Trefoil · tmavý' },
+  { id: 'oled-dark', label: 'OLED · tmavý' },
   { id: 'classic-light', label: 'Klasický · světlý' },
   { id: 'classic-dark', label: 'Klasický · tmavý' },
   { id: 'contrast-light', label: 'Vysoký kontrast · světlý' },

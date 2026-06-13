@@ -128,8 +128,8 @@ try {
   ok('modál Upravit osobu předvyplněn', r.text.includes('Upravit osobu') && r.text.includes('value="TestE2E Osoba K5"'));
 
   // --- běžný uživatel: vidí, ale nemění ---
-  await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E User K5', email: 'teste2e-k5@conviu.test', role: 'user', password: 'tajneheslo1' } });
-  const user = db.prepare("SELECT id FROM persons WHERE login_email = 'teste2e-k5@conviu.test'").get();
+  await req('/administrace/tym', { method: 'POST', form: { name: 'TestE2E User K5', email: 'teste2e-k5@trefoil.test', role: 'user', password: 'tajneheslo1' } });
+  const user = db.prepare("SELECT id FROM persons WHERE login_email = 'teste2e-k5@trefoil.test'").get();
   if (user) cleanup.persons.push(user.id);
   const usid = 'e2etest-' + randomUUID().replace(/-/g, '');
   db.prepare('INSERT INTO sessions (id, person_id, expires_at, created_at) VALUES (?, ?, ?, ?)').run(

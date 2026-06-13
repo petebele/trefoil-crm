@@ -1,0 +1,48 @@
+/* ============================================================
+   Skin: OLED · tmavý
+   Pozadí: #000000 — OLED pixely vypnuté, maximální šetření očí.
+   Text: tlumená off-white (ne čistá bílá — příliš krutý kontrast).
+   Trefoil barvy přítomné, ale desaturované a ztlumené.
+   ============================================================ */
+:root[data-skin="oled-dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text */
+  --ink: #c4ccc4;          /* off-white se stopou zeleně — ne #fff (dráždí oči) */
+  --muted: #708070;        /* zeleno-šedá — 5.0:1 na #000, 4.7:1 na card */
+  --bg: #000000;           /* OLED: pixely zcela vypnuté */
+  --card: #0a0c0a;         /* karta: skoro černá, sotva znatelný zelený nádech */
+  --line: #181c18;         /* rámečky: téměř neviditelné */
+  --surface-2: #0f130e;    /* aktivní plochy: stopa zeleně */
+  --hover: #0c100c;        /* hover: sotva tam */
+  --track: #141814;        /* dráha progress baru */
+
+  /* Akcent — tlumená luční zelená (přítomná, ne výrazná) */
+  --accent: #5a8d5e;
+  --accent-hover: #6fa374;
+  --accent-soft: #0b110c;  /* skoro černé zelené pozadí */
+  --teal: #5a8d5e;         /* úspěch = stejná tlumená zelená */
+  --teal-soft: #0b110c;
+  --teal-ink: #7aaa7e;
+
+  --red: #d45050;          /* 5.1:1 na #000, 4.7:1 na red-soft */
+  --red-soft: #180808;
+  --orange: #b87820;       /* ztlumená oranžová */
+  --pink: #8a3d5e;         /* jetelová růžová — přítomná, ale klidná */
+
+  /* Avatary — velmi tmavá pozadí, tlumené barvy */
+  --av-g-bg: #0e1a0f; --av-g-ink: #7aaa7e;
+  --av-p-bg: #1e0c16; --av-p-ink: #c084a4;
+  --av-b-bg: #08101c; --av-b-ink: #6090d0;
+  --av-y-bg: #1a1006; --av-y-ink: #c09040;
+
+  /* Chipy */
+  --chip-bg: #0f130e;
+  --chip-orange-bg: #1a1006; --chip-orange-ink: #c09040;
+  --chip-dark-bg: #141814;   --chip-dark-ink: #8aa08a;
+
+  /* Ostatní */
+  --btn-danger-border: #5a1e1e;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .88);
+}

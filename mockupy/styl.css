@@ -1,101 +1,155 @@
 /* ============================================================
-   Conviu CRM v2 — styl mockupů (standalone, VYGENEROVÁNO).
-   Všech 6 skinů (tokeny) + struktura. V aplikaci jsou tokeny
+   Trefoil CRM v2 — styl mockupů (standalone, VYGENEROVÁNO).
+   Všech 7 skinů (tokeny) + struktura. V aplikaci jsou tokeny
    v public/skins/*.css, struktura v public/theme.css.
-   Náhled jiného skinu: <html data-skin="conviu-dark"> apod.
+   Náhled jiného skinu: <html data-skin="oled-dark"> apod.
    ============================================================ */
 
 /* ============================================================
-   Skin: Conviu · světlý — podle vizuálu conviu.cz.
-   Značkové barvy: petrolejová modř #015280 (akcent), námořnická #161931
-   (text), zlatá #f8ae0d, zelená #7cb342 (úspěch), červená #b3261e.
+   Skin: Trefoil · světlý — "letní louka"
+   Zelená: luční #2d6b31 (akcent/listy), světlejší #4caf50 (úspěch).
+   Růžová: jetelový květ #c0186a (pink token, avatary, chipy).
    ============================================================ */
-:root[data-skin="conviu-light"] {
+:root[data-skin="trefoil-light"] {
   color-scheme: light;
 
   /* Plochy a text */
-  --ink: #161931;          /* námořnická (blue1) */
-  --muted: #5a6275;
-  --bg: #f3f6f9;
+  --ink: #1b2c1d;          /* tmavě zelená (skoro černá se zeleným nádechem) */
+  --muted: #5c7260;
+  --bg: #f0f6f1;           /* velmi světlá luční zelená */
   --card: #ffffff;
-  --line: #e0e6ec;
-  --surface-2: #e8eef3;
-  --hover: #f6f9fb;
-  --track: #e2e9ef;
+  --line: #cce0ce;
+  --surface-2: #e1ece3;
+  --hover: #f4fbf5;
+  --track: #cfe0d1;
 
   /* Akcent a stavové barvy */
-  --accent: #015280;       /* petrolejová modř (blue3) */
-  --accent-hover: #013d5f;
-  --accent-soft: #e2eef4;
-  --teal: #5f9b2f;         /* značková zelená = úspěch */
-  --teal-soft: #e9f3dd;
-  --teal-ink: #44721d;
-  --red: #b3261e;
-  --red-soft: #f7e1df;
-  --orange: #f8ae0d;       /* značková zlatá */
-  --pink: #cf4a7d;
+  --accent: #2d6b31;       /* luční zelená (listy jetele) */
+  --accent-hover: #1d4e21;
+  --accent-soft: #e3f2e5;
+  --teal: #4caf50;         /* projasněná zelená = úspěch */
+  --teal-soft: #e8f5e9;
+  --teal-ink: #2e7d32;
+  --red: #c62828;
+  --red-soft: #ffebee;
+  --orange: #ef6c00;
+  --pink: #c0186a;         /* květ jetele — tmavá jetelová růžová */
 
   /* Avatary */
-  --av-g-bg: #e3f0d4; --av-g-ink: #44721d;
-  --av-p-bg: #f7dde7; --av-p-ink: #a83a68;
-  --av-b-bg: #d7e7f1; --av-b-ink: #015280;
-  --av-y-bg: #fdecc3; --av-y-ink: #8a5e00;
+  --av-g-bg: #e3f0e5; --av-g-ink: #2e7d32;
+  --av-p-bg: #fde8f1; --av-p-ink: #c0186a;
+  --av-b-bg: #e3effd; --av-b-ink: #1565c0;
+  --av-y-bg: #fff8e1; --av-y-ink: #e65100;
 
   /* Chipy */
-  --chip-bg: #e9edf2;
-  --chip-orange-bg: #fdecc3; --chip-orange-ink: #8a5e00;
-  --chip-dark-bg: #dde3ec;   --chip-dark-ink: #2a2d45;
+  --chip-bg: #e1ece3;
+  --chip-orange-bg: #fff3e0; --chip-orange-ink: #e65100;
+  --chip-dark-bg: #d6e4d8;   --chip-dark-ink: #1b2c1d;
 
   /* Ostatní */
-  --btn-danger-border: #e6b6b3;
-  --shadow-color: 22, 25, 49;          /* stín laděný do námořnické */
-  --overlay: rgba(22, 25, 49, .42);
+  --btn-danger-border: #ef9a9a;
+  --shadow-color: 27, 44, 29;          /* stín laděný do tmavé zelené */
+  --overlay: rgba(27, 44, 29, .40);
 }
 
 /* ============================================================
-   Skin: Conviu · tmavý — postavený na značkové námořnické #161931.
-   Akcent petrolejová projasněná pro tmavé pozadí, zlatá a zelená drží.
+   Skin: Trefoil · tmavý
+   Báze: neutrální tmavá #121412 (sotva znatelný zelený nádech).
+   Zelená (#5cb85f / surface-2 / hover): podklady a plochy.
+   Růžová (#e04f7a): interaktivní prvky — accent, odkazy, aktivní nav.
    ============================================================ */
-:root[data-skin="conviu-dark"] {
+:root[data-skin="trefoil-dark"] {
   color-scheme: dark;
 
-  /* Plochy a text (báze = námořnická) */
-  --ink: #e8eaf6;
-  --muted: #99a1c2;
-  --bg: #12152b;
-  --card: #1c2042;
-  --line: #2c3157;
-  --surface-2: #262c52;
-  --hover: #1f2446;
-  --track: #2c3157;
+  /* Plochy a text — neutrální základ, zelený nádech se stupňuje */
+  --ink: #e6ece7;          /* text: sotva zelená bílá */
+  --muted: #8ca28d;        /* tlumená: mírně zelená */
+  --bg: #121412;           /* stránka: neutrální tmavá, stopa zeleně */
+  --card: #1a1d1a;         /* karta: stejný tón */
+  --line: #272d28;         /* rámečky: zelený nádech */
+  --surface-2: #1e2d1f;    /* aktivní plochy: zelená se projeví */
+  --hover: #182618;        /* hover řádků: zřetelná zelená */
+  --track: #243025;        /* dráha progress baru: zelená */
 
-  /* Akcent a stavové barvy */
-  --accent: #46a6e0;       /* petrolejová projasněná */
-  --accent-hover: #64b7ea;
-  --accent-soft: #13314a;
-  --teal: #8bc34a;         /* značková zelená = úspěch */
-  --teal-soft: #1f3016;
-  --teal-ink: #a6d96a;
+  /* Akcent — RŮŽOVÁ (květ jetele) pro všechny interaktivní prvky */
+  --accent: #e04f7a;
+  --accent-hover: #ed6b8e;
+  --accent-soft: #2e1220;  /* tmavé růžové pozadí (vybraná položka, count badge) */
+
+  /* Zelená = úspěch / pozitivní stav */
+  --teal: #5cb85f;
+  --teal-soft: #182a19;
+  --teal-ink: #9dd09f;
+
   --red: #ef5350;
-  --red-soft: #3a1d1c;
-  --orange: #f9b62a;       /* značková zlatá */
-  --pink: #ec6a93;
+  --red-soft: #3d1414;
+  --orange: #ffa726;
+  --pink: #e04f7a;         /* jetelová růžová = alias accentu v této paletě */
 
   /* Avatary */
-  --av-g-bg: #1f3016; --av-g-ink: #a6d96a;
-  --av-p-bg: #3a1f2c; --av-p-ink: #f0a0bf;
-  --av-b-bg: #12314c; --av-b-ink: #6fc0f0;
-  --av-y-bg: #3a2c10; --av-y-ink: #f2c766;
+  --av-g-bg: #182a19; --av-g-ink: #9dd09f;
+  --av-p-bg: #36122a; --av-p-ink: #f48fb1;
+  --av-b-bg: #0c2640; --av-b-ink: #90caf9;
+  --av-y-bg: #3a280c; --av-y-ink: #ffe082;
 
-  /* Chipy */
-  --chip-bg: #262c52;
-  --chip-orange-bg: #3a2c10; --chip-orange-ink: #f2c766;
-  --chip-dark-bg: #2c3157;   --chip-dark-ink: #c4c9e4;
+  /* Chipy — zelené povrchy (podklady) */
+  --chip-bg: #1e2d1f;
+  --chip-orange-bg: #3a280c; --chip-orange-ink: #ffe082;
+  --chip-dark-bg: #243025;   --chip-dark-ink: #c4ddc6;
 
   /* Ostatní */
-  --btn-danger-border: #5a2e2c;
+  --btn-danger-border: #6d1f1f;
   --shadow-color: 0, 0, 0;
-  --overlay: rgba(4, 5, 16, .66);
+  --overlay: rgba(0, 0, 0, .70);
+}
+
+/* ============================================================
+   Skin: OLED · tmavý
+   Pozadí: #000000 — OLED pixely vypnuté, maximální šetření očí.
+   Text: tlumená off-white (ne čistá bílá — příliš krutý kontrast).
+   Trefoil barvy přítomné, ale desaturované a ztlumené.
+   ============================================================ */
+:root[data-skin="oled-dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text */
+  --ink: #c4ccc4;          /* off-white se stopou zeleně — ne #fff (dráždí oči) */
+  --muted: #708070;        /* zeleno-šedá — 5.0:1 na #000, 4.7:1 na card */
+  --bg: #000000;           /* OLED: pixely zcela vypnuté */
+  --card: #0a0c0a;         /* karta: skoro černá, sotva znatelný zelený nádech */
+  --line: #181c18;         /* rámečky: téměř neviditelné */
+  --surface-2: #0f130e;    /* aktivní plochy: stopa zeleně */
+  --hover: #0c100c;        /* hover: sotva tam */
+  --track: #141814;        /* dráha progress baru */
+
+  /* Akcent — tlumená luční zelená (přítomná, ne výrazná) */
+  --accent: #5a8d5e;
+  --accent-hover: #6fa374;
+  --accent-soft: #0b110c;  /* skoro černé zelené pozadí */
+  --teal: #5a8d5e;         /* úspěch = stejná tlumená zelená */
+  --teal-soft: #0b110c;
+  --teal-ink: #7aaa7e;
+
+  --red: #d45050;          /* 5.1:1 na #000, 4.7:1 na red-soft */
+  --red-soft: #180808;
+  --orange: #b87820;       /* ztlumená oranžová */
+  --pink: #8a3d5e;         /* jetelová růžová — přítomná, ale klidná */
+
+  /* Avatary — velmi tmavá pozadí, tlumené barvy */
+  --av-g-bg: #0e1a0f; --av-g-ink: #7aaa7e;
+  --av-p-bg: #1e0c16; --av-p-ink: #c084a4;
+  --av-b-bg: #08101c; --av-b-ink: #6090d0;
+  --av-y-bg: #1a1006; --av-y-ink: #c09040;
+
+  /* Chipy */
+  --chip-bg: #0f130e;
+  --chip-orange-bg: #1a1006; --chip-orange-ink: #c09040;
+  --chip-dark-bg: #141814;   --chip-dark-ink: #8aa08a;
+
+  /* Ostatní */
+  --btn-danger-border: #5a1e1e;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .88);
 }
 
 /* ============================================================
@@ -286,7 +340,7 @@
 }
 
 /* ============================================================
-   Conviu CRM v2 — struktura UI (replika vizuálu Capsule CRM)
+   Trefoil CRM v2 — struktura UI (replika vizuálu Capsule CRM)
    Komponenty dle docs/UI-ZASADY.md. BARVY ZDE NEJSOU NATVRDO —
    čerpají se z tokenů, které definuje aktivní skin (public/skins/*.css).
    Viz src/web/skins.ts.

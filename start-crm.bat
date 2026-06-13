@@ -2,7 +2,7 @@
 chcp 65001 >nul
 cd /d "%~dp0"
 echo ================================
-echo    Conviu CRM
+echo    Trefoil CRM
 echo ================================
 echo.
 echo Aplikace se za chvili sama otevre v prohlizeci.

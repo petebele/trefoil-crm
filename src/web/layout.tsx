@@ -28,7 +28,7 @@ export function Layout(props: {
   return (
     <html lang="cs">
       <head>
-        <HeadAssets title={`${title} · Conviu CRM`} />
+        <HeadAssets title={`${title} · Trefoil CRM`} />
         <script src="/static/htmx.min.js" defer></script>
         <script src={`/static/app.js?v=${ASSET_V}`} defer></script>
       </head>
@@ -109,7 +109,7 @@ export function Layout(props: {
                   <span class="av av-i">{initials(person.name)}</span>
                   <span class="uname">
                     {person.name}
-                    <small>Conviu CRM</small>
+                    <small>Trefoil CRM</small>
                   </span>
                   <IconChevron />
                 </div>

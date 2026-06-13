@@ -1,11 +1,11 @@
-# Roadmapa — Conviu CRM v2
+# Roadmapa — Trefoil CRM v2
 
 Proces: **spec → schválení → stavba → ověření → commit**, modul po modulu.
 Vizuální reference: `docs/UI-ZASADY.md` + `/mockupy`. Datový základ: `docs/DATOVY-MODEL.md`.
 
 ## Hotovo
 
-- [x] **Krok 0** — prostředí (PC Jetel) + repo `conviu-crm-2` + push
+- [x] **Krok 0** — prostředí (PC Jetel) + repo `trefoil-crm` + push
 - [x] **Krok 1** — Capsule UI studie (19 screenshotů) → UI zásady, slovník, datový model,
       šablona specifikací, roadmapa + **mockupy** (nástěnka, zákazníci, detail zákazníka)
 
@@ -23,7 +23,7 @@ Vizuální reference: `docs/UI-ZASADY.md` + `/mockupy`. Datový základ: `docs/D
 | **9 — Obchod** | Příležitosti, pipeline kanban + hodnoty/součty, list | reuse kanbanu |
 | **10 — Vyhledávání** | Horní hledání + Ctrl+K (skok na firmu/osobu/zakázku/deal) | |
 | **11 — Doleštění** | UX/responzivita/aria audit proti UI zásadám, drobnosti | |
-| Později | manažerské reporty (hodiny/spendy/tým), e-mail integrace, nasazení na crm.conviu.com | mimo MVP |
+| Později | manažerské reporty (hodiny/spendy/tým), e-mail integrace, nasazení na crm.trefoil.cz | mimo MVP |
 
 ## Technické lekce z v1 (aplikovat průběžně)
 
@@ -33,4 +33,4 @@ better-sqlite3 ≥ 12 (prebuildy pro Node 24) · povolit build skripty v pnpm (`
 
 ## Výchozí přihlášení (dev — od Kroku 2)
 
-`admin@conviu.com` / `admin123` — změnit před ostrým provozem.
+`admin@trefoil.cz` / `admin123` — změnit před ostrým provozem.

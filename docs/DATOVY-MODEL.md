@@ -1,4 +1,4 @@
-# Datový model — Conviu CRM v2 (blueprint)
+# Datový model — Trefoil CRM v2 (blueprint)
 
 > Převzatý a osvědčený flexibilní základ z v1 (tam prošel architektonickou revizí a praxí).
 > Detailní sloupce se definují ve specifikaci příslušného modulu; tady je závazná kostra.

@@ -45,7 +45,7 @@ v Administraci.
   `/zalozeni` přesměruje pryč · nepřihlášený → `/login` · přihlášený na `/login` → Nástěnka.
 - **Přihlášení:** scrypt + httpOnly cookie session (vzor v1).
 - **Repo náležitosti:** `package.json` (`packageManager`), `tsconfig.json`, `.env.example`,
-  CI (install + typecheck), `start-crm.bat` (CRLF) + zástupce „Conviu CRM" na ploše.
+  CI (install + typecheck), `start-crm.bat` (CRLF) + zástupce „Trefoil CRM" na ploše.
 
 ## 5. Pravidla
 

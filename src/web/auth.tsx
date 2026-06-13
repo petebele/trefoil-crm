@@ -12,12 +12,12 @@ function LoginPage(props: { orgName: string; email?: string; error?: string }) {
   return (
     <html lang="cs">
       <head>
-        <HeadAssets title="Přihlášení · Conviu CRM" />
+        <HeadAssets title="Přihlášení · Trefoil CRM" />
       </head>
       <body>
         <main class="page" style="max-width:420px">
           <div class="card" style="padding:1.6rem;margin-top:4rem">
-            <h1 style="font-size:1.3rem">Conviu CRM</h1>
+            <h1 style="font-size:1.3rem">Trefoil CRM</h1>
             <p class="sub" style="margin:.2rem 0 1.2rem">Přihlášení do organizace {props.orgName}</p>
             {props.error ? <div class="form-error">{props.error}</div> : null}
             <form method="post" action="/login">

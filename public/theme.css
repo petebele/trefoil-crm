@@ -1,5 +1,5 @@
 /* ============================================================
-   Conviu CRM v2 — struktura UI (replika vizuálu Capsule CRM)
+   Trefoil CRM v2 — struktura UI (replika vizuálu Capsule CRM)
    Komponenty dle docs/UI-ZASADY.md. BARVY ZDE NEJSOU NATVRDO —
    čerpají se z tokenů, které definuje aktivní skin (public/skins/*.css).
    Viz src/web/skins.ts.

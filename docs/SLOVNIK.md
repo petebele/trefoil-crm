@@ -1,4 +1,4 @@
-# Slovník pojmů — Conviu CRM v2
+# Slovník pojmů — Trefoil CRM v2
 
 > Jednotná terminologie (převzato z v1, doplněno pro v2). Aplikace mluví **jednoznačně**:
 > nepoužíváme „zákazník" jako název typu záznamu, ale konkrétně **Firma** nebo **Osoba**.
@@ -11,7 +11,7 @@
 | **Osoba** | Člověk. Buď samostatný zákazník (fyzická osoba), **nebo** kontakt přiřazený k Firmě. | **K Osobě se nepřiřazují další Osoby.** Osoba se přiřazuje **jen k Firmám.** |
 | **Kontakt** | Osoba ve vztahu k Firmě (= role Osoby u Firmy, ne samostatný typ). | „Jednatel v Borovec-elektro.cz" |
 | **Zákazník** | Zastřešující neformální pojem pro Firmy i Osoby. | Sekce **Zákazníci** obsahuje obojí + filtr. |
-| **Kolega** | Člen týmu Conviu (Osoba s přihlášením a rolí). | Spravuje se v **Administraci**, ne v Zákaznících. |
+| **Kolega** | Člen týmu Trefoil (Osoba s přihlášením a rolí). | Spravuje se v **Administraci**, ne v Zákaznících. |
 | **Kontaktní údaj** | Telefon / e-mail / … u Osoby nebo Firmy. | Vícenásobné; mohou být vázané na konkrétní Firmu (osobní vs. firemní mobil). |
 | **Služba** | Co u nás Firma/Osoba má aktivního (z Katalogu služeb): stav, odpovědný a **orientační měsíční spend**. Součet spendů = celkový orientační spend zákazníka. | SEO, PPC, sociální sítě, feedy… |
 | **Rozpočet hodin** | Domluvený měsíční počet hodin u zákazníka. Schválené výkazy se z něj odečítají (vidíš „nastaveno / zbývá"); bez rozpočtu se hodiny kumulují k fakturaci. | Zadávají jen manažeři. |
@@ -26,7 +26,7 @@
 | **Seznam** | Konfigurovatelný číselník (Katalog služeb, Štítky, Stavy, Kategorie úkolů, Fáze obchodu…). | Spravuje se v Administraci. |
 | **Role** | Pojmenovaná sada práv (Admin, Moderátor, Člen, Zákazník). | Osoba může mít víc rolí. |
 | **Nástěnka** | Úvodní stránka po přihlášení: pozdrav, naposledy zobrazené, aktivita, úkoly (Po termínu / Dnes), kalendář. | Nahrazuje v1 stránku „Dnes". Není modul — je vždy. |
-| **Organizace** | Společnost, která CRM používá (prostor, ve kterém pracuje tým — pro nás Conviu). Zakládá ji první uživatel (stává se adminem), kolegové se do ní zvou. | **Nezaměňovat s Firmou** (= zákazník). |
+| **Organizace** | Společnost, která CRM používá (prostor, ve kterém pracuje tým — pro nás Trefoil). Zakládá ji první uživatel (stává se adminem), kolegové se do ní zvou. | **Nezaměňovat s Firmou** (= zákazník). |
 | **Modul** | Zapínatelná část aplikace (Zákazníci, Úkoly, Zakázky, Obchod…). Admin v Administraci určuje, které moduly jsou zapnuté — platí pro celou Organizaci. | Nástěnka a Administrace nejsou moduly. |
 
 ## Pravidla modelu

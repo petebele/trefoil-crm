@@ -1,4 +1,4 @@
-// Conviu CRM — drobné chování UI (bez závislostí).
+// Trefoil CRM — drobné chování UI (bez závislostí).
 
 // Skiny (motivy): atribut data-skin na <html> řídí barvy. Konfiguraci (seznam
 // skinů + výchozí světlý/tmavý) zveřejní skript v <head> do window.__skins (viz

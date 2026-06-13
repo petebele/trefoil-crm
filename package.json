@@ -1,9 +1,9 @@
 {
-  "name": "conviu-crm",
+  "name": "trefoil-crm",
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Interní CRM pro marketingovou agenturu Conviu (v2)",
+  "description": "Trefoil CRM (v2)",
   "packageManager": "pnpm@11.5.3",
   "engines": {
     "node": ">=22"
