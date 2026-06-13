@@ -1,5 +1,52 @@
 // Conviu CRM — drobné chování UI (bez závislostí).
 
+// Skiny (motivy): atribut data-skin na <html> řídí barvy. Volba je v
+// localStorage['skin']; bez volby se řídí systémem. Seznam skinů a první
+// nastavení (před vykreslením) zajišťuje skript v <head> (viz src/web/skins.ts).
+(function () {
+  function stored() {
+    try { return localStorage.getItem('skin'); } catch (e) { return null; }
+  }
+  // platné skiny = ty, které nabízí přepínač v menu (data-driven z registru)
+  function ids() {
+    return Array.prototype.map.call(document.querySelectorAll('[data-skin-set]'), function (b) {
+      return b.getAttribute('data-skin-set');
+    });
+  }
+  function current() {
+    var s = stored();
+    var list = ids();
+    if (list.length && (!s || list.indexOf(s) < 0)) {
+      var sysDark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+      s = sysDark && list.indexOf('dark') >= 0 ? 'dark' : list[0];
+    }
+    return s || document.documentElement.getAttribute('data-skin') || 'light';
+  }
+  function apply() {
+    var s = current();
+    document.documentElement.setAttribute('data-skin', s);
+    document.querySelectorAll('[data-skin-set]').forEach(function (b) {
+      b.setAttribute('aria-checked', b.getAttribute('data-skin-set') === s ? 'true' : 'false');
+    });
+  }
+  // klik na volbu skinu: ulož a okamžitě přepni (menu zůstává otevřené)
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-skin-set]');
+    if (!b) return;
+    try { localStorage.setItem('skin', b.getAttribute('data-skin-set')); } catch (e2) {}
+    apply();
+  });
+  // změna systémového motivu se projeví jen pokud uživatel sám nic nevybral
+  if (window.matchMedia) {
+    var mq = matchMedia('(prefers-color-scheme: dark)');
+    var onSys = function () { if (!stored()) apply(); };
+    mq.addEventListener ? mq.addEventListener('change', onSys) : mq.addListener(onSys);
+  }
+  // přepnutí v jednom okně se promítne do ostatních otevřených oken/záložek
+  window.addEventListener('storage', function (e) { if (e.key === 'skin') apply(); });
+  apply();
+})();
+
 // Realtime: poslouchej události ze serveru (SSE) a dej vědět živým zónám
 // (elementy s hx-trigger="live-update from:body" se samy překreslí).
 if (document.querySelector('.topbar')) {

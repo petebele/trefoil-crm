@@ -4,6 +4,7 @@ import type { AppEnv } from '../types';
 import { db } from '../db';
 import { verifyPassword } from '../auth/password';
 import { createSession, destroySession } from '../auth/session';
+import { HeadAssets } from './head';
 
 export const authRoutes = new Hono<AppEnv>();
 
@@ -11,10 +12,7 @@ function LoginPage(props: { orgName: string; email?: string; error?: string }) {
   return (
     <html lang="cs">
       <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Přihlášení · Conviu CRM</title>
-        <link rel="stylesheet" href="/static/theme.css?v=4" />
+        <HeadAssets title="Přihlášení · Conviu CRM" />
       </head>
       <body>
         <main class="page" style="max-width:420px">

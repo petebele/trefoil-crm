@@ -1,0 +1,46 @@
+/* ============================================================
+   Skin: Tmavý. Pouze barevné tokeny — strukturu řeší theme.css.
+   Aktivuje se atributem data-skin="dark" na <html> (nastaví skript
+   v hlavičce podle volby uživatele / systému).
+   ============================================================ */
+:root[data-skin="dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text */
+  --ink: #e7e9f2;
+  --muted: #98a0b3;
+  --bg: #13151d;
+  --card: #1b1e29;
+  --line: #2b2f3d;
+  --surface-2: #262a37;
+  --hover: #20232e;
+  --track: #2b2f3d;
+
+  /* Akcent a stavové barvy (na tmavém pozadí o něco světlejší) */
+  --accent: #7d79f7;
+  --accent-hover: #938ffa;
+  --accent-soft: #292654;
+  --teal: #1fc29f;
+  --teal-soft: #123430;
+  --teal-ink: #57d6b4;
+  --red: #f2565b;
+  --red-soft: #3a1e21;
+  --orange: #f5a623;
+  --pink: #ee6b85;
+
+  /* Avatary (tmavý tón + světlý text) */
+  --av-g-bg: #143a2c; --av-g-ink: #5fd6a6;
+  --av-p-bg: #3d1f2e; --av-p-ink: #f29ac4;
+  --av-b-bg: #1b2c4d; --av-b-ink: #8db4f5;
+  --av-y-bg: #3a2f14; --av-y-ink: #e8c06a;
+
+  /* Chipy */
+  --chip-bg: #262a37;
+  --chip-orange-bg: #3a2f14; --chip-orange-ink: #e8c06a;
+  --chip-dark-bg: #2c3040;   --chip-dark-ink: #c3c8d6;
+
+  /* Ostatní */
+  --btn-danger-border: #5a2e30;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .62);
+}

@@ -1,23 +1,114 @@
 /* ============================================================
-   Conviu CRM v2 — mockup theme (replika vizuálu Capsule CRM)
-   Tokeny a komponenty dle docs/UI-ZASADY.md
+   Conviu CRM v2 — styl mockupů (standalone). VYGENEROVÁNO:
+   skiny (light+dark tokeny) + struktura. V aplikaci jsou tokeny
+   v public/skins/*.css, struktura v public/theme.css.
+   Náhled tmavého: <html data-skin="dark"> v mockupu.
    ============================================================ */
 
-:root {
+/* ============================================================
+   Skin: Světlý — výchozí motiv (replika vizuálu Capsule CRM).
+   Pouze barevné tokeny; strukturu řeší theme.css.
+   Bloky `:root` i `:root[data-skin="light"]` => světlá je výchozí
+   i bez JavaScriptu.
+   ============================================================ */
+:root,
+:root[data-skin="light"] {
+  color-scheme: light;
+
+  /* Plochy a text */
   --ink: #1e2235;
   --muted: #6b7280;
   --bg: #f6f7f9;
   --card: #ffffff;
   --line: #e7e9ee;
+  --surface-2: #eff1f4;   /* zvýraznění/hover ploch (aktivní ikona, vyhledávání…) */
+  --hover: #f9fafb;       /* jemný hover řádků a chipů */
+  --track: #e9ebef;       /* dráha ukazatele průběhu */
+
+  /* Akcent a stavové barvy */
   --accent: #635df5;
   --accent-hover: #5246e0;
   --accent-soft: #eceafd;
   --teal: #0aa789;
   --teal-soft: #e0f5f0;
+  --teal-ink: #067a64;
   --red: #e5484d;
   --red-soft: #fdebec;
   --orange: #f59e0b;
   --pink: #ec5b78;
+
+  /* Avatary (jemné pozadí + sytý text) */
+  --av-g-bg: #d9f0e5; --av-g-ink: #1e7a52;
+  --av-p-bg: #fde4ec; --av-p-ink: #b0387a;
+  --av-b-bg: #dde9fd; --av-b-ink: #2b5fb8;
+  --av-y-bg: #fdf0d4; --av-y-ink: #9a6b08;
+
+  /* Chipy */
+  --chip-bg: #eef0f3;
+  --chip-orange-bg: #fdf0d4; --chip-orange-ink: #9a6b08;
+  --chip-dark-bg: #e4e5e9;   --chip-dark-ink: #3a3f51;
+
+  /* Ostatní */
+  --btn-danger-border: #f3c4c6;
+  --shadow-color: 30, 34, 53;          /* RGB pro rgba() ve stínech */
+  --overlay: rgba(30, 34, 53, .38);    /* pozadí velkého modálu */
+}
+
+/* ============================================================
+   Skin: Tmavý. Pouze barevné tokeny — strukturu řeší theme.css.
+   Aktivuje se atributem data-skin="dark" na <html> (nastaví skript
+   v hlavičce podle volby uživatele / systému).
+   ============================================================ */
+:root[data-skin="dark"] {
+  color-scheme: dark;
+
+  /* Plochy a text */
+  --ink: #e7e9f2;
+  --muted: #98a0b3;
+  --bg: #13151d;
+  --card: #1b1e29;
+  --line: #2b2f3d;
+  --surface-2: #262a37;
+  --hover: #20232e;
+  --track: #2b2f3d;
+
+  /* Akcent a stavové barvy (na tmavém pozadí o něco světlejší) */
+  --accent: #7d79f7;
+  --accent-hover: #938ffa;
+  --accent-soft: #292654;
+  --teal: #1fc29f;
+  --teal-soft: #123430;
+  --teal-ink: #57d6b4;
+  --red: #f2565b;
+  --red-soft: #3a1e21;
+  --orange: #f5a623;
+  --pink: #ee6b85;
+
+  /* Avatary (tmavý tón + světlý text) */
+  --av-g-bg: #143a2c; --av-g-ink: #5fd6a6;
+  --av-p-bg: #3d1f2e; --av-p-ink: #f29ac4;
+  --av-b-bg: #1b2c4d; --av-b-ink: #8db4f5;
+  --av-y-bg: #3a2f14; --av-y-ink: #e8c06a;
+
+  /* Chipy */
+  --chip-bg: #262a37;
+  --chip-orange-bg: #3a2f14; --chip-orange-ink: #e8c06a;
+  --chip-dark-bg: #2c3040;   --chip-dark-ink: #c3c8d6;
+
+  /* Ostatní */
+  --btn-danger-border: #5a2e30;
+  --shadow-color: 0, 0, 0;
+  --overlay: rgba(0, 0, 0, .62);
+}
+
+/* ============================================================
+   Conviu CRM v2 — struktura UI (replika vizuálu Capsule CRM)
+   Komponenty dle docs/UI-ZASADY.md. BARVY ZDE NEJSOU NATVRDO —
+   čerpají se z tokenů, které definuje aktivní skin (public/skins/*.css).
+   Viz src/web/skins.ts.
+   ============================================================ */
+
+:root {
   --radius: 12px;
   --radius-sm: 8px;
   font-size: 16px;
@@ -50,11 +141,11 @@ svg { display: block; }
   color: var(--muted);
 }
 .nico:hover { background: var(--bg); color: var(--ink); text-decoration: none; }
-.nico.active { background: #f0f1f4; color: var(--ink); }
+.nico.active { background: var(--surface-2); color: var(--ink); }
 .search {
   flex: 1; max-width: 560px; margin: 0 auto;
   display: flex; align-items: center; gap: .6rem;
-  background: #f1f2f5; border-radius: 10px;
+  background: var(--surface-2); border-radius: 10px;
   padding: 0 .9rem; height: 38px; color: var(--muted); cursor: text;
 }
 .search kbd {
@@ -86,12 +177,12 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
   height: 36px; padding: 0 .95rem;
   font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer;
 }
-.btn:hover { background: #f7f7f9; text-decoration: none; }
+.btn:hover { background: var(--hover); text-decoration: none; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-sm { height: 30px; padding: 0 .7rem; font-size: .8125rem; border-radius: 8px; }
 .btn-ghost { border: none; background: none; color: var(--accent); padding: 0 .3rem; }
-.btn-danger { color: var(--red); border-color: #f3c4c6; }
+.btn-danger { color: var(--red); border-color: var(--btn-danger-border); }
 .btn-danger:hover { background: var(--red-soft); }
 .btn-danger-solid { background: var(--red); border-color: var(--red); color: #fff; }
 .btn-danger-solid:hover { background: #d13438; }
@@ -133,14 +224,14 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 /* ---------- Chipy ---------- */
 .chip {
   display: inline-flex; align-items: center;
-  background: #eef0f3; color: var(--ink);
+  background: var(--chip-bg); color: var(--ink);
   border-radius: 999px; padding: .1rem .6rem;
   font-size: .75rem; font-weight: 500; white-space: nowrap;
 }
-.chip-soft-teal { background: var(--teal-soft); color: #067a64; }
-.chip-soft-gray { background: #eef0f3; color: var(--muted); }
-.chip-soft-orange { background: #fdf0d4; color: #9a6b08; }
-.chip-soft-dark { background: #e4e5e9; color: #3a3f51; }
+.chip-soft-teal { background: var(--teal-soft); color: var(--teal-ink); }
+.chip-soft-gray { background: var(--chip-bg); color: var(--muted); }
+.chip-soft-orange { background: var(--chip-orange-bg); color: var(--chip-orange-ink); }
+.chip-soft-dark { background: var(--chip-dark-bg); color: var(--chip-dark-ink); }
 .cat {
   display: inline-flex; align-items: center;
   border-radius: 6px; padding: .08rem .5rem;
@@ -161,10 +252,10 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 }
 .av-sm { width: 26px; height: 26px; font-size: .65rem; }
 .av-lg { width: 72px; height: 72px; font-size: 1.5rem; }
-.av-g { background: #d9f0e5; color: #1e7a52; }
-.av-p { background: #fde4ec; color: #b0387a; }
-.av-b { background: #dde9fd; color: #2b5fb8; }
-.av-y { background: #fdf0d4; color: #9a6b08; }
+.av-g { background: var(--av-g-bg); color: var(--av-g-ink); }
+.av-p { background: var(--av-p-bg); color: var(--av-p-ink); }
+.av-b { background: var(--av-b-bg); color: var(--av-b-ink); }
+.av-y { background: var(--av-y-bg); color: var(--av-y-ink); }
 .av-i { background: var(--accent-soft); color: var(--accent); }
 
 /* ---------- Tabulka ---------- */
@@ -175,7 +266,7 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 }
 .tbl td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: none; }
-.tbl tr:hover td { background: #fafbfc; }
+.tbl tr:hover td { background: var(--hover); }
 .cell-name { display: flex; align-items: center; gap: .75rem; }
 .cell-name .nm { font-weight: 600; }
 .cell-name .sub { display: block; }
@@ -220,7 +311,7 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .tl-item { display: flex; gap: .85rem; padding: 1rem 0; border-top: 1px solid var(--line); }
 .tl-ico {
   width: 34px; height: 34px; flex: none; border-radius: 8px;
-  display: grid; place-items: center; background: #f0f1f4; font-size: .95rem;
+  display: grid; place-items: center; background: var(--surface-2); font-size: .95rem;
 }
 .tl-head { font-size: .8125rem; }
 .tl-head b { font-size: .875rem; }
@@ -249,7 +340,7 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
   background: var(--card); border: 1px solid var(--line); border-radius: 999px;
   padding: .4rem .9rem .4rem .45rem; cursor: pointer;
 }
-.recent-chip:hover { background: #fafbfc; text-decoration: none; }
+.recent-chip:hover { background: var(--hover); text-decoration: none; }
 .recent-chip .nm { font-weight: 600; font-size: .8125rem; color: var(--ink); line-height: 1.15; }
 .recent-chip .sub { display: block; font-weight: 400; }
 
@@ -262,14 +353,14 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .empty .hint { font-size: .78rem; }
 
 /* ---------- Progress ---------- */
-.progress { height: 6px; background: #e9ebef; border-radius: 99px; overflow: hidden; }
+.progress { height: 6px; background: var(--track); border-radius: 99px; overflow: hidden; }
 .progress i { display: block; height: 100%; background: var(--teal); border-radius: 99px; }
 
 /* ---------- Quick-view panel ---------- */
 .quickview {
   position: fixed; right: 1.5rem; top: 110px; width: 340px; z-index: 40;
   background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-  padding: 1.4rem; box-shadow: 0 18px 45px rgba(30,34,53,.12);
+  padding: 1.4rem; box-shadow: 0 18px 45px rgba(var(--shadow-color), .12);
 }
 
 /* ---------- Formuláře ---------- */
@@ -298,10 +389,10 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 /* Zarovnání: defaultně levým horním rohem k akci (levý/střední panel);
    .menu.align-right zarovná pravým rohem (akce v pravém panelu / horní liště). */
 .menu-list {
-  font-weight: 400; /* panel nedědí tučnost spouštěče (akce v h4/nadpisech) */
   display: none; position: absolute; left: 0; top: calc(100% + 6px); min-width: 180px;
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
-  box-shadow: 0 10px 30px rgba(30,34,53,.10); padding: .35rem; z-index: 60;
+  box-shadow: 0 10px 30px rgba(var(--shadow-color), .10); padding: .35rem; z-index: 60;
+  font-weight: 400; /* panel nedědí tučnost spouštěče (akce v h4/nadpisech) */
 }
 .menu.align-right .menu-list { left: auto; right: 0; }
 .menu.open .menu-list { display: block; }
@@ -315,8 +406,10 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 /* Dropdown panel (Capsule styl): větší plovoucí panel s hledáním, položkami a akcemi */
 .menu-list.panel {
   min-width: 250px; padding: .7rem; border-radius: 12px;
-  box-shadow: 0 14px 40px rgba(30,34,53,.14);
+  box-shadow: 0 14px 40px rgba(var(--shadow-color), .14);
 }
+/* oddělovač sekcí v rozbalovacím menu (např. Vzhled | Odhlásit) */
+.menu-sep { border-top: 1px solid var(--line); margin: .35rem 0; }
 .menu-list.panel .input { width: 100%; margin-bottom: .5rem; }
 .opt {
   display: flex; align-items: center; justify-content: space-between; gap: .6rem;
@@ -326,6 +419,9 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 }
 .opt:hover { background: var(--bg); text-decoration: none; }
 .opt .tick { color: var(--accent); font-weight: 700; }
+/* přepínač (radio) v menu: fajfka jen u aktivní volby (např. výběr skinu) */
+.opt[role="menuitemradio"] .tick { visibility: hidden; }
+.opt[aria-checked="true"] .tick { visibility: visible; }
 .opt-group { font-size: .68rem; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: .45rem .6rem .15rem; }
 .panel-actions { display: flex; justify-content: flex-end; gap: .9rem; align-items: center; padding-top: .55rem; margin-top: .35rem; border-top: 1px solid var(--line); }
 
@@ -335,7 +431,7 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
   border: none; background: none; border-radius: 6px; cursor: pointer;
   color: var(--muted); font-size: .8rem; padding: 0;
 }
-.icon-btn:hover { background: #f0f1f4; color: var(--ink); }
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
 .hover-row .row-actions { opacity: 0; transition: opacity .12s ease; }
 .hover-row:hover .row-actions, .hover-row:focus-within .row-actions { opacity: 1; }
 /* sekční varianta (skryté přidávání): platí pro celou sekci vč. zanořených obalů */
@@ -366,14 +462,14 @@ summary.subtle-action::marker { content: ''; }
 .modal-card {
   background: var(--card); border: 1px solid var(--line); border-radius: 16px;
   padding: 1.5rem; max-width: 420px;
-  box-shadow: 0 18px 45px rgba(30,34,53,.12);
+  box-shadow: 0 18px 45px rgba(var(--shadow-color), .12);
 }
 .modal-card h3 { margin: 0 0 1.1rem; font-size: 1.05rem; font-weight: 650; }
 
 /* ---------- Velký modál (overlay na střed obrazovky) ---------- */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
-  background: rgba(30, 34, 53, .38);
+  background: var(--overlay);
   display: flex; align-items: flex-start; justify-content: center;
   padding: 4vh 1rem; overflow-y: auto;
 }
@@ -389,7 +485,7 @@ summary.subtle-action::marker { content: ''; }
   margin: -.12rem -.35rem;
   transition: background-color .12s ease;
 }
-.editable:hover { background: #f0f1f4; }
+.editable:hover { background: var(--surface-2); }
 .editable:hover::after {
   content: '✎';
   opacity: .45;
@@ -399,7 +495,7 @@ summary.subtle-action::marker { content: ''; }
 .editable:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  background: #f0f1f4;
+  background: var(--surface-2);
 }
 .inline-form { display: flex; gap: .45rem; align-items: flex-start; }
 .inline-form .input { min-width: 0; flex: 1; }

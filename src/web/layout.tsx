@@ -1,10 +1,9 @@
 import type { Child } from 'hono/jsx';
 import type { PersonsTable } from '../db/schema';
 import { MODULES } from '../modules';
+import { SKINS } from './skins';
+import { HeadAssets, ASSET_V } from './head';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
-
-/** Verze statických souborů — zvednout při změně theme.css/app.js (cache-busting). */
-const ASSET_V = '12';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -29,10 +28,7 @@ export function Layout(props: {
   return (
     <html lang="cs">
       <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{title} · Conviu CRM</title>
-        <link rel="stylesheet" href={`/static/theme.css?v=${ASSET_V}`} />
+        <HeadAssets title={`${title} · Conviu CRM`} />
         <script src="/static/htmx.min.js" defer></script>
         <script src={`/static/app.js?v=${ASSET_V}`} defer></script>
       </head>
@@ -118,6 +114,14 @@ export function Layout(props: {
                   <IconChevron />
                 </div>
                 <div class="menu-list" role="menu">
+                  <div class="opt-group">Vzhled</div>
+                  {SKINS.map((s) => (
+                    <button class="opt" type="button" role="menuitemradio" aria-checked="false" data-skin-set={s.id}>
+                      <span>{s.label}</span>
+                      <span class="tick">✓</span>
+                    </button>
+                  ))}
+                  <div class="menu-sep"></div>
                   <form method="post" action="/logout" class="m0">
                     <button class="menu-item" type="submit" role="menuitem">
                       Odhlásit

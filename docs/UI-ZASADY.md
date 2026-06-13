@@ -19,9 +19,25 @@
 - **Přepínač pohledů** pod H1: ikona + text, aktivní = indigo text + 3px indigo podtržení.
 - **Řádek filtrů**: bílé pilulky s rámečkem `Štítek: Hodnota ▾`.
 
-## 2. Barvy (CSS tokeny)
+## 2. Barvy (CSS tokeny) a skiny
 
-| Token | Hodnota | Použití |
+Vzhled **není natvrdo** — barvy jsou výhradně CSS tokeny a každý **skin (motiv)** je
+samostatná sada těchto tokenů. Strukturu (rozměry, rozvržení, komponenty) drží
+`public/theme.css` a používá jen `var(--token)`; konkrétní barvy dodává aktivní skin
+z `public/skins/<id>.css`. Skin se aktivuje atributem `data-skin` na `<html>`.
+
+Zatím dva skiny: **`light`** (výchozí, hodnoty v tabulce níže) a **`dark`**. Přepínač je
+v uživatelském menu (sekce *Vzhled*); volba se ukládá do `localStorage['skin']`, bez volby
+se řídí systémem (`prefers-color-scheme`). Skript v `<head>` nastaví motiv ještě před
+vykreslením (žádné bliknutí). Registr skinů: `src/web/skins.ts`.
+
+**Přidání dalšího skinu**: nový soubor `public/skins/<id>.css` s blokem
+`:root[data-skin="<id>"] { …všechny tokeny… }` + položka v `SKINS` (`skins.ts`). Přepínač
+i načtení stylů se z registru vygenerují samy. Tokeny, které musí každý skin nastavit, jsou
+v `public/skins/light.css` (vč. ploch `--surface-2`/`--hover`/`--track`, avatarů `--av-*`,
+chipů `--chip-*`, `--shadow-color`, `--overlay`).
+
+| Token | Hodnota (light) | Použití |
 |---|---|---|
 | `--ink` | `#1e2235` | primární text (téměř černá, do modra) |
 | `--muted` | `#6b7280` | sekundární text, popisky, meta |
@@ -37,9 +53,10 @@
 
 **Kategorie úkolů = barevné plné chipy s bílým textem** (jako Capsule): Hovor=teal, E-mail=pink,
 Schůzka=red, Follow-up=orange, Milník=indigo. **Štítky (tagy) = naopak tlumené**: světle šedé
-pilulky (`#eef0f3`, text `--ink`, 12 px) — nikdy nesmí křičet.
+pilulky (`--chip-bg`, text `--ink`, 12 px) — nikdy nesmí křičet.
 
-**Avatary**: kruh s iniciálami, pastelové pozadí (zelená/růžová/modrá/žlutá), tmavší text téže barvy.
+**Avatary**: kruh s iniciálami, pastelové pozadí (zelená/růžová/modrá/žlutá) `--av-*-bg`, tmavší
+text téže barvy `--av-*-ink`. V tmavém skinu jsou pozadí ztmavená a text projasněný (tokeny to řeší).
 
 ## 3. Typografie
 
@@ -121,7 +138,8 @@ pod rukama). Nové moduly vznikají rovnou s živými zónami.
 - **Katalog komponent**: přesné kódy a pravidla každého prvku → `docs/KOMPONENTY.md`,
   živý náhled všech prvků → `mockupy/komponenty.html`. Moduly **nevymýšlejí nové prvky** —
   používají katalog; co chybí, nejdřív přibude do katalogu.
-- Tokeny z §2 = CSS proměnné v `public/theme.css` (vznikne v Kroku 2 z `mockupy/styl.css`).
+- Tokeny z §2 = CSS proměnné definované **per skin** v `public/skins/*.css`; strukturu drží
+  `public/theme.css` (jen `var(--token)`, žádné barvy natvrdo). Registr skinů `src/web/skins.ts`.
 - **Bootstrap 5 jen jako podvozek chování** (dropdown, collapse, modal) — vzhled určuje náš theme;
   Bootstrap proměnné přemapovat na naše tokeny, komponenty z §4 jako vlastní třídy (`.chip`, `.kanban-card`…).
 - Mockupy v `/mockupy` jsou čisté HTML+CSS (bez závislostí, fungují offline) a jsou **závazná

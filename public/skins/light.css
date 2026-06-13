@@ -1,0 +1,48 @@
+/* ============================================================
+   Skin: Světlý — výchozí motiv (replika vizuálu Capsule CRM).
+   Pouze barevné tokeny; strukturu řeší theme.css.
+   Bloky `:root` i `:root[data-skin="light"]` => světlá je výchozí
+   i bez JavaScriptu.
+   ============================================================ */
+:root,
+:root[data-skin="light"] {
+  color-scheme: light;
+
+  /* Plochy a text */
+  --ink: #1e2235;
+  --muted: #6b7280;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --line: #e7e9ee;
+  --surface-2: #eff1f4;   /* zvýraznění/hover ploch (aktivní ikona, vyhledávání…) */
+  --hover: #f9fafb;       /* jemný hover řádků a chipů */
+  --track: #e9ebef;       /* dráha ukazatele průběhu */
+
+  /* Akcent a stavové barvy */
+  --accent: #635df5;
+  --accent-hover: #5246e0;
+  --accent-soft: #eceafd;
+  --teal: #0aa789;
+  --teal-soft: #e0f5f0;
+  --teal-ink: #067a64;
+  --red: #e5484d;
+  --red-soft: #fdebec;
+  --orange: #f59e0b;
+  --pink: #ec5b78;
+
+  /* Avatary (jemné pozadí + sytý text) */
+  --av-g-bg: #d9f0e5; --av-g-ink: #1e7a52;
+  --av-p-bg: #fde4ec; --av-p-ink: #b0387a;
+  --av-b-bg: #dde9fd; --av-b-ink: #2b5fb8;
+  --av-y-bg: #fdf0d4; --av-y-ink: #9a6b08;
+
+  /* Chipy */
+  --chip-bg: #eef0f3;
+  --chip-orange-bg: #fdf0d4; --chip-orange-ink: #9a6b08;
+  --chip-dark-bg: #e4e5e9;   --chip-dark-ink: #3a3f51;
+
+  /* Ostatní */
+  --btn-danger-border: #f3c4c6;
+  --shadow-color: 30, 34, 53;          /* RGB pro rgba() ve stínech */
+  --overlay: rgba(30, 34, 53, .38);    /* pozadí velkého modálu */
+}

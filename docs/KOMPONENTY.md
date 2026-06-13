@@ -352,6 +352,23 @@ Jediná navigace aplikace: ikonová navigace (`.nico`, aktivní `.active`, vždy
 vyhledávání `.search` s `<kbd>/</kbd>`, vpravo `Přidat +` a `.user`. Přesný markup: kterýkoli mockup
 (`mockupy/nastenka.html`). Ikony: inline SVG (Feather styl, stroke 2, 20×20).
 
+## 23. Skiny (motivy) a přepínač vzhledu
+
+Barvy nejsou v `theme.css` natvrdo — drží je **tokeny** a každý skin je jejich sada
+(`public/skins/<id>.css`, blok `:root[data-skin="<id>"]`). Aktivní skin = atribut `data-skin`
+na `<html>`. Registr `src/web/skins.ts` (id + štítek) generuje jak `<link>` na styly skinů
+(`HeadAssets`, `src/web/head.tsx`), tak položky přepínače.
+
+**Přepínač** je v rozbalovacím menu `.user` (sekce „Vzhled"): pro každý skin `<button class="opt"
+role="menuitemradio" data-skin-set="<id>">` se `<span class="tick">✓</span>` (fajfka jen
+u aktivní volby přes `aria-checked="true"`). Oddělovač sekcí `.menu-sep`.
+
+Chování (`app.js`): klik uloží volbu do `localStorage['skin']` a hned přepne (menu zůstává
+otevřené). Bez volby se řídí systémem; přepnutí se promítne i do ostatních otevřených oken
+(`storage` event). Bliknutí brání skript v `<head>` (`skinInitScript`), který motiv nastaví
+před vykreslením. **Nová obrazovka nepotřebuje nic navíc** — stačí, že její `<head>` použije
+`HeadAssets` (Layout, login i založení už ano).
+
 ## 22. Závislá pole a výchozí hodnoty z katalogu (formuláře)
 
 Obecné mechanismy v `app.js` — použitelné v každém formuláři, žádný kód na míru:

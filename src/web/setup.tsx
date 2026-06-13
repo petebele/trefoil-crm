@@ -7,6 +7,7 @@ import { hashPassword } from '../auth/password';
 import { createSession } from '../auth/session';
 import { MODULES, isModuleKey } from '../modules';
 import { seedTenantLists } from '../db/seed';
+import { HeadAssets } from './head';
 
 export const setupRoutes = new Hono<AppEnv>();
 
@@ -15,10 +16,7 @@ function SetupPage(props: { error?: string; orgName?: string; name?: string; ema
   return (
     <html lang="cs">
       <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Založení organizace · Conviu CRM</title>
-        <link rel="stylesheet" href="/static/theme.css?v=4" />
+        <HeadAssets title="Založení organizace · Conviu CRM" />
       </head>
       <body>
         <main class="page" style="max-width:560px">
