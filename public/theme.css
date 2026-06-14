@@ -200,6 +200,8 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .person-row { display: flex; align-items: center; gap: .7rem; padding: .25rem 0; }
 .person-row .nm { font-weight: 600; font-size: .85rem; }
 .person-row .sub { display: block; }
+/* Odpovědná osoba — avatar stejně velký jako v bloku Lidé (40 px / 1rem) */
+.person-row .av { width: 40px; height: 40px; font-size: 1rem; }
 
 /* ---------- Detail: 3 sloupce ---------- */
 .detail-grid {
@@ -283,6 +285,19 @@ select.input { appearance: auto; }
 textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: vertical; }
 .field .help { display: block; font-size: .75rem; color: var(--muted); margin-top: .3rem; }
 .field .side-link { float: right; font-size: .75rem; }
+
+/* Dva údaje vedle sebe (IČO/DIČ, Ulice/č.p.) — poměr sloupců přes inline grid-template-columns */
+.field-row2 { display: grid; gap: .6rem; }
+.field-row2 > .field { margin-bottom: 0; }
+
+/* Kompaktnější rozestupy a čitelnější sekční nadpisy ve velkém modálu */
+.modal-card .field, .modal-card .field-row2 { margin-bottom: .6rem; }
+.modal-card .field > label { margin-bottom: .2rem; }
+.modal-card .opt-group {
+  font-size: .78rem; color: var(--ink); font-weight: 700; letter-spacing: .03em;
+  padding: 0; margin: .7rem 0 .3rem;
+}
+.modal-card .form-actions { margin-top: 1rem; }
 .form-actions { display: flex; gap: .75rem; align-items: center; margin-top: 1.25rem; }
 
 /* ---------- Chyba formuláře ---------- */
@@ -458,14 +473,18 @@ summary.subtle-action::marker { content: ''; }
 .prow + .prow { border-top: 1px solid var(--line); }
 .prow:hover { background: rgba(var(--shadow-color), .04); }
 .prow .nm { font-weight: 600; }
+/* Avatar přiřazené osoby/firmy v bloku Lidé je výraznější než drobné av-sm */
+.prow .av { width: 40px; height: 40px; font-size: 1rem; }
 /* IČO/DIČ dvojice ve firemních údajích */
 .minirow { display: flex; gap: 1.8rem; margin-top: .45rem; }
 /* řádek kontaktu v modálu „Upravit kontakty" (bez horizontálního posuvníku) */
 .crow { display: flex; gap: .4rem; align-items: flex-start; margin-bottom: .5rem; }
-.crow .input { min-width: 0; }
-.crow .ctype { width: 92px; flex: none; }
+/* width:auto přebíjí .field .input{width:100%}; u selectu musí být i element (select.ctype),
+   aby přebil specifičtější .field select.input{width:100%} — jinak typ roztáhne řádek mimo modál */
+.crow .input, .crow select.input { min-width: 0; width: auto; }
+.crow select.ctype { width: 92px; flex: none; }
 .crow .clab { width: 90px; flex: none; }
-.crow .cval { flex: 1 1 auto; }
+.crow .cval { flex: 1 1 auto; min-width: 0; }
 /* hodnota uvnitř textu (víc hodnot v jednom řádku): čárkované podtržení (vždy viditelné) */
 .editable-inline {
   cursor: pointer; border-bottom: 1px dashed var(--muted);

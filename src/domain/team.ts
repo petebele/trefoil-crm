@@ -61,7 +61,7 @@ export async function activeAdminCount(tenantId: string): Promise<number> {
 
 export async function createTeamMember(
   tenantId: string,
-  data: { name: string; email: string; isAdmin: boolean; password: string },
+  data: { name: string; email: string; isAdmin: boolean; password: string; position?: string | null },
 ): Promise<string> {
   const id = newId();
   await db
@@ -74,6 +74,7 @@ export async function createTeamMember(
       password_hash: hashPassword(data.password),
       is_admin: data.isAdmin ? 1 : 0,
       is_active: 1,
+      position: data.position ?? null,
       note: null,
       created_at: now(),
       deleted_at: null,
@@ -85,7 +86,7 @@ export async function createTeamMember(
 export async function updateTeamMember(
   tenantId: string,
   id: string,
-  data: { name: string; email: string; isAdmin: boolean; password?: string | null },
+  data: { name: string; email: string; isAdmin: boolean; password?: string | null; position?: string | null },
 ): Promise<void> {
   await db
     .updateTable('persons')
@@ -93,6 +94,7 @@ export async function updateTeamMember(
       name: data.name,
       login_email: data.email,
       is_admin: data.isAdmin ? 1 : 0,
+      position: data.position ?? null,
       ...(data.password ? { password_hash: hashPassword(data.password) } : {}),
     })
     .where('tenant_id', '=', tenantId)

@@ -41,6 +41,7 @@ export interface PersonsTable {
   password_hash: string | null;
   is_admin: number; // dočasné — nahradí RBAC role
   is_active: number;
+  position: string | null; // pozice v týmu (prostý text, např. „SEO specialista")
   note: string | null;
   lang: string | null; // jazyk UI ('cs' | 'en'); null = výchozí
   created_at: string;

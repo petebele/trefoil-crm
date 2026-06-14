@@ -86,14 +86,37 @@ document.addEventListener('click', function (e) {
 
 // Po otevření panelu (editace pole): kurzor do prvního pole (+ označit text), flip nad
 // pole, když by panel spadl pod spodní okraj okna, a dorovnání výšky rostoucích textarea.
+// Najde nejbližší předka, který ořezává obsah (overflow auto/scroll/hidden/clip) —
+// např. vodorovně scrollovatelnou tabulku. Uvnitř něj by se rozbalený panel schoval
+// pod okraj, proto ho v takovém případě ukotvíme napevno (fixed) k spouštěči.
+function clippingAncestor(el) {
+  for (var p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+    var s = getComputedStyle(p);
+    if (/(auto|scroll|hidden|clip)/.test(s.overflowX + ' ' + s.overflowY + ' ' + s.overflow)) return p;
+  }
+  return null;
+}
+function resetPanelPos(panel) {
+  panel.style.position = '';
+  panel.style.left = panel.style.right = panel.style.top = panel.style.bottom = '';
+}
 function onPanelOpen(menu) {
   var panel = menu.querySelector(':scope > .menu-list');
   if (!panel) return;
   menu.classList.remove('up');
+  resetPanelPos(panel);
   requestAnimationFrame(function () {
     var trigger = menu.querySelector('[data-menu-toggle]') || menu;
     var tr = trigger.getBoundingClientRect(), ph = panel.offsetHeight;
-    if (tr.bottom + 6 + ph > window.innerHeight - 8 && tr.top - 6 - ph > 8) menu.classList.add('up');
+    var up = tr.bottom + 6 + ph > window.innerHeight - 8 && tr.top - 6 - ph > 8;
+    if (up) menu.classList.add('up');
+    if (clippingAncestor(menu)) {
+      panel.style.position = 'fixed';
+      if (menu.classList.contains('align-right')) { panel.style.right = (window.innerWidth - tr.right) + 'px'; panel.style.left = 'auto'; }
+      else { panel.style.left = tr.left + 'px'; panel.style.right = 'auto'; }
+      if (up) { panel.style.bottom = (window.innerHeight - tr.top + 6) + 'px'; panel.style.top = 'auto'; }
+      else { panel.style.top = (tr.bottom + 6) + 'px'; panel.style.bottom = 'auto'; }
+    }
     panel.querySelectorAll('textarea[data-autogrow]').forEach(autogrow);
     var f = panel.querySelector('input:not([type=hidden]):not([type=checkbox]), textarea');
     if (f) { f.focus(); if (f.select) f.select(); }

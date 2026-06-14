@@ -13,7 +13,6 @@ import {
   peopleOfClient,
   linkPersonToClient,
   unlinkPersonFromClient,
-  clientDisplayName,
   composeAddress,
 } from '../domain/clients';
 import { listCustomerPersons, createCustomerPerson, listCoworkers } from '../domain/people';
@@ -84,10 +83,6 @@ firmyRoutes.get('/firmy/modal/nova', async (c) => {
     <ModalShell title={tr('Nová firma')}>
       <form method="post" action="/firmy">
         <div class="field">
-          <label>{tr('Název zákazníka')}</label>
-          <input class="input" name="display_name" placeholder={tr('zkrácený název do hlavičky (nepovinné)')} />
-        </div>
-        <div class="field">
           <label>{tr('Název firmy')} <span class="req">*</span></label>
           <input class="input" name="name" required autofocus />
         </div>
@@ -131,27 +126,40 @@ firmyRoutes.get('/firmy/:id/modal/upravit', async (c) => {
   const client = await getClient(t, c.req.param('id'));
   if (!client) return c.notFound();
   const [statusItems, coworkers] = await Promise.all([itemsByKey(t, 'client_statuses'), listCoworkers(t)]);
+  const countries = ['Česká republika', 'Slovensko', 'Polsko', 'Německo', 'Rakousko', 'Maďarsko', 'Ukrajina'];
+  const curCountry = client.country ?? '';
+  const countryOpts = curCountry && !countries.includes(curCountry) ? [curCountry, ...countries] : countries;
 
   return c.html(
     <ModalShell title={`${tr('Upravit firmu')} · ${client.name}`}>
       <form method="post" action={`/firmy/${client.id}/upravit`}>
         <div class="field">
-          <label>{tr('Název zákazníka')} <span class="help" style="display:inline;margin-left:.4rem">{tr('do hlavičky; prázdné = Název firmy')}</span></label>
-          <input class="input" name="display_name" value={client.display_name ?? ''} placeholder={client.name} autofocus />
+          <label>{tr('Název firmy')} <span class="req">*</span></label>
+          <input class="input" name="name" value={client.name} required autofocus />
+        </div>
+        <div class="field-row2" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>{tr('IČO')}</label><input class="input" name="ico" value={client.ico ?? ''} /></div>
+          <div class="field"><label>{tr('DIČ')}</label><input class="input" name="dic" value={client.dic ?? ''} /></div>
+        </div>
+        <div class="opt-group">{tr('Adresa')}</div>
+        <div class="field-row2" style="grid-template-columns:3fr 1fr">
+          <div class="field"><label>{tr('Ulice')}</label><input class="input" name="street" value={client.street ?? ''} /></div>
+          <div class="field"><label>{tr('Č.p./č.o.')}</label><input class="input" name="house_no" value={client.house_no ?? ''} /></div>
+        </div>
+        <div class="field"><label>{tr('Adresa, 2. řádek')}</label><input class="input" name="address2" value={client.address2 ?? ''} /></div>
+        <div class="field-row2" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>{tr('Město')}</label><input class="input" name="city" value={client.city ?? ''} /></div>
+          <div class="field"><label>{tr('PSČ')}</label><input class="input" name="postal_code" value={client.postal_code ?? ''} /></div>
         </div>
         <div class="field">
-          <label>{tr('Název firmy')} <span class="req">*</span></label>
-          <input class="input" name="name" value={client.name} required />
+          <label>{tr('Stát')}</label>
+          <select class="input" name="country">
+            <option value="">{tr('— stát —')}</option>
+            {countryOpts.map((co) => (
+              <option value={co} selected={co === curCountry}>{co}</option>
+            ))}
+          </select>
         </div>
-        <div class="field"><label>{tr('IČO')}</label><input class="input" name="ico" value={client.ico ?? ''} /></div>
-        <div class="field"><label>{tr('DIČ')}</label><input class="input" name="dic" value={client.dic ?? ''} /></div>
-        <div class="opt-group" style="padding-left:0">{tr('Adresa')}</div>
-        <div class="field"><label>{tr('Ulice')}</label><input class="input" name="street" value={client.street ?? ''} /></div>
-        <div class="field"><label>{tr('Č.p./č.o.')}</label><input class="input" name="house_no" value={client.house_no ?? ''} /></div>
-        <div class="field"><label>{tr('Adresa, 2. řádek')}</label><input class="input" name="address2" value={client.address2 ?? ''} /></div>
-        <div class="field"><label>{tr('Město')}</label><input class="input" name="city" value={client.city ?? ''} /></div>
-        <div class="field"><label>{tr('PSČ')}</label><input class="input" name="postal_code" value={client.postal_code ?? ''} /></div>
-        <div class="field"><label>{tr('Stát')}</label><input class="input" name="country" value={client.country ?? ''} /></div>
         <div class="field">
           <label>{tr('Stav')}</label>
           <select class="input" name="status">
@@ -199,7 +207,6 @@ firmyRoutes.post('/firmy/:id/upravit', async (c) => {
   };
   const data = {
     name,
-    displayName: f.strOrNull('display_name'),
     ico: f.strOrNull('ico'),
     dic: f.strOrNull('dic'),
     address: addr,
@@ -210,7 +217,6 @@ firmyRoutes.post('/firmy/:id/upravit', async (c) => {
   const newAddr = composeAddress(addr).join('\n') || null;
   const changes: string[] = [];
   if (client.name !== data.name) changes.push('název firmy');
-  if ((client.display_name ?? null) !== data.displayName) changes.push('název zákazníka');
   if ((client.ico ?? null) !== data.ico) changes.push('IČO');
   if ((client.dic ?? null) !== data.dic) changes.push('DIČ');
   if ((client.address ?? null) !== newAddr) changes.push('adresa');
@@ -282,7 +288,6 @@ firmyRoutes.post('/firmy', async (c) => {
 
   const id = await createClient(t, {
     name,
-    displayName: f.strOrNull('display_name'),
     ico: f.strOrNull('ico'),
     dic: f.strOrNull('dic'),
     status: f.str('status') || 'lead',
@@ -415,7 +420,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
     listCatalog(t),
   ]);
   const base = `/firmy/${client.id}`;
-  const dn = clientDisplayName(client);
+  const dn = client.name;
   const linkedIds = new Set(people.map((p) => p.id));
   const peopleContacts = await contactsForOwners(t, 'person', people.map((p) => p.id));
   const peopleWith = people.map((p) => ({ ...p, contacts: peopleContacts.filter((x) => x.owner_id === p.id) }));
@@ -656,7 +661,7 @@ firmyRoutes.get('/firmy/:id/kontakty/modal', async (c) => {
   const client = await getClient(t, id);
   if (!client) return c.notFound();
   const [contacts, labels] = await Promise.all([listContacts(t, 'client', id), itemsByKey(t, 'contact_labels')]);
-  return c.html(<ContactsEditAll base={`/firmy/${id}`} title={`${tr('Kontakty')} · ${clientDisplayName(client)}`} contacts={contacts} labels={labels} />);
+  return c.html(<ContactsEditAll base={`/firmy/${id}`} title={`${tr('Kontakty')} · ${client.name}`} contacts={contacts} labels={labels} />);
 });
 
 firmyRoutes.post('/firmy/:id/kontakty', async (c) => {

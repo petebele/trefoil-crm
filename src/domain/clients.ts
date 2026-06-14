@@ -14,11 +14,6 @@ export type ClientAddressInput = {
   country: string | null;
 };
 
-/** Zobrazované jméno firmy: Název zákazníka (zkrácený) s fallbackem na Název firmy. */
-export function clientDisplayName(c: { display_name?: string | null; name: string }): string {
-  return c.display_name?.trim() || c.name;
-}
-
 /** Adresa pro zobrazení: poskládá strukturovaná pole; fallback na legacy volný text. */
 export function composeAddress(c: {
   street?: string | null; house_no?: string | null; address2?: string | null;
@@ -58,7 +53,6 @@ export async function createClient(
   tenantId: string,
   data: {
     name: string;
-    displayName?: string | null;
     ico?: string | null;
     dic?: string | null;
     status?: string;
@@ -77,7 +71,6 @@ export async function createClient(
       tenant_id: tenantId,
       kind: 'company',
       name: data.name,
-      display_name: data.displayName ?? null,
       ico: data.ico ?? null,
       dic: data.dic ?? null,
       website: null,
@@ -109,7 +102,6 @@ export async function updateClientMain(
   id: string,
   data: {
     name: string;
-    displayName: string | null;
     ico: string | null;
     dic: string | null;
     address: ClientAddressInput;
@@ -125,7 +117,6 @@ export async function updateClientMain(
     .updateTable('clients')
     .set({
       name: data.name,
-      display_name: data.displayName,
       ico: data.ico,
       dic: data.dic,
       street: a.street,

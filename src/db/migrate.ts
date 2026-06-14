@@ -54,6 +54,8 @@ export async function migrate(): Promise<void> {
   await sql`ALTER TABLE persons ADD COLUMN note text`.execute(db).catch(() => {});
   // jazyk UI per uživatel ('cs' | 'en'); starší DB idempotentně
   await sql`ALTER TABLE persons ADD COLUMN lang text`.execute(db).catch(() => {});
+  // pozice v týmu (prostý text); starší DB idempotentně
+  await sql`ALTER TABLE persons ADD COLUMN position text`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('clients')

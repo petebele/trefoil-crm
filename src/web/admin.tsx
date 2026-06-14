@@ -4,9 +4,12 @@ import type { AppEnv } from '../types';
 import { db } from '../db';
 import { Layout } from './layout';
 import { MODULES, isModuleKey } from '../modules';
-import { ModalShell, EmptyState, initials, avColor, KebabMenu } from './components';
+import { ModalShell, EmptyState, initials, avColor, KebabMenu, ContactRowsField } from './components';
 import { readForm } from '../lib/util';
 import { logEvent } from '../domain/events';
+import { listContacts, clearOwnerContacts, addContact, isContactType } from '../domain/contacts';
+import { itemsByKey } from '../domain/lists';
+import type { PersonContactsTable } from '../db/schema';
 import {
   listTeam,
   getTeamMember,
@@ -119,9 +122,12 @@ function TymTab(props: { team: PersonsTable[]; meId: string }) {
               <td>
                 <span style="display:flex;align-items:center;gap:.6rem">
                   <span class={`av ${avColor(u.name)}`}>{initials(u.name)}</span>
-                  <span style="font-weight:600">
-                    {u.name}
-                    {u.id === props.meId ? <span class="sub" style="font-weight:400"> {tr('(vy)')}</span> : null}
+                  <span>
+                    <span style="font-weight:600">
+                      {u.name}
+                      {u.id === props.meId ? <span class="sub" style="font-weight:400"> {tr('(vy)')}</span> : null}
+                    </span>
+                    {u.position ? <span class="sub" style="display:block">{u.position}</span> : null}
                   </span>
                 </span>
               </td>
@@ -157,7 +163,7 @@ function TymTab(props: { team: PersonsTable[]; meId: string }) {
   );
 }
 
-function TeamModal(props: { member: PersonsTable | null }) {
+function TeamModal(props: { member: PersonsTable | null; contacts: PersonContactsTable[]; labels: Array<{ label: string }> }) {
   const m = props.member;
   return (
     <ModalShell title={m ? `${tr('Upravit uživatele')} · ${m.name}` : tr('Nový uživatel')}>
@@ -170,12 +176,18 @@ function TeamModal(props: { member: PersonsTable | null }) {
           <label>{tr('Přihlašovací e-mail')} <span class="req">*</span></label>
           <input class="input" type="email" name="email" value={m?.login_email ?? ''} required />
         </div>
-        <div class="field">
-          <label>{tr('Role')}</label>
-          <select class="input" name="role">
-            <option value="user" selected={!m || m.is_admin !== 1}>{tr('Uživatel')}</option>
-            <option value="admin" selected={m?.is_admin === 1}>{tr('Admin — spravuje tým, služby a moduly')}</option>
-          </select>
+        <div class="field-row2" style="grid-template-columns:1fr 1fr">
+          <div class="field">
+            <label>{tr('Role')}</label>
+            <select class="input" name="role">
+              <option value="user" selected={!m || m.is_admin !== 1}>{tr('Uživatel')}</option>
+              <option value="admin" selected={m?.is_admin === 1}>{tr('Admin')}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{tr('Pozice')}</label>
+            <input class="input" name="position" value={m?.position ?? ''} placeholder={tr('např. SEO specialista')} />
+          </div>
         </div>
         <div class="field">
           <label>{tr('Heslo')} {m ? null : <span class="req">*</span>}</label>
@@ -189,6 +201,7 @@ function TeamModal(props: { member: PersonsTable | null }) {
           />
           {m ? null : <span class="help">{tr('Nastavte první heslo a předejte ho kolegovi — změní si ho po přihlášení. Pozvánky e-mailem připravujeme.')}</span>}
         </div>
+        <ContactRowsField contacts={props.contacts} labels={props.labels} />
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">{m ? tr('Uložit změny') : tr('Vytvořit uživatele')}</button>
           <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
@@ -378,28 +391,59 @@ adminRoutes.post('/administrace/moduly', async (c) => {
 
 // ---------- Tým: routy ----------
 
-adminRoutes.get('/administrace/tym/modal/novy', (c) => c.html(<TeamModal member={null} />));
+/** Nahradí všechny kontakty člena týmu podle polí c_type[]/c_value[]/c_label[].
+ *  Vrací true, když se sada kontaktů reálně změnila (kvůli zápisu do Historie). */
+async function syncTeamContacts(tenantId: string, personId: string, body: Record<string, unknown>): Promise<boolean> {
+  const arr = (v: unknown) => (Array.isArray(v) ? v.map(String) : v !== undefined ? [String(v)] : []);
+  const types = arr(body.c_type);
+  const values = arr(body.c_value);
+  const labels = arr(body.c_label);
+  const next: Array<{ type: PersonContactsTable['type']; value: string; label: string | null }> = [];
+  for (let i = 0; i < values.length; i++) {
+    const value = (values[i] ?? '').trim();
+    const type = types[i] ?? 'other';
+    if (!value || !isContactType(type)) continue;
+    next.push({ type, value, label: (labels[i] ?? '').trim() || null });
+  }
+  const norm = (xs: Array<{ type: string; value: string; label: string | null }>) =>
+    xs.map((x) => `${x.type}|${x.value}|${x.label ?? ''}`).sort().join('\n');
+  const before = await listContacts(tenantId, 'person', personId);
+  if (norm(before) === norm(next)) return false;
+  await clearOwnerContacts(tenantId, 'person', personId);
+  for (const cc of next) await addContact(tenantId, 'person', personId, { type: cc.type, value: cc.value, label: cc.label, clientId: null });
+  return true;
+}
+
+adminRoutes.get('/administrace/tym/modal/novy', async (c) => {
+  const tenant = c.get('tenant')!;
+  const labels = await itemsByKey(tenant.id, 'contact_labels');
+  return c.html(<TeamModal member={null} contacts={[]} labels={labels} />);
+});
 
 adminRoutes.get('/administrace/tym/:id/modal', async (c) => {
   const tenant = c.get('tenant')!;
   const member = await getTeamMember(tenant.id, c.req.param('id'));
   if (!member) return c.notFound();
-  return c.html(<TeamModal member={member} />);
+  const [contacts, labels] = await Promise.all([listContacts(tenant.id, 'person', member.id), itemsByKey(tenant.id, 'contact_labels')]);
+  return c.html(<TeamModal member={member} contacts={contacts} labels={labels} />);
 });
 
 adminRoutes.post('/administrace/tym', async (c) => {
   const person = c.get('person')!;
   const tenant = c.get('tenant')!;
-  const f = readForm(await c.req.parseBody());
+  const body = await c.req.parseBody({ all: true });
+  const f = readForm(body);
   const name = f.str('name');
   const email = f.email('email');
   const password = f.raw('password');
   const isAdmin = f.str('role') === 'admin';
+  const position = f.strOrNull('position');
 
   if (!name || !email || !password) return c.redirect('/administrace?tab=tym&err=povinne');
   if (await loginEmailTaken(tenant.id, email)) return c.redirect('/administrace?tab=tym&err=email');
 
-  const id = await createTeamMember(tenant.id, { name, email, isAdmin, password });
+  const id = await createTeamMember(tenant.id, { name, email, isAdmin, password, position });
+  await syncTeamContacts(tenant.id, id, body);
   await logEvent(tenant.id, 'person', id, person.id, `Uživatel ${name} přidán do týmu (${isAdmin ? 'Admin' : 'Uživatel'})`);
   return c.redirect('/administrace?tab=tym');
 });
@@ -411,11 +455,13 @@ adminRoutes.post('/administrace/tym/:id', async (c) => {
   const member = await getTeamMember(tenant.id, id);
   if (!member) return c.notFound();
 
-  const f = readForm(await c.req.parseBody());
+  const body = await c.req.parseBody({ all: true });
+  const f = readForm(body);
   const name = f.str('name');
   const email = f.email('email');
   const password = f.strOrNull('password');
   const isAdmin = f.str('role') === 'admin';
+  const position = f.strOrNull('position');
 
   if (!name || !email) return c.redirect('/administrace?tab=tym&err=povinne');
   if (await loginEmailTaken(tenant.id, email, id)) return c.redirect('/administrace?tab=tym&err=email');
@@ -425,15 +471,18 @@ adminRoutes.post('/administrace/tym/:id', async (c) => {
     return c.redirect('/administrace?tab=tym&err=lastadmin');
   }
 
+  const contactsChanged = await syncTeamContacts(tenant.id, id, body);
   const changes: string[] = [];
   if (member.name !== name) changes.push(`jméno → ${name}`);
   if (member.login_email !== email) changes.push(`e-mail → ${email}`);
   if ((member.is_admin === 1) !== isAdmin) changes.push(`role → ${isAdmin ? 'Admin' : 'Uživatel'}`);
+  if ((member.position ?? null) !== position) changes.push(`pozice → ${position ?? '—'}`);
   if (password) changes.push('změna hesla');
+  if (contactsChanged) changes.push('kontakty');
 
   // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
   if (changes.length) {
-    await updateTeamMember(tenant.id, id, { name, email, isAdmin, password });
+    await updateTeamMember(tenant.id, id, { name, email, isAdmin, password, position });
     await logEvent(tenant.id, 'person', id, person.id, `Uživatel ${name} upraven: ${changes.join(', ')}`);
   }
   return c.redirect('/administrace?tab=tym');

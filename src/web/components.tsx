@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
-import { IconPhone, IconMail, IconGlobe, IconPlus } from './icons';
+import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil } from './icons';
 import { tr, fmtDateTime } from '../i18n';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
@@ -346,8 +346,12 @@ function contactTypeIcon(t: PersonContactsTable['type']) {
   return <IconPlus />;
 }
 
-/** Modál „Upravit kontakty" — hromadná správa (typ + hodnota + štítek, přidání/odebrání). */
-export function ContactsEditAll(props: { base: string; title: string; contacts: PersonContactsTable[]; labels: Array<{ label: string }> }) {
+/**
+ * Editovatelné řádky kontaktů (typ + hodnota + označení) s přidáním/odebráním.
+ * Sdílené pro hromadnou editaci kontaktů (firma/osoba) i formulář člena týmu.
+ * Posílá pole `c_type[]` / `c_value[]` / `c_label[]`; server je nahradí celé.
+ */
+export function ContactRowsField(props: { contacts: PersonContactsTable[]; labels: Array<{ label: string }>; label?: string }) {
   const row = (c?: PersonContactsTable) => (
     <div class="crow">
       <select class="input ctype" name="c_type" aria-label={tr('Typ kontaktu')}>
@@ -362,14 +366,24 @@ export function ContactsEditAll(props: { base: string; title: string; contacts: 
     </div>
   );
   return (
+    <div class="field">
+      <label>{props.label ?? tr('Kontakty')}</label>
+      <div id="contactRows">
+        {props.contacts.map((c) => row(c))}
+        <template id="contactRowTpl">{row()}</template>
+      </div>
+      <button type="button" class="btn btn-ghost" data-add-row="contactRowTpl">{tr('+ přidat kontakt')}</button>
+      <datalist id="contactLabelsModal">{props.labels.map((l) => <option value={l.label}></option>)}</datalist>
+    </div>
+  );
+}
+
+/** Modál „Upravit kontakty" — hromadná správa (typ + hodnota + štítek, přidání/odebrání). */
+export function ContactsEditAll(props: { base: string; title: string; contacts: PersonContactsTable[]; labels: Array<{ label: string }> }) {
+  return (
     <ModalShell title={props.title}>
       <form hx-post={`${props.base}/kontakty`} hx-target="#contacts" hx-swap="outerHTML">
-        <div id="contactRows">
-          {props.contacts.map((c) => row(c))}
-          <template id="contactRowTpl">{row()}</template>
-        </div>
-        <button type="button" class="btn btn-ghost" data-add-row="contactRowTpl">{tr('+ přidat kontakt')}</button>
-        <datalist id="contactLabelsModal">{props.labels.map((l) => <option value={l.label}></option>)}</datalist>
+        <ContactRowsField contacts={props.contacts} labels={props.labels} />
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">{tr('Uložit')}</button>
           <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
@@ -441,7 +455,7 @@ export function ContactsSection(props: {
       </Picker>
       {props.contacts.length ? (
         <button type="button" class="icon-btn" hx-get={`${props.base}/kontakty/modal`} hx-target="#modal" hx-swap="innerHTML" aria-label={tr('Upravit všechny kontakty')} title={tr('Upravit vše')}>
-          <PencilIcon />
+          <IconPencil />
         </button>
       ) : null}
     </span>
