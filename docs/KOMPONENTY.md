@@ -1,6 +1,6 @@
 # Katalog komponent — Trefoil CRM v2
 
-🧭 **Znalostní báze:** [mapa](../README.md) · [UI zásady](UI-ZASADY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md) · [architektura](../ARCHITECTURE.md) · [sumář](../SUMMARY.md) · [roadmap](../ROADMAP.md) · [pravidla](../CLAUDE.md) · [mockupy](../mockupy/)
+🧭 **Znalostní báze:** [mapa](../README.md) · [UI zásady](UI-ZASADY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md) · [architektura](ARCHITECTURE.md) · [sumář](SUMMARY.md) · [roadmap](ROADMAP.md) · [pravidla](../CLAUDE.md) · [mockupy](../mockupy/)
 
 > **Závazná specifikace znovupoužitelných prvků UI.** Zdroj stylů: `mockupy/styl.css`
 > (v Kroku 2 se stane `public/theme.css` aplikace). Živý náhled všech prvků:

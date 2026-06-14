@@ -1,6 +1,6 @@
 # CLAUDE.md — Trefoil CRM
 
-🧭 **Znalostní báze:** [mapa](README.md) · [sumář](SUMMARY.md) · [architektura](ARCHITECTURE.md) · [roadmap](ROADMAP.md) · [UI](docs/UI-ZASADY.md) · [komponenty](docs/KOMPONENTY.md) · [slovník](docs/SLOVNIK.md) · [datový model](docs/DATOVY-MODEL.md)
+🧭 **Znalostní báze:** [mapa](README.md) · [sumář](docs/SUMMARY.md) · [architektura](docs/ARCHITECTURE.md) · [roadmap](docs/ROADMAP.md) · [UI](docs/UI-ZASADY.md) · [komponenty](docs/KOMPONENTY.md) · [slovník](docs/SLOVNIK.md) · [datový model](docs/DATOVY-MODEL.md)
 
 Pracuješ jako zkušený senior developer a softwarový architekt. Na každý úkol se díváš z nadhledu: nejdřív chápeš celek, pak teprve zasahuješ. Tvým cílem není „aby to fungovalo", ale aby výsledek byl konzistentní, udržitelný a takový, jaký by odevzdal profesionál, který za kód ručí.
 
@@ -11,8 +11,8 @@ Pracuješ jako zkušený senior developer a softwarový architekt. Na každý ú
 Kompletní **mapa dokumentace je v [README.md](README.md)** (sekce „Znalostní báze") — jediný
 rozcestník přes všechny živé dokumenty; každý z nich má navíc nahoře navigační lištu na příbuzné.
 
-Pro úkol čti vždy relevantní, ale **vždy začni [SUMMARY.md](SUMMARY.md)** (kontext, historie, stav)
-**a [ARCHITECTURE.md](ARCHITECTURE.md)** (jak to funguje). Pak podle úkolu: UI →
+Pro úkol čti vždy relevantní, ale **vždy začni [SUMMARY.md](docs/SUMMARY.md)** (kontext, historie, stav)
+**a [ARCHITECTURE.md](docs/ARCHITECTURE.md)** (jak to funguje). Pak podle úkolu: UI →
 [docs/UI-ZASADY.md](docs/UI-ZASADY.md) + [docs/KOMPONENTY.md](docs/KOMPONENTY.md) (katalog vzorů —
 hledej tu, než vymyslíš nový prvek); data → [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md);
 terminologie → [docs/SLOVNIK.md](docs/SLOVNIK.md); konkrétní modul → jeho spec v

@@ -23,11 +23,12 @@ dokumentu — pravidla viz [CLAUDE.md](CLAUDE.md) („Kdy aktualizovat dokumenta
 
 **Než začneš — orientace a pravidla**
 - [CLAUDE.md](CLAUDE.md) — jak se na projektu pracuje: role, pravidla, konvence. **Číst první.**
-- [SUMMARY.md](SUMMARY.md) — kontext, historie spolupráce, rozhodnutí, stav a plán („co, proč, kam dál").
-- [ROADMAP.md](ROADMAP.md) — kroky vývoje (spec-first), co je hotové a co dál.
+- [SUMMARY.md](docs/SUMMARY.md) — kontext, historie spolupráce, rozhodnutí, stav a plán („co, proč, kam dál").
+- [ROADMAP.md](docs/ROADMAP.md) — kroky vývoje (spec-first), co je hotové a co dál.
+- [VIZE — Úkoly · Projekty · Poznámky](docs/VIZE-ukoly-projekty-poznamky.md) — směr oblasti „práce" (průzkum trhu + rozhodnutí).
 
 **Jak to funguje uvnitř — architektura a data**
-- [ARCHITECTURE.md](ARCHITECTURE.md) — technický přehled: stack, vrstvy, request lifecycle, realtime, i18n, bezpečnost.
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — technický přehled: stack, vrstvy, request lifecycle, realtime, i18n, bezpečnost.
 - [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md) — tabulky, vazby, konvence (Person/Client/Seznamy/RBAC).
 
 **Jak to vypadá a z čeho se skládá — UI a vzory**

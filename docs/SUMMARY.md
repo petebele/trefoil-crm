@@ -1,4 +1,4 @@
-🧭 **Znalostní báze:** [mapa](README.md) · [architektura](ARCHITECTURE.md) · [roadmap](ROADMAP.md) · [pravidla](CLAUDE.md) · [UI](docs/UI-ZASADY.md) · [komponenty](docs/KOMPONENTY.md) · [slovník](docs/SLOVNIK.md) · [datový model](docs/DATOVY-MODEL.md)
+🧭 **Znalostní báze:** [mapa](../README.md) · [architektura](ARCHITECTURE.md) · [roadmap](ROADMAP.md) · [pravidla](../CLAUDE.md) · [UI](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md)
 
 # Trefoil CRM v2 — Solution Summary
 

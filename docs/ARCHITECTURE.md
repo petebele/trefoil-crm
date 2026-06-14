@@ -1,4 +1,4 @@
-🧭 **Znalostní báze:** [mapa](README.md) · [sumář](SUMMARY.md) · [roadmap](ROADMAP.md) · [pravidla](CLAUDE.md) · [UI](docs/UI-ZASADY.md) · [komponenty](docs/KOMPONENTY.md) · [slovník](docs/SLOVNIK.md) · [datový model](docs/DATOVY-MODEL.md)
+🧭 **Znalostní báze:** [mapa](../README.md) · [sumář](SUMMARY.md) · [roadmap](ROADMAP.md) · [pravidla](../CLAUDE.md) · [UI](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md)
 
 # Trefoil CRM v2 — Architektura aplikace
 
@@ -7,12 +7,12 @@
 
 Tento soubor je „rozcestník a celkový obraz". Detailní dokumentace je v `docs/`:
 
-- [docs/UI-ZASADY.md](docs/UI-ZASADY.md) — designový manuál (replika Capsule CRM), barvy/skiny
-- [docs/KOMPONENTY.md](docs/KOMPONENTY.md) — katalog znovupoužitelných UI komponent (kódy + pravidla)
-- [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md) — datový model (Person/Client/Seznamy/RBAC, billing)
-- [docs/SLOVNIK.md](docs/SLOVNIK.md) — jednotná terminologie (pojmy = stejná slova v UI i kódu)
-- [docs/specs/](docs/specs/) — specifikace jednotlivých modulů (vznikají PŘED stavbou)
-- [mockupy/](mockupy/) `*.html` — klikací vizuální reference obrazovek (otevři v prohlížeči)
+- [docs/UI-ZASADY.md](UI-ZASADY.md) — designový manuál (replika Capsule CRM), barvy/skiny
+- [docs/KOMPONENTY.md](KOMPONENTY.md) — katalog znovupoužitelných UI komponent (kódy + pravidla)
+- [docs/DATOVY-MODEL.md](DATOVY-MODEL.md) — datový model (Person/Client/Seznamy/RBAC, billing)
+- [docs/SLOVNIK.md](SLOVNIK.md) — jednotná terminologie (pojmy = stejná slova v UI i kódu)
+- [docs/specs/](specs/) — specifikace jednotlivých modulů (vznikají PŘED stavbou)
+- [mockupy/](../mockupy/) `*.html` — klikací vizuální reference obrazovek (otevři v prohlížeči)
 - [SUMMARY.md](SUMMARY.md) — historie projektu, rozhodnutí a plán dalších fází
 
 ## 1) Co to je
@@ -184,7 +184,7 @@ web/ (Hono routy + JSX)  →  domain/ (logika nad Kysely)  →  db/ (Kysely inst
     přidávání nových sloupců (poprvé použito u katalogu služeb).
 - Tabulky (`schema.ts`): `tenants`, `tenant_modules`, `persons`, `sessions`, `clients`,
   `person_clients`, `person_contacts`, `lists`, `list_items`, `entity_list_items`, `events`,
-  `services`, `work_records`. (Detailní význam: [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md).)
+  `services`, `work_records`. (Detailní význam: [docs/DATOVY-MODEL.md](DATOVY-MODEL.md).)
 - MULTI-TENANT: vše je scoped přes `tenant_id` (Organizace). V praxi běží jedna
   Organizace (agentura), ale model je připraven na víc.
 - SEAM pro škálování: přechod na PostgreSQL = výměna dialektu v `src/db/index.ts`
@@ -294,7 +294,7 @@ Registr `src/web/skins.ts` (id + štítek) generuje `<link>`y i přepínač (sub
 systému (`prefers-color-scheme`). Boot skript v `<head>` (`skinBootScript`) nastaví
 motiv ještě před vykreslením (žádné bliknutí) a zveřejní `window.__skins` (čte `app.js`).
 PŘIDÁNÍ SKINU = nový soubor `public/skins/<id>.css` + položka v `SKINS`. Nic víc.
-Detaily: [docs/UI-ZASADY.md](docs/UI-ZASADY.md) §2 a [docs/KOMPONENTY.md](docs/KOMPONENTY.md) §23.
+Detaily: [docs/UI-ZASADY.md](UI-ZASADY.md) §2 a [docs/KOMPONENTY.md](KOMPONENTY.md) §23.
 
 ## 13) Billing / fakturační model (jádro byznys logiky)
 
@@ -312,7 +312,7 @@ Sazba v katalogu je vždy Kč/h. Výkaz práce má pole „billing" (z paušálu
 zvlášť / neúčtovat), výchozí dle režimu služby, měnitelné per záznam.
 Do peněz a hodin se počítají SCHVÁLENÉ výkazy; „Měsíčně celkem" ukazuje i ČEKAJÍCÍ
 (očekávané/rezervované) jako samostatnou položku. Logika: `src/domain/workRecords.ts`.
-Detaily a důvody: [SUMMARY.md](SUMMARY.md) + [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md).
+Detaily a důvody: [SUMMARY.md](SUMMARY.md) + [docs/DATOVY-MODEL.md](DATOVY-MODEL.md).
 
 ## 14) Testy a ověřování
 
@@ -342,12 +342,12 @@ Detaily a důvody: [SUMMARY.md](SUMMARY.md) + [docs/DATOVY-MODEL.md](docs/DATOVY
 
 - Spec-first: nový modul = nejdřív krátká specifikace (`docs/specs/`, šablona
   `_SABLONA.md`) → schválení → stavba → ověření → commit.
-- UI nevymýšlí nové prvky — používá KATALOG ([docs/KOMPONENTY.md](docs/KOMPONENTY.md) +
+- UI nevymýšlí nové prvky — používá KATALOG ([docs/KOMPONENTY.md](KOMPONENTY.md) +
   `mockupy/komponenty.html`). Co chybí, nejdřív přibude do katalogu.
-- Jednotná terminologie ([docs/SLOVNIK.md](docs/SLOVNIK.md)): stejné slovo v UI i v kódu.
+- Jednotná terminologie ([docs/SLOVNIK.md](SLOVNIK.md)): stejné slovo v UI i v kódu.
 - Lokalizace: všechny UI texty přes `tr()` z `'src/i18n'`. Anglický překlad
   přidat do `en.ts`. Čeština je klíč — nepřeložené texty zůstanou česky.
-- Kontextové akce ([docs/KOMPONENTY.md](docs/KOMPONENTY.md) §20):
+- Kontextové akce ([docs/KOMPONENTY.md](KOMPONENTY.md) §20):
   - Nadpisy sekcí (`card-head`, `h4`): KebabMenu (⋯) VŽDY viditelné.
   - Řádky v seznamech: `class="hover-row"` + `span.row-actions` s KebabMenu
     (⋯ se ukáže najetím). Na dotyku vždy viditelné (`@media hover:none`).

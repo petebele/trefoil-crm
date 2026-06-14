@@ -1,6 +1,6 @@
 # Specifikace: Krok 2 — Kostra aplikace (se zapínatelnými moduly)
 
-🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
+🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
 
 > Stav: **schváleno + rozšířeno Petrem** (zapínatelné moduly, založení Organizace,
 > výběr modulů při prvním spuštění). Žádné moduly se nestaví — jen kostra, na kterou se věší.

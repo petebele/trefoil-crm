@@ -1,6 +1,6 @@
 # Specifikace modulu: Krok 4 — Administrace: Tým a katalog Služeb
 
-🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
+🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
 
 > Změna pořadí oproti původní roadmapě (na Petrovo přání): dřív než Úkoly/Nástěnka
 > stavíme **základ, na který se vážou další moduly** — uživatele s rolemi a celofiremní

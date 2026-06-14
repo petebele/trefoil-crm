@@ -1,6 +1,6 @@
 # Slovník pojmů — Trefoil CRM v2
 
-🧭 **Znalostní báze:** [mapa](../README.md) · [datový model](DATOVY-MODEL.md) · [UI zásady](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [architektura](../ARCHITECTURE.md) · [sumář](../SUMMARY.md) · [roadmap](../ROADMAP.md) · [pravidla](../CLAUDE.md)
+🧭 **Znalostní báze:** [mapa](../README.md) · [datový model](DATOVY-MODEL.md) · [UI zásady](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [architektura](ARCHITECTURE.md) · [sumář](SUMMARY.md) · [roadmap](ROADMAP.md) · [pravidla](../CLAUDE.md)
 
 > Jednotná terminologie (převzato z v1, doplněno pro v2). Aplikace mluví **jednoznačně**:
 > nepoužíváme „zákazník" jako název typu záznamu, ale konkrétně **Firma** nebo **Osoba**.
