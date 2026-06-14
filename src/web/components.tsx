@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
-import { IconPhone, IconMail, IconGlobe, IconPlus, IconTag } from './icons';
+import { IconPhone, IconMail, IconGlobe, IconPlus } from './icons';
 import { tr, fmtDateTime } from '../i18n';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
@@ -187,7 +187,7 @@ export function EditField(props: {
 export function TitleBox(props: { base: string; label: string; value: string; children?: Child }) {
   const label = tr(props.label);
   return (
-    <EditField id="f-name" topLabel={label} label={label} wide value={<span class="field-strong">{props.value}</span>}>
+    <EditField id="f-name" label={label} block value={<span class="idname field-strong">{props.value}</span>}>
       <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
         <div class="opt-group" style="padding-left:0">{label}</div>
         <input class="input" name="value" value={props.value} required aria-label={label} style="width:100%" />
@@ -201,19 +201,22 @@ export function TitleBox(props: { base: string; label: string; value: string; ch
 /** Sekce Poznámka — klik na text (nebo „— doplnit —") otevře panel s textareou. */
 export function NoteSection(props: { base: string; value: string | null }) {
   return (
-    <EditField
-      id="f-note"
-      topLabel={tr('Poznámka')}
-      label={tr('Poznámka')}
-      area
-      value={props.value ? <p style="white-space:pre-wrap;margin:0;font-size:.88rem;font-weight:400">{props.value}</p> : <span class="empty-inline">{tr('Žádná poznámka.')} <a class="emptylink" data-menu-toggle="f-note" role="button" tabindex={0}>{tr('Přidat poznámku.')}</a></span>}
-    >
-      <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
-        <div class="opt-group" style="padding-left:0">{tr('Poznámka')}</div>
-        <textarea class="input" name="value" rows={3} data-autogrow aria-label={tr('Poznámka')} style="width:100%">{props.value ?? ''}</textarea>
-        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.4rem">{tr('Uložit')}</button>
-      </form>
-    </EditField>
+    <div class="group" id="f-note">
+      <div class="group-h">{tr('Poznámka')}</div>
+      <EditField
+        id="note-field"
+        label={tr('Poznámka')}
+        area
+        block
+        value={props.value ? <p style="white-space:pre-wrap;margin:0;font-size:.88rem;font-weight:400">{props.value}</p> : <span class="empty-inline">{tr('Žádná poznámka.')} <a class="emptylink" data-menu-toggle="note-field" role="button" tabindex={0}>{tr('Přidat poznámku.')}</a></span>}
+      >
+        <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
+          <div class="opt-group" style="padding-left:0">{tr('Poznámka')}</div>
+          <textarea class="input" name="value" rows={3} data-autogrow aria-label={tr('Poznámka')} style="width:100%">{props.value ?? ''}</textarea>
+          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.4rem">{tr('Uložit')}</button>
+        </form>
+      </EditField>
+    </div>
   );
 }
 
@@ -225,7 +228,7 @@ export function StatusBox(props: {
   items: Array<{ value: string; label: string; color: string | null }>;
 }) {
   return (
-    <EditField id="f-status" topLabel={tr('Stav')} label={tr('Stav')} value={<StatusChip value={props.value} items={props.items} />}>
+    <EditField id="f-status" label={tr('Stav')} block value={<StatusChip value={props.value} items={props.items} />}>
       <div class="opt-group">{tr('Stav')}</div>
       {props.items.map((s) => (
         <button
@@ -252,32 +255,27 @@ export function OwnerBox(props: {
   coworkers: Array<{ id: string; name: string }>;
 }) {
   return (
-    <EditField
-      id="owner-box"
-      topLabel={tr('Odpovědná osoba')}
-      label={tr('Odpovědná osoba')}
-      value={
-        props.owner ? (
-          <span class="person-row" style="padding:0">
-            <span class={`av av-sm ${avColor(props.owner.name)}`}>{initials(props.owner.name)}</span>
-            <span class="nm" style="flex:1">{props.owner.name}</span>
-          </span>
-        ) : (
-          <span class="empty-inline">{tr('Žádná odpovědná osoba.')} <a class="emptylink" data-menu-toggle="owner-box" role="button" tabindex={0}>{tr('Přiřadit osobu.')}</a></span>
-        )
-      }
-    >
+    <div class="group" id="owner-box">
+      <div class="group-h">{tr('Odpovědná osoba')}</div>
+      <EditField
+        id="owner-field"
+        label={tr('Odpovědná osoba')}
+        block
+        value={
+          props.owner ? (
+            <span class="person-row" style="padding:0">
+              <span class={`av av-sm ${avColor(props.owner.name)}`}>{initials(props.owner.name)}</span>
+              <span class="nm" style="flex:1">{props.owner.name}</span>
+            </span>
+          ) : (
+            <span class="empty-inline">{tr('Žádná odpovědná osoba.')} <a class="emptylink" data-menu-toggle="owner-field" role="button" tabindex={0}>{tr('Přiřadit osobu.')}</a></span>
+          )
+        }
+      >
         <input class="input" data-filter-list placeholder={tr('Hledat kolegu…')} aria-label={tr('Hledat kolegu')} />
         <div class="opt-group">{tr('Kolegové')}</div>
         {props.coworkers.map((u) => (
-          <button
-            type="button"
-            class="opt"
-            hx-post={`${props.base}/owner`}
-            hx-vals={JSON.stringify({ owner_id: u.id })}
-            hx-target="#owner-box"
-            hx-swap="outerHTML"
-          >
+          <button type="button" class="opt" hx-post={`${props.base}/owner`} hx-vals={JSON.stringify({ owner_id: u.id })} hx-target="#owner-box" hx-swap="outerHTML">
             <span style="display:flex;align-items:center;gap:.5rem">
               <span class={`av av-sm ${avColor(u.name)}`}>{initials(u.name)}</span>
               {u.name}
@@ -286,19 +284,12 @@ export function OwnerBox(props: {
           </button>
         ))}
         {props.owner ? (
-          <button
-            type="button"
-            class="opt"
-            style="color:var(--muted)"
-            hx-post={`${props.base}/owner`}
-            hx-vals={JSON.stringify({ owner_id: '' })}
-            hx-target="#owner-box"
-            hx-swap="outerHTML"
-          >
+          <button type="button" class="opt" style="color:var(--muted)" hx-post={`${props.base}/owner`} hx-vals={JSON.stringify({ owner_id: '' })} hx-target="#owner-box" hx-swap="outerHTML">
             {tr('Zrušit přiřazení')}
           </button>
         ) : null}
-    </EditField>
+      </EditField>
+    </div>
   );
 }
 
@@ -307,32 +298,42 @@ export function OwnerBox(props: {
 export function TagsSection(props: {
   base: string;
   tags: Array<{ id: string; label: string }>;
+  allTags?: Array<{ label: string }>;
 }) {
+  const assigned = new Set(props.tags.map((t) => t.label));
+  const available = (props.allTags ?? []).filter((t) => !assigned.has(t.label));
   return (
-    <div class="field-row field-plain" id="tags">
-      <span class="field-label">{tr('Štítky')}</span>
-      {props.tags.length ? (
-        <div class="chips" style="align-items:center">
-          {props.tags.map((tag) => (
-            <span class="chip hover-row">
-              {tag.label}
-              <button
-                type="button"
-                class="row-actions"
-                style="border:none;background:none;cursor:pointer;padding:0 0 0 .3rem;font-size:.8em;color:var(--muted)"
-                aria-label={tr('Odebrat štítek {label}', { label: tag.label })}
-                hx-post={`${props.base}/stitek/${tag.id}/smazat`}
-                hx-target="#tags"
-                hx-swap="outerHTML"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-        </div>
-      ) : (
-        <span class="empty-inline">{tr('Žádné štítky.')} <a class="emptylink" data-menu-toggle="addTag" role="button" tabindex={0}>{tr('Přidat štítek.')}</a></span>
-      )}
+    <div class="id-badges" id="tags" style="margin-top:.2rem">
+      {props.tags.length === 0 ? <span class="empty-inline" style="margin-right:.1rem">{tr('Žádné štítky.')}</span> : null}
+      {props.tags.map((tag) => (
+        <span class="chip hover-row">
+          {tag.label}
+          <button
+            type="button"
+            class="row-actions"
+            style="border:none;background:none;cursor:pointer;padding:0 0 0 .3rem;font-size:.8em;color:var(--muted)"
+            aria-label={tr('Odebrat štítek {label}', { label: tag.label })}
+            hx-post={`${props.base}/stitek/${tag.id}/smazat`}
+            hx-target="#tags"
+            hx-swap="outerHTML"
+          >
+            ✕
+          </button>
+        </span>
+      ))}
+      <Picker id="addTag" trigger={tr('+ štítek')} triggerClass="chip chip-soft-gray" triggerLabel={tr('Přidat štítek')}>
+        <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
+          <div class="opt-group" style="padding-left:0">{tr('Štítek')}</div>
+          <input class="input" name="label" data-filter-list placeholder={tr('Najít nebo vytvořit…')} autocomplete="off" aria-label={tr('Název štítku')} />
+          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">{tr('Přidat napsaný štítek')}</button>
+        </form>
+        {available.length ? <div class="opt-group">{tr('Existující štítky')}</div> : null}
+        {available.map((t) => (
+          <button type="button" class="opt" hx-post={`${props.base}/stitek`} hx-vals={JSON.stringify({ label: t.label })} hx-target="#tags" hx-swap="outerHTML">
+            {t.label}
+          </button>
+        ))}
+      </Picker>
     </div>
   );
 }
@@ -389,7 +390,7 @@ export function ContactsSection(props: {
   base: string;
   contacts: PersonContactsTable[];
   labels: Array<{ label: string }>;
-  allTags: Array<{ label: string }>;
+  allTags?: Array<{ label: string }>;
   assignedTags?: Array<{ label: string }>;
   /** Firma: přiřazené osoby se zobrazí PŘED firemními kontakty. */
   people?: PersonWithContacts[];
@@ -398,124 +399,100 @@ export function ContactsSection(props: {
   /** Firma: base pro odebrání vazby osoby (POST …/osoba/:id/odebrat). */
   unlinkBase?: string;
 }) {
-  const assigned = new Set((props.assignedTags ?? []).map((t) => t.label));
-  const availableTags = props.allTags.filter((t) => !assigned.has(t.label));
   const groups: Array<{ type: PersonContactsTable['type']; rows: PersonContactsTable[] }> = (
     ['phone', 'email', 'web', 'other'] as const
   )
     .map((t) => ({ type: t, rows: props.contacts.filter((c) => c.type === t) }))
     .filter((g) => g.rows.length > 0);
-
   const people = props.people ?? [];
-  const hasContacts = props.contacts.length > 0 || people.length > 0;
-  const groupLabel = (text: string) => (
-    <span style="display:block;color:var(--muted);font-size:.73rem;margin:.4rem 0 .1rem">{text}</span>
-  );
+  const isFirm = props.people !== undefined;
+  const primaryContact = (cs: PersonContactsTable[]) => {
+    const ph = cs.find((c) => c.type === 'phone');
+    const em = cs.find((c) => c.type === 'email');
+    return ph?.value ?? em?.value ?? '';
+  };
   // Rychlé přidání žije v řádku nadpisu a je VŽDY viditelné (indikace, že tu akce jsou).
-  const quickAdd = (
-    <span class="quick-add" style="margin:0" role="group" aria-label={tr('Rychlé přidání kontaktu, štítku nebo osoby')}>
-      {props.personAdd ?? null}
+  const contactAdd = (
+    <span class="ha" role="group" aria-label={tr('Přidat kontakt')}>
       <QuickAddPanel base={props.base} type="phone" labels={props.labels} />
       <QuickAddPanel base={props.base} type="email" labels={props.labels} />
       <QuickAddPanel base={props.base} type="web" labels={props.labels} />
       <QuickAddPanel base={props.base} type="other" labels={props.labels} />
-      <Picker id="addTag" trigger={<IconTag />} triggerClass="icon-btn" triggerLabel={tr('Přidat štítek')}>
-        <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
-          <div class="opt-group" style="padding-left:0">{tr('Štítek')}</div>
-          <input class="input" name="label" data-filter-list placeholder={tr('Najít nebo vytvořit…')} autocomplete="off" aria-label={tr('Název štítku')} />
-          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">
-            {tr('Přidat napsaný štítek')}
-          </button>
-        </form>
-        {availableTags.length ? <div class="opt-group">{tr('Existující štítky')}</div> : null}
-        {availableTags.map((t) => (
-          <button
-            type="button"
-            class="opt"
-            hx-post={`${props.base}/stitek`}
-            hx-vals={JSON.stringify({ label: t.label })}
-            hx-target="#tags"
-            hx-swap="outerHTML"
-          >
-            {t.label}
-          </button>
-        ))}
-      </Picker>
     </span>
   );
 
   return (
-    <div id="contacts" class={`side-section ${hasContacts ? 'hover-area' : ''}`} style="border-top:none;margin-top:.4rem;padding-top:0">
-      <h4>{tr('Kontakty')} {quickAdd}</h4>
-
-      {people.length > 0 ? groupLabel(tr('Lidé')) : null}
-      {people.map((p) => (
-        <div style="padding:.2rem 0">
-          <div class="person-row hover-row" style="padding:0">
-            <span class={`av av-sm ${avColor(p.name)}`}>{initials(p.name)}</span>
-            <span style="flex:1">
-              <a class="nm" href={`/osoby/${p.id}`} style="color:inherit">{p.name}</a>
-              {p.role_at_client ? <span class="sub">{p.role_at_client}</span> : null}
-            </span>
-            {props.unlinkBase ? (
-              <span class="row-actions">
-                <KebabMenu id={`pMenu-${p.id}`} label={tr('Možnosti pro {name}', { name: p.name })}>
-                  <form method="post" action={`${props.unlinkBase}/osoba/${p.id}/odebrat`} class="m0" onsubmit={`return confirm('${tr('Odebrat osobu z této firmy?')}')`}>
-                    <button type="submit" class="opt">{tr('Odebrat z firmy')}</button>
-                  </form>
-                </KebabMenu>
-              </span>
-            ) : null}
+    <div id="contacts">
+      {/* LIDÉ — jen u firmy */}
+      {isFirm ? (
+        <div class="group hover-area">
+          <div class="group-h">
+            {tr('Lidé')}
+            {props.personAdd ? <span class="ha">{props.personAdd}</span> : null}
           </div>
-          {p.contacts.length > 0 ? (
-            <div style="margin-left:2.05rem">
-              {p.contacts.map((c) => (
-                <div class="contact-row" style="font-size:.83rem">
-                  <span class="cico" aria-hidden="true">{contactTypeIcon(c.type)}</span>
-                  <span class="val"><ContactValue c={c} /></span>
-                  {c.label ? <span class="tagaft">{c.label}</span> : null}
+          {people.length ? (
+            people.map((p) => {
+              const sub = [p.role_at_client, primaryContact(p.contacts)].filter(Boolean).join(' · ');
+              return (
+                <div class="prow hover-row">
+                  <a href={`/osoby/${p.id}`} style="display:flex;align-items:center;gap:.6rem;flex:1;text-decoration:none;color:inherit">
+                    <span class={`av av-sm ${avColor(p.name)}`}>{initials(p.name)}</span>
+                    <span>
+                      <span class="nm">{p.name}</span>
+                      {sub ? <span class="sub" style="display:block">{sub}</span> : null}
+                    </span>
+                  </a>
+                  {props.unlinkBase ? (
+                    <span class="row-actions">
+                      <KebabMenu id={`pMenu-${p.id}`} label={tr('Možnosti pro {name}', { name: p.name })}>
+                        <form method="post" action={`${props.unlinkBase}/osoba/${p.id}/odebrat`} class="m0" onsubmit={`return confirm('${tr('Odebrat osobu z této firmy?')}')`}>
+                          <button type="submit" class="opt">{tr('Odebrat z firmy')}</button>
+                        </form>
+                      </KebabMenu>
+                    </span>
+                  ) : null}
                 </div>
-              ))}
-            </div>
-          ) : null}
+              );
+            })
+          ) : (
+            <p class="empty-inline m0" style="padding:.25rem 0">
+              {tr('Žádní lidé.')} <a class="emptylink" data-menu-toggle="personAdd" role="button" tabindex={0}>{tr('Přidat osobu.')}</a>
+            </p>
+          )}
         </div>
-      ))}
-
-      {people.length > 0 && groups.length > 0 ? groupLabel(tr('Kontakty firmy')) : null}
-      {groups.flatMap((g) => g.rows).map((c) => (
-        <div class="contact-row hover-row" id={`c-${c.id}`}>
-          <span class="cico" aria-hidden="true">{contactTypeIcon(c.type)}</span>
-          <span class="val"><ContactValue c={c} /></span>
-          {c.label ? <span class="tagaft">{c.label}</span> : null}
-          <span class="row-actions" style="margin-left:auto">
-            <KebabMenu id={`cMenu-${c.id}`} label={tr('Možnosti kontaktu')}>
-              <form hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
-                <div class="opt-group" style="padding-left:0">{contactTypeLabel(c.type)}</div>
-                <input class="input" name="value" value={c.value} required aria-label={tr('Hodnota kontaktu')} />
-                <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder={tr('Štítek (Práce…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
-                <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
-              </form>
-              <div style="border-top:1px solid var(--line);margin:.25rem 0 .1rem" />
-              <button
-                type="button"
-                class="opt"
-                style="color:var(--red)"
-                hx-post={`${props.base}/kontakt/${c.id}/smazat`}
-                hx-confirm={tr('Smazat tento kontakt?')}
-                hx-target="#contacts"
-                hx-swap="outerHTML"
-              >
-                {tr('Smazat')}
-              </button>
-            </KebabMenu>
-          </span>
-        </div>
-      ))}
-      {!hasContacts ? (
-        <p class="empty-inline m0" style="padding:.3rem 0">
-          {tr('Zatím žádný kontakt.')} <a class="emptylink" data-menu-toggle="addContact-phone" role="button" tabindex={0}>{tr('Přidat kontakt.')}</a>
-        </p>
       ) : null}
+
+      {/* KONTAKTY */}
+      <div class="group hover-area">
+        <div class="group-h">{tr('Kontakty')} {contactAdd}</div>
+        {groups.flatMap((g) => g.rows).map((c) => (
+          <div class="contact-row hover-row" id={`c-${c.id}`}>
+            <span class="cico" aria-hidden="true">{contactTypeIcon(c.type)}</span>
+            <span class="val"><ContactValue c={c} /></span>
+            {c.label ? <span class="tagaft">{c.label}</span> : null}
+            <span class="row-actions" style="margin-left:auto">
+              <KebabMenu id={`cMenu-${c.id}`} label={tr('Možnosti kontaktu')}>
+                <form hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
+                  <div class="opt-group" style="padding-left:0">{contactTypeLabel(c.type)}</div>
+                  <input class="input" name="value" value={c.value} required aria-label={tr('Hodnota kontaktu')} />
+                  <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder={tr('Štítek (Práce…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
+                  <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
+                </form>
+                <div style="border-top:1px solid var(--line);margin:.25rem 0 .1rem" />
+                <button type="button" class="opt" style="color:var(--red)" hx-post={`${props.base}/kontakt/${c.id}/smazat`} hx-confirm={tr('Smazat tento kontakt?')} hx-target="#contacts" hx-swap="outerHTML">
+                  {tr('Smazat')}
+                </button>
+              </KebabMenu>
+            </span>
+          </div>
+        ))}
+        {props.contacts.length === 0 ? (
+          <p class="empty-inline m0" style="padding:.25rem 0">
+            {tr('Žádné kontakty.')} <a class="emptylink" data-menu-toggle="addContact-phone" role="button" tabindex={0}>{tr('Přidat kontakt.')}</a>
+          </p>
+        ) : null}
+      </div>
+
       <datalist id="contactLabels">
         {props.labels.map((l) => (
           <option value={l.label}></option>

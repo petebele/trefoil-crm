@@ -335,9 +335,9 @@ function FirmInfoBlock(props: {
   const c = props.client;
   const addr = composeAddress(c);
   return (
-    <div class="field-row" id="f-firma-info">
-      <div class="editable" style="display:block;padding-top:.42rem;padding-bottom:.42rem">
-        <span class="field-label">{tr('Firemní údaje')}</span>
+    <div class="group" id="f-firma-info">
+      <div class="group-h">{tr('Firemní údaje')}</div>
+      <div class="editable" style="display:block;padding:.3rem .4rem">
         <div style="font-weight:500">{c.name}</div>
         {addr.length ? (
           <div style="margin-top:.1rem">{addr.map((l) => <div>{l}</div>)}</div>
@@ -349,7 +349,7 @@ function FirmInfoBlock(props: {
             </span>
           </div>
         )}
-        <div style="display:flex;gap:1.6rem;margin-top:.4rem">
+        <div class="minirow">
           <div><span class="field-label">{tr('IČO')}</span>{c.ico ?? '—'}</div>
           <div><span class="field-label">{tr('DIČ')}</span>{c.dic ?? '—'}</div>
         </div>
@@ -433,24 +433,26 @@ firmyRoutes.get('/firmy/:id', async (c) => {
       <div class="detail-grid">
         {/* A) Levý panel */}
         <aside class="card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.3rem">
-            <span class={`av av-lg ${avColor(dn)}`}>{initials(dn)}</span>
-            <KebabMenu id="firmActions" label={tr('Akce firmy')}>
-              <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit firemní údaje')}</button>
-              <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')}')`}>
-                <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat firmu')}</button>
-              </form>
-            </KebabMenu>
+          {/* Hlavička (identita): avatar + akce, název, stav, štítky */}
+          <div class="idblock">
+            <div class="id-top">
+              <span class={`av av-lg ${avColor(dn)}`}>{initials(dn)}</span>
+              <KebabMenu id="firmActions" label={tr('Akce firmy')}>
+                <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit firemní údaje')}</button>
+                <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')}')`}>
+                  <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat firmu')}</button>
+                </form>
+              </KebabMenu>
+            </div>
+            <div class="editable" style="display:block;margin-top:.45rem">
+              <span class="idname field-strong">{dn}</span>
+              <button type="button" class="pen-ind" data-tip={tr('Upravit firemní údaje')} aria-label={tr('Upravit firemní údaje')} hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
+                <PencilIcon />
+              </button>
+            </div>
+            <StatusBox base={base} value={client.status} items={statusItems} />
+            <TagsSection base={base} tags={tags} allTags={allTags} />
           </div>
-          <div class="editable" style="display:block;margin-bottom:.2rem">
-            <span class="field-strong">{dn}</span>
-            <button type="button" class="pen-ind" data-tip={tr('Upravit firemní údaje')} aria-label={tr('Upravit firemní údaje')} hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
-              <PencilIcon />
-            </button>
-          </div>
-          {/* Hlavička: stav + štítky u identity */}
-          <StatusBox base={base} value={client.status} items={statusItems} />
-          <TagsSection base={base} tags={tags} />
 
           {/* Lidé + Kontakty */}
           <ContactsSection
@@ -591,8 +593,8 @@ firmyRoutes.post('/firmy/:id/owner', async (c) => {
 // ---------- štítky ----------
 
 async function tagsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, clientId: string) {
-  const tags = await listEntityTags(tenantId, 'client', clientId);
-  return c.html(<TagsSection base={`/firmy/${clientId}`} tags={tags} />);
+  const [tags, allTags] = await Promise.all([listEntityTags(tenantId, 'client', clientId), itemsByKey(tenantId, 'client_tags')]);
+  return c.html(<TagsSection base={`/firmy/${clientId}`} tags={tags} allTags={allTags} />);
 }
 
 firmyRoutes.post('/firmy/:id/stitek', async (c) => {

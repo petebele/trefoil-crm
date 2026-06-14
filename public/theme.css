@@ -441,6 +441,25 @@ summary.subtle-action::marker { content: ''; }
 .cico svg { width: 15px; height: 15px; }
 .tagaft { font-size: .7rem; color: var(--muted); background: var(--surface-2);
   border-radius: 999px; padding: .06rem .45rem; font-weight: 500; }
+/* kontaktní řádky se oddělují tenkou linkou (jako v example) */
+.group .contact-row + .contact-row { border-top: 1px solid var(--line); }
+
+/* ---------- Sekce levého panelu (styl z example-zakaznik) ---------- */
+.idblock { padding-bottom: .9rem; border-bottom: 1px solid var(--line); }
+.id-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+.idname { font-size: 1.4rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.id-badges { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.group { margin-top: 1.2rem; }
+.group-h { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--muted); margin: 0 0 .3rem; display: flex; align-items: center; gap: .4rem; }
+.group-h .ha { margin-left: auto; display: inline-flex; gap: .05rem; align-items: center; }
+/* lidé = navigační řádky s oddělovačem */
+.prow { display: flex; align-items: center; gap: .6rem; padding: .4rem 0; text-decoration: none; color: var(--ink); border-radius: 6px; }
+.prow + .prow { border-top: 1px solid var(--line); }
+.prow:hover { background: rgba(var(--shadow-color), .04); }
+.prow .nm { font-weight: 600; }
+/* IČO/DIČ dvojice ve firemních údajích */
+.minirow { display: flex; gap: 1.8rem; margin-top: .45rem; }
 /* hodnota uvnitř textu (víc hodnot v jednom řádku): čárkované podtržení (vždy viditelné) */
 .editable-inline {
   cursor: pointer; border-bottom: 1px dashed var(--muted);

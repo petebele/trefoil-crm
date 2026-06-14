@@ -24,6 +24,7 @@ import {
   ContactsSection,
   DetailTabs,
   EventRow,
+  KebabMenu,
   ModalShell,
   ModalContactRows,
 } from './components';
@@ -229,35 +230,41 @@ osobyRoutes.get('/osoby/:id', async (c) => {
       <div class="detail-grid">
         {/* A) Levý panel */}
         <aside class="card">
-          <div style="text-align:center;margin-bottom:.5rem">
-            <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
-          </div>
-          <TitleBox base={base} label="Jméno a příjmení" value={p.name}>
-            <div style="border-top:1px solid var(--line);margin:.3rem 0 .1rem" />
-            <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
-              {tr('Upravit osobu')}
-            </button>
-            <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto osobu?')}')`}>
-              <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat osobu')}</button>
-            </form>
-          </TitleBox>
-          <TagsSection base={base} tags={tags} />
-
-          <div class="field-row field-plain">
-            <span class="field-label">{tr('Firmy')}</span>
-            {firms.map((f) => (
-              <div class="person-row">
-                <span class={`av av-sm ${avColor(f.name)}`}>{initials(f.name)}</span>
-                <span>
-                  <a class="nm" href={`/firmy/${f.id}`} style="color:inherit">{f.name}</a>
-                  {f.role_at_client ? <span class="sub">{f.role_at_client}</span> : null}
-                </span>
-              </div>
-            ))}
-            {firms.length === 0 ? <span class="placeholder">{tr('— žádná —')}</span> : null}
+          {/* Hlavička (identita): avatar + akce, jméno, štítky */}
+          <div class="idblock">
+            <div class="id-top">
+              <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
+              <KebabMenu id="personActions" label={tr('Akce osoby')}>
+                <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit osobu')}</button>
+                <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto osobu?')}')`}>
+                  <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat osobu')}</button>
+                </form>
+              </KebabMenu>
+            </div>
+            <TitleBox base={base} label="Jméno a příjmení" value={p.name} />
+            <TagsSection base={base} tags={tags} allTags={allTags} />
           </div>
 
-          <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
+          {/* Kontakty */}
+          <ContactsSection base={base} contacts={contacts} labels={labels} />
+
+          {/* Firmy (napojení) */}
+          <div class="group">
+            <div class="group-h">{tr('Firmy')}</div>
+            {firms.length ? (
+              firms.map((f) => (
+                <a class="prow" href={`/firmy/${f.id}`}>
+                  <span class={`av av-sm ${avColor(f.name)}`}>{initials(f.name)}</span>
+                  <span>
+                    <span class="nm">{f.name}</span>
+                    {f.role_at_client ? <span class="sub" style="display:block">{f.role_at_client}</span> : null}
+                  </span>
+                </a>
+              ))
+            ) : (
+              <p class="empty-inline m0" style="padding:.25rem 0">{tr('Žádná firma.')}</p>
+            )}
+          </div>
 
           <NoteSection base={base} value={p.note} />
         </aside>
@@ -351,8 +358,8 @@ osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
 // ---------- štítky ----------
 
 async function tagsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, personId: string) {
-  const tags = await listEntityTags(tenantId, 'person', personId);
-  return c.html(<TagsSection base={`/osoby/${personId}`} tags={tags} />);
+  const [tags, allTags] = await Promise.all([listEntityTags(tenantId, 'person', personId), itemsByKey(tenantId, 'client_tags')]);
+  return c.html(<TagsSection base={`/osoby/${personId}`} tags={tags} allTags={allTags} />);
 }
 
 osobyRoutes.post('/osoby/:id/stitek', async (c) => {
