@@ -9,7 +9,7 @@
 
   /* Plochy a text */
   --ink: #c4ccc4;          /* off-white se stopou zeleně — ne #fff (dráždí oči) */
-  --muted: #708070;        /* zeleno-šedá — 5.0:1 na #000, 4.7:1 na card */
+  --muted: #718171;        /* zeleno-šedá — 5.1:1 na #000, 4.5:1 na surface-2 */
   --bg: #000000;           /* OLED: pixely zcela vypnuté */
   --card: #0a0c0a;         /* karta: skoro černá, sotva znatelný zelený nádech */
   --line: #181c18;         /* rámečky: téměř neviditelné */

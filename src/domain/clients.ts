@@ -160,6 +160,7 @@ export async function linkPersonToClient(
   const existing = await db
     .selectFrom('person_clients')
     .select('person_id')
+    .where('tenant_id', '=', tenantId)
     .where('person_id', '=', personId)
     .where('client_id', '=', clientId)
     .executeTakeFirst();

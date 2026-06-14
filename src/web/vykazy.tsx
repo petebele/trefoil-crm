@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from '../types';
 import { Layout } from './layout';
-import { ModalShell, EmptyState } from './components';
+import { ModalShell, EmptyState, KebabMenu } from './components';
 import { logEvent } from '../domain/events';
 import { getClient, listClients } from '../domain/clients';
 import { listClientServices, type ClientService } from '../domain/clientServices';
@@ -26,6 +26,7 @@ import {
   type WorkRecordInput,
 } from '../domain/workRecords';
 import type { PersonsTable } from '../db/schema';
+import { tr, fmtDate } from '../i18n';
 
 export const vykazyRoutes = new Hono<AppEnv>();
 
@@ -39,10 +40,7 @@ vykazyRoutes.use('/vykazy/*', requireModule);
 
 const validMonth = (s: string | undefined): string => (s && /^\d{4}-(0[1-9]|1[0-2])$/.test(s) ? s : monthKey(new Date()));
 
-const fmtDay = (iso: string) => {
-  const [y, m, d] = iso.split('-');
-  return `${Number(d)}. ${Number(m)}. ${y}`;
-};
+const fmtDay = (iso: string) => fmtDate(iso);
 
 // ---------- práva ----------
 
@@ -70,19 +68,19 @@ export function WorkRecordModal(props: {
   const preselected = running.find((s) => s.id === props.preselectServiceId);
   const billingDefault = r?.billing ?? (preselected ? defaultBilling(preselected.mode) : 'retainer_hours');
   return (
-    <ModalShell title={r ? `Upravit výkaz · ${r.client_name}` : 'Vykázat práci'}>
+    <ModalShell title={r ? `${tr('Upravit výkaz')} · ${r.client_name}` : tr('Vykázat práci')}>
       <form method="post" action={r ? `/vykazy/${r.id}` : '/vykazy'}>
         <input type="hidden" name="back" value={props.back} />
         {r ? null : props.client ? (
           <input type="hidden" name="client_id" value={props.client.id} />
         ) : null}
         {r ? (
-          <p class="sub" style="margin:0 0 .8rem">Zákazník: <b>{r.client_name}</b> · pracoval(a) {r.worker_name}</p>
+          <p class="sub" style="margin:0 0 .8rem">{tr('Zákazník')}: <b>{r.client_name}</b> · {tr('pracoval(a) {name}', { name: r.worker_name })}</p>
         ) : props.client ? (
-          <p class="sub" style="margin:0 0 .8rem">Zákazník: <b>{props.client.name}</b></p>
+          <p class="sub" style="margin:0 0 .8rem">{tr('Zákazník')}: <b>{props.client.name}</b></p>
         ) : (
           <div class="field">
-            <label>Zákazník <span class="req">*</span></label>
+            <label>{tr('Zákazník')} <span class="req">*</span></label>
             {/* výběr zákazníka načte modál znovu s jeho službami */}
             <select
               class="input"
@@ -96,7 +94,7 @@ export function WorkRecordModal(props: {
               hx-include="this"
               autofocus
             >
-              <option value="">— vyberte zákazníka —</option>
+              <option value="">{tr('— vyberte zákazníka —')}</option>
               {props.clients.map((cl) => (
                 <option value={cl.id}>{cl.name}</option>
               ))}
@@ -106,10 +104,10 @@ export function WorkRecordModal(props: {
         {r || props.client ? (
           <>
             <div class="field">
-              <label>Služba <span class="req">*</span></label>
+              <label>{tr('Služba')} <span class="req">*</span></label>
               {/* data-set-billing = výchozí účtování dle režimu služby (app.js) */}
               <select class="input" name="service_id" required data-defaults>
-                <option value="">— vyberte službu —</option>
+                <option value="">{tr('— vyberte službu —')}</option>
                 {running.map((s) => (
                   <option
                     value={s.id}
@@ -121,46 +119,46 @@ export function WorkRecordModal(props: {
                   </option>
                 ))}
               </select>
-              {running.length === 0 ? <span class="help">Zákazník nemá žádnou běžící službu — nejdřív mu ji přidělte (detail → Služby).</span> : null}
+              {running.length === 0 ? <span class="help">{tr('Zákazník nemá žádnou běžící službu — nejdřív mu ji přidělte (detail → Služby).')}</span> : null}
             </div>
             <div class="field">
-              <label>Popis úkonu <span class="req">*</span></label>
+              <label>{tr('Popis úkonu')} <span class="req">*</span></label>
               <input class="input" name="description" value={r?.description ?? ''} required />
             </div>
             <div class="field">
-              <label>Poznámka</label>
+              <label>{tr('Poznámka')}</label>
               <textarea class="input" name="note" rows={2}>{r?.note ?? ''}</textarea>
             </div>
             <div class="field">
-              <label>Čas <span class="req">*</span></label>
+              <label>{tr('Čas')} <span class="req">*</span></label>
               <div style="display:flex;gap:.5rem;align-items:center">
-                <input class="input" type="number" name="hours" min="0" max="24" step="1" value={r ? Math.floor(r.minutes / 60) : ''} style="max-width:6rem" aria-label="Hodiny" />
-                <span class="sub">h</span>
-                <input class="input" type="number" name="mins" min="0" max="59" step="5" value={r ? r.minutes % 60 : ''} style="max-width:6rem" aria-label="Minuty" />
-                <span class="sub">min</span>
+                <input class="input" type="number" name="hours" min="0" max="24" step="1" value={r ? Math.floor(r.minutes / 60) : ''} style="max-width:6rem" aria-label={tr('Hodiny')} />
+                <span class="sub">{tr('h')}</span>
+                <input class="input" type="number" name="mins" min="0" max="59" step="5" value={r ? r.minutes % 60 : ''} style="max-width:6rem" aria-label={tr('Minuty')} />
+                <span class="sub">{tr('min')}</span>
               </div>
             </div>
             <div class="field">
-              <label>Datum</label>
+              <label>{tr('Datum')}</label>
               <input class="input" type="date" name="performed_at" value={r?.performed_at ?? today} required />
             </div>
             <div class="field">
-              <label>Účtování</label>
+              <label>{tr('Účtování')}</label>
               <select class="input" name="billing">
-                <option value="retainer_hours" selected={billingDefault === 'retainer_hours'}>{BILLING_LABELS.retainer_hours}</option>
-                <option value="billed" selected={billingDefault === 'billed'}>{BILLING_LABELS.billed}</option>
-                <option value="free" selected={billingDefault === 'free'}>{BILLING_LABELS.free}</option>
+                <option value="retainer_hours" selected={billingDefault === 'retainer_hours'}>{tr(BILLING_LABELS.retainer_hours)}</option>
+                <option value="billed" selected={billingDefault === 'billed'}>{tr(BILLING_LABELS.billed)}</option>
+                <option value="free" selected={billingDefault === 'free'}>{tr(BILLING_LABELS.free)}</option>
               </select>
-              <span class="help">Předvyplní se podle režimu služby; u každého výkazu jde změnit.</span>
+              <span class="help">{tr('Předvyplní se podle režimu služby; u každého výkazu jde změnit.')}</span>
             </div>
             <div class="form-actions">
-              <button class="btn btn-primary" type="submit">{r ? 'Uložit změny' : 'Vykázat'}</button>
-              <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+              <button class="btn btn-primary" type="submit">{r ? tr('Uložit změny') : tr('Vykázat')}</button>
+              <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
             </div>
           </>
         ) : (
           <div class="form-actions">
-            <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+            <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
           </div>
         )}
       </form>
@@ -185,29 +183,33 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
         </span>
       </span>
       <span class={`chip ${r.billing === 'retainer_hours' ? 'chip-soft-teal' : r.billing === 'billed' ? 'chip-soft-orange' : 'chip-soft-gray'}`}>
-        {BILLING_LABELS[r.billing]}
+        {tr(BILLING_LABELS[r.billing])}
       </span>
       <span style="font-weight:600;white-space:nowrap">{fmtMinutes(r.minutes)}</span>
-      {r.status === 'pending' ? <span class="chip chip-soft-gray">Čeká</span> : <span class="chip chip-soft-teal" title={r.approved_by_name ? `Schválil(a) ${r.approved_by_name}` : ''}>Schváleno</span>}
-      <span class="row-actions" style="white-space:nowrap;display:flex;gap:.7rem">
-        {r.status === 'pending' && canApproveFor(person, props.ownerId) ? (
-          <form method="post" action={`/vykazy/${r.id}/schvalit`} class="m0">
-            <input type="hidden" name="back" value={back} />
-            <button class="subtle-action" type="submit">Schválit</button>
-          </form>
-        ) : null}
-        {canEditRecord(person, r) ? (
-          <>
-            <button class="subtle-action" type="button" hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
-              Upravit
-            </button>
-            <form method="post" action={`/vykazy/${r.id}/smazat`} class="m0" onsubmit="return confirm('Smazat tento výkaz?')">
-              <input type="hidden" name="back" value={back} />
-              <button class="subtle-action" type="submit">Smazat</button>
-            </form>
-          </>
-        ) : null}
-      </span>
+      {r.status === 'pending' ? <span class="chip chip-soft-gray">{tr('Čeká')}</span> : <span class="chip chip-soft-teal" title={r.approved_by_name ? tr('Schválil(a) {name}', { name: r.approved_by_name }) : ''}>{tr('Schváleno')}</span>}
+      {(r.status === 'pending' && canApproveFor(person, props.ownerId)) || canEditRecord(person, r) ? (
+        <span class="row-actions">
+          <KebabMenu id={`wkRow-${r.id}`} label={tr('Možnosti výkazu')}>
+            {r.status === 'pending' && canApproveFor(person, props.ownerId) ? (
+              <form method="post" action={`/vykazy/${r.id}/schvalit`} class="m0">
+                <input type="hidden" name="back" value={back} />
+                <button class="opt" type="submit">{tr('Schválit')}</button>
+              </form>
+            ) : null}
+            {canEditRecord(person, r) ? (
+              <>
+                <button class="opt" type="button" hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
+                  {tr('Upravit')}
+                </button>
+                <form method="post" action={`/vykazy/${r.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tento výkaz?')}')`}>
+                  <input type="hidden" name="back" value={back} />
+                  <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
+                </form>
+              </>
+            ) : null}
+          </KebabMenu>
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -216,9 +218,9 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
 export function MonthNav(props: { month: string; hrefFor: (m: string) => string }) {
   return (
     <span style="display:inline-flex;align-items:center;gap:.15rem;border:1px solid var(--line);border-radius:999px;padding:.1rem .35rem;background:var(--card)">
-      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, -1))} aria-label="Předchozí měsíc">‹</a>
+      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, -1))} aria-label={tr('Předchozí měsíc')}>‹</a>
       <span style="min-width:8.5rem;text-align:center;text-transform:capitalize;font-weight:600;font-size:.85rem">{monthLabel(props.month)}</span>
-      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, 1))} aria-label="Další měsíc">›</a>
+      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, 1))} aria-label={tr('Další měsíc')}>›</a>
     </span>
   );
 }
@@ -249,18 +251,18 @@ vykazyRoutes.get('/vykazy', async (c) => {
   const myTotal = mine.reduce((s, r) => s + r.minutes, 0);
 
   return c.html(
-    <Layout title="Výkazy práce" person={person} modules={c.get('modules')} active="vykazy">
+    <Layout title={tr('Výkazy práce')} person={person} modules={c.get('modules')} active="vykazy">
       <div class="page-head">
-        <h1>Výkazy práce</h1>
+        <h1>{tr('Výkazy práce')}</h1>
         <button class="btn btn-primary" type="button" hx-get={`/vykazy/modal/novy?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
-          Vykázat práci
+          {tr('Vykázat práci')}
         </button>
       </div>
 
-      <nav class="tabs" aria-label="Sekce výkazů">
+      <nav class="tabs" aria-label={tr('Sekce výkazů')}>
         {TABS.filter((x) => x.key !== 'prehled' || isAdmin).map((x) => (
           <a class={`tab ${tab === x.key ? 'active' : ''}`} href={`/vykazy?tab=${x.key}&mesic=${month}`}>
-            {x.label}
+            {tr(x.label)}
           </a>
         ))}
       </nav>
@@ -282,11 +284,11 @@ vykazyRoutes.get('/vykazy', async (c) => {
         {tab === 'muj' ? (
           <div class="card">
             <div class="card-head">
-              <h3>Můj výkaz</h3>
+              <h3>{tr('Můj výkaz')}</h3>
               <b>{fmtMinutes(myTotal)}</b>
             </div>
             {mine.length === 0 ? (
-              <EmptyState text="Zatím jsi v tomto měsíci nevykázal žádnou práci." />
+              <EmptyState text={tr('Zatím jsi v tomto měsíci nevykázal žádnou práci.')} />
             ) : (
               <div>{mine.map((r) => <WorkRecordRow r={r} person={person} ownerId={null} back={back} showClient />)}</div>
             )}
@@ -295,14 +297,14 @@ vykazyRoutes.get('/vykazy', async (c) => {
 
         {tab === 'schvalovani' ? (
           <div class="card">
-            <div class="card-head"><h3>Čeká na schválení</h3></div>
+            <div class="card-head"><h3>{tr('Čeká na schválení')}</h3></div>
             {pending.length === 0 ? (
-              <EmptyState text="Nic nečeká na schválení. 🎉" />
+              <EmptyState text={tr('Nic nečeká na schválení. 🎉')} />
             ) : (
               <div>{pending.map((r) => <WorkRecordRow r={r} person={person} ownerId={isAdmin ? person.id : person.id} back={back} showClient />)}</div>
             )}
             <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">
-              Zobrazují se výkazy zákazníků, za které odpovídáš{isAdmin ? ' (admin vidí všechny)' : ''}.
+              {isAdmin ? tr('Zobrazují se výkazy zákazníků, za které odpovídáš (admin vidí všechny).') : tr('Zobrazují se výkazy zákazníků, za které odpovídáš.')}
             </p>
           </div>
         ) : null}
@@ -311,11 +313,11 @@ vykazyRoutes.get('/vykazy', async (c) => {
           <div class="card card-table" style="overflow-x:auto">
             <table class="tbl">
               <thead>
-                <tr><th>Pracovník</th><th>Výkazů</th><th>Celkem čas</th></tr>
+                <tr><th>{tr('Pracovník')}</th><th>{tr('Výkazů')}</th><th>{tr('Celkem čas')}</th></tr>
               </thead>
               <tbody>
                 {overview.length === 0 ? (
-                  <tr><td colspan={3}><EmptyState text="V tomto měsíci zatím nikdo nevykázal žádnou práci." /></td></tr>
+                  <tr><td colspan={3}><EmptyState text={tr('V tomto měsíci zatím nikdo nevykázal žádnou práci.')} /></td></tr>
                 ) : (
                   overview.map((o) => (
                     <tr>

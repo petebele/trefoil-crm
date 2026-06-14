@@ -10,7 +10,7 @@
 
   /* Plochy a text */
   --ink: #1e2235;
-  --muted: #6b7280;
+  --muted: #676e7b;
   --bg: #f6f7f9;
   --card: #ffffff;
   --line: #e7e9ee;
@@ -19,26 +19,26 @@
   --track: #e9ebef;       /* dráha ukazatele průběhu */
 
   /* Akcent a stavové barvy */
-  --accent: #635df5;
+  --accent: #5c56e4;
   --accent-hover: #5246e0;
   --accent-soft: #eceafd;
   --teal: #0aa789;
   --teal-soft: #e0f5f0;
   --teal-ink: #067a64;
-  --red: #e5484d;
+  --red: #c23d41;
   --red-soft: #fdebec;
-  --orange: #f59e0b;
+  --orange: #c98209;
   --pink: #ec5b78;
 
   /* Avatary (jemné pozadí + sytý text) */
   --av-g-bg: #d9f0e5; --av-g-ink: #1e7a52;
   --av-p-bg: #fde4ec; --av-p-ink: #b0387a;
   --av-b-bg: #dde9fd; --av-b-ink: #2b5fb8;
-  --av-y-bg: #fdf0d4; --av-y-ink: #9a6b08;
+  --av-y-bg: #fdf0d4; --av-y-ink: #926508;
 
   /* Chipy */
   --chip-bg: #eef0f3;
-  --chip-orange-bg: #fdf0d4; --chip-orange-ink: #9a6b08;
+  --chip-orange-bg: #fdf0d4; --chip-orange-ink: #926508;
   --chip-dark-bg: #e4e5e9;   --chip-dark-ink: #3a3f51;
 
   /* Ostatní */

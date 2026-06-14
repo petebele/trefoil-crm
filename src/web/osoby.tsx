@@ -13,10 +13,10 @@ import {
 import { itemsByKey, listEntityTags, addEntityTag, removeEntityTag } from '../domain/lists';
 import { listContacts, addContact, updateContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
 import { logEvent, listEvents } from '../domain/events';
+import { readForm } from '../lib/util';
 import {
   initials,
   avColor,
-  relTime,
   EmptyState,
   TitleBox,
   NoteSection,
@@ -27,6 +27,7 @@ import {
   ModalShell,
   ModalContactRows,
 } from './components';
+import { tr, relTime } from '../i18n';
 import { servicesOfPersonFirms, SERVICE_STATUS_LABELS } from '../domain/clientServices';
 import { SERVICE_MODE_LABELS } from '../domain/services';
 
@@ -61,37 +62,37 @@ osobyRoutes.get('/osoby/modal/nova', async (c) => {
   ]);
 
   return c.html(
-    <ModalShell title="Nová osoba">
+    <ModalShell title={tr('Nová osoba')}>
       <form method="post" action="/osoby">
         <div class="field">
-          <label>Jméno a příjmení <span class="req">*</span></label>
+          <label>{tr('Jméno a příjmení')} <span class="req">*</span></label>
           <input class="input" name="name" required autofocus />
         </div>
         <div class="field">
-          <label>Firma</label>
-          <input class="input" name="firm_name" list="allFirmsModal" placeholder="Najdi firmu… (nová se rovnou založí)" autocomplete="off" />
+          <label>{tr('Firma')}</label>
+          <input class="input" name="firm_name" list="allFirmsModal" placeholder={tr('Najdi firmu… (nová se rovnou založí)')} autocomplete="off" />
           <datalist id="allFirmsModal">
             {firms.map((f) => (
               <option value={f.name}></option>
             ))}
           </datalist>
-          <span class="help">Když napíšeš firmu, která ještě neexistuje, založí se spolu s osobou.</span>
+          <span class="help">{tr('Když napíšeš firmu, která ještě neexistuje, založí se spolu s osobou.')}</span>
         </div>
         <div class="field">
-          <label>Role u firmy</label>
+          <label>{tr('Role u firmy')}</label>
           <select class="input" name="role">
-            <option value="">— role —</option>
+            <option value="">{tr('— role —')}</option>
             {roles.map((r) => (
               <option value={r.label}>{r.label}</option>
             ))}
           </select>
         </div>
         <ModalContactRows labels={labels} />
-        <div class="field"><label>Štítky <span class="help" style="display:inline;margin-left:.4rem">oddělené čárkou</span></label><input class="input" name="tags" placeholder="VIP…" /></div>
-        <div class="field"><label>Poznámka</label><textarea class="input" name="note"></textarea></div>
+        <div class="field"><label>{tr('Štítky')} <span class="help" style="display:inline;margin-left:.4rem">{tr('oddělené čárkou')}</span></label><input class="input" name="tags" placeholder="VIP…" /></div>
+        <div class="field"><label>{tr('Poznámka')}</label><textarea class="input" name="note"></textarea></div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">Vytvořit osobu</button>
-          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+          <button class="btn btn-primary" type="submit">{tr('Vytvořit osobu')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
     </ModalShell>,
@@ -102,14 +103,15 @@ osobyRoutes.post('/osoby', async (c) => {
   const person = c.get('person')!;
   const t = person.tenant_id;
   const body = await c.req.parseBody({ all: true });
-  const name = String(body.name ?? '').trim();
+  const f = readForm(body);
+  const name = f.str('name');
   if (!name) return c.redirect('/osoby/nova');
 
-  const personId = await createCustomerPerson(t, { name, note: String(body.note ?? '').trim() || null });
+  const personId = await createCustomerPerson(t, { name, note: f.strOrNull('note') });
   await logEvent(t, 'person', personId, person.id, 'Osoba založena');
 
   // firma: existující podle jména, jinak rovnou založit
-  const firmName = String(body.firm_name ?? '').trim();
+  const firmName = f.str('firm_name');
   let clientContext: string | null = null;
   if (firmName) {
     const firms = await listClients(t);
@@ -119,7 +121,7 @@ osobyRoutes.post('/osoby', async (c) => {
       await logEvent(t, 'client', newId, person.id, `Firma založena (při zakládání osoby ${name})`);
       firm = { id: newId } as (typeof firms)[number];
     }
-    const role = String(body.role ?? '').trim() || null;
+    const role = f.strOrNull('role');
     await linkPersonToClient(t, personId, firm.id, role);
     clientContext = firm.id;
     await logEvent(t, 'client', firm.id, person.id, `Přidána osoba ${name}${role ? ` (${role})` : ''}`);
@@ -162,16 +164,16 @@ osobyRoutes.get('/osoby/:id/modal/upravit', async (c) => {
   if (!p) return c.notFound();
 
   return c.html(
-    <ModalShell title={`Upravit osobu · ${p.name}`}>
+    <ModalShell title={`${tr('Upravit osobu')} · ${p.name}`}>
       <form method="post" action={`/osoby/${p.id}/upravit`}>
         <div class="field">
-          <label>Jméno a příjmení <span class="req">*</span></label>
+          <label>{tr('Jméno a příjmení')} <span class="req">*</span></label>
           <input class="input" name="name" value={p.name} required autofocus />
         </div>
-        <div class="field"><label>Poznámka</label><textarea class="input" name="note">{p.note ?? ''}</textarea></div>
+        <div class="field"><label>{tr('Poznámka')}</label><textarea class="input" name="note">{p.note ?? ''}</textarea></div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">Uložit změny</button>
-          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+          <button class="btn btn-primary" type="submit">{tr('Uložit změny')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
     </ModalShell>,
@@ -184,10 +186,10 @@ osobyRoutes.post('/osoby/:id/upravit', async (c) => {
   const p = await getCustomerPerson(t, c.req.param('id'));
   if (!p) return c.notFound();
 
-  const body = await c.req.parseBody();
-  const name = String(body.name ?? '').trim();
+  const f = readForm(await c.req.parseBody());
+  const name = f.str('name');
   if (!name) return c.redirect(`/osoby/${p.id}`);
-  const note = String(body.note ?? '').trim() || null;
+  const note = f.strOrNull('note');
 
   const changes: string[] = [];
   if (p.name !== name) changes.push('jméno');
@@ -238,7 +240,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
           <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
 
           <div class="side-section">
-            <h4>Firmy</h4>
+            <h4>{tr('Firmy')}</h4>
             {firms.map((f) => (
               <div class="person-row">
                 <span class={`av av-sm ${avColor(f.name)}`}>{initials(f.name)}</span>
@@ -249,7 +251,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
               </div>
             ))}
             {firms.length === 0 ? (
-              <p class="sub m0" style="padding:.2rem 0">Zatím není u žádné firmy. Přiřadíš ji na detailu firmy.</p>
+              <p class="sub m0" style="padding:.2rem 0">{tr('Zatím není u žádné firmy. Přiřadíš ji na detailu firmy.')}</p>
             ) : null}
           </div>
 
@@ -257,10 +259,10 @@ osobyRoutes.get('/osoby/:id', async (c) => {
 
           <div class="side-section" style="border-top-style:dashed;display:flex;gap:1rem;align-items:center">
             <button class="subtle-action" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
-              Upravit osobu
+              {tr('Upravit osobu')}
             </button>
-            <form method="post" action={`${base}/smazat`} class="m0" onsubmit="return confirm('Opravdu smazat tuto osobu?')">
-              <button class="btn btn-sm btn-danger" type="submit">Smazat osobu</button>
+            <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto osobu?')}')`}>
+              <button class="btn btn-sm btn-danger" type="submit">{tr('Smazat osobu')}</button>
             </form>
           </div>
         </aside>
@@ -270,9 +272,9 @@ osobyRoutes.get('/osoby/:id', async (c) => {
           <DetailTabs base={base} active={tab} />
           {tab === 'sluzby' ? (
             <div class="card">
-              <div class="card-head"><h3>Služby firem této osoby</h3></div>
+              <div class="card-head"><h3>{tr('Služby firem této osoby')}</h3></div>
               {firmServices.length === 0 ? (
-                <EmptyState text="Žádné běžící služby. Služby se přidělují na detailu firmy (záložka Služby)." />
+                <EmptyState text={tr('Žádné běžící služby. Služby se přidělují na detailu firmy (záložka Služby).')} />
               ) : (
                 <div>
                   {firmServices.map((s) => (
@@ -280,9 +282,9 @@ osobyRoutes.get('/osoby/:id', async (c) => {
                       <span style="flex:1">
                         <span style="font-weight:600">{s.label}</span>
                         <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
-                          {SERVICE_MODE_LABELS[s.mode]}
+                          {tr(SERVICE_MODE_LABELS[s.mode])}
                         </span>
-                        {s.status === 'paused' ? <span class="chip chip-soft-orange" style="margin-left:.35rem">{SERVICE_STATUS_LABELS.paused}</span> : null}
+                        {s.status === 'paused' ? <span class="chip chip-soft-orange" style="margin-left:.35rem">{tr(SERVICE_STATUS_LABELS.paused)}</span> : null}
                       </span>
                       <a class="subtle-action" href={`/firmy/${s.client_id}?tab=sluzby`}>{s.client_name}</a>
                     </div>
@@ -291,27 +293,27 @@ osobyRoutes.get('/osoby/:id', async (c) => {
               )}
             </div>
           ) : tab === 'projekty' ? (
-            <div class="card"><EmptyState text="Funkčnost projektů teprve promyslíme." /></div>
+            <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'historie' ? (
             <div class="card">
-              <div class="card-head"><h3>Historie</h3></div>
-              {events.length ? <div>{events.map((e) => <EventRow e={e} />)}</div> : <EmptyState text="Zatím žádná událost." />}
+              <div class="card-head"><h3>{tr('Historie')}</h3></div>
+              {events.length ? <div>{events.map((e) => <EventRow e={e} />)}</div> : <EmptyState text={tr('Zatím žádná událost.')} />}
             </div>
           ) : (
             <>
               <div class="stats" style="grid-template-columns:repeat(3,1fr)">
-                <div class="stat"><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>poslední aktivita</span></div>
-                <div class="stat"><b>{firms.length}</b><span>firmy</span></div>
-                <div class="stat"><b>{contacts.length}</b><span>kontakty</span></div>
+                <div class="stat"><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>{tr('poslední aktivita')}</span></div>
+                <div class="stat"><b>{firms.length}</b><span>{tr('firmy')}</span></div>
+                <div class="stat"><b>{contacts.length}</b><span>{tr('kontakty')}</span></div>
               </div>
               <div class="card" style="margin-top:1rem">
-                <div class="card-head"><h3>Poslední dění</h3></div>
+                <div class="card-head"><h3>{tr('Poslední dění')}</h3></div>
                 {events.length ? (
                   <div>{events.slice(0, 8).map((e) => <EventRow e={e} />)}</div>
                 ) : (
-                  <EmptyState text="Zatím se tu nic nestalo." />
+                  <EmptyState text={tr('Zatím se tu nic nestalo.')} />
                 )}
-                <p class="sub" style="margin:.8rem 0 0">Komunikace a úkoly přibudou s modulem Úkoly (Krok 4).</p>
+                <p class="sub" style="margin:.8rem 0 0">{tr('Komunikace a úkoly přibudou s modulem Úkoly (Krok 4).')}</p>
               </div>
             </>
           )}
@@ -320,8 +322,8 @@ osobyRoutes.get('/osoby/:id', async (c) => {
         {/* C) Pravý panel */}
         <aside>
           <div class="card">
-            <div class="card-head"><h3>Úkoly a události</h3></div>
-            <EmptyState text="Úkoly přijdou s modulem Úkoly (Krok 4)." />
+            <div class="card-head"><h3>{tr('Úkoly a události')}</h3></div>
+            <EmptyState text={tr('Úkoly přijdou s modulem Úkoly (Krok 4).')} />
           </div>
         </aside>
       </div>
@@ -340,7 +342,7 @@ osobyRoutes.post('/osoby/:id/pole/:field', async (c) => {
   const p = await getCustomerPerson(t, id);
   if (!p) return c.notFound();
 
-  let value: string | null = String((await c.req.parseBody()).value ?? '').trim() || null;
+  let value: string | null = readForm(await c.req.parseBody()).strOrNull('value');
   if (field === 'name' && !value) value = p.name;
   const meta = FIELD_META[field]!;
   if (value !== (p[field] ?? null)) {
@@ -397,13 +399,13 @@ osobyRoutes.post('/osoby/:id/kontakt', async (c) => {
   const t = person.tenant_id;
   const id = c.req.param('id');
   if (!(await getCustomerPerson(t, id))) return c.notFound();
-  const body = await c.req.parseBody();
-  const type = String(body.type ?? 'other');
+  const f = readForm(await c.req.parseBody());
+  const type = f.str('type') || 'other';
   if (isContactType(type)) {
     const added = await addContact(t, 'person', id, {
       type,
-      value: String(body.value ?? ''),
-      label: String(body.label ?? '').trim() || null,
+      value: f.raw('value'),
+      label: f.strOrNull('label'),
     });
     if (added) {
       await logEvent(t, 'person', id, person.id, `Přidán kontakt: ${CONTACT_TYPE_LABELS[added.type]} ${added.value}${added.label ? ` (${added.label})` : ''}`);
@@ -424,11 +426,11 @@ osobyRoutes.post('/osoby/:id/kontakt/:cid', async (c) => {
   const t = person.tenant_id;
   const id = c.req.param('id');
   if (!(await getCustomerPerson(t, id))) return c.notFound();
-  const body = await c.req.parseBody();
+  const f = readForm(await c.req.parseBody());
   const old = (await listContacts(t, 'person', id)).find((x) => x.id === c.req.param('cid'));
   const updated = await updateContact(t, c.req.param('cid'), {
-    value: String(body.value ?? ''),
-    label: String(body.label ?? '').trim() || null,
+    value: f.raw('value'),
+    label: f.strOrNull('label'),
   });
   if (updated && (!old || old.value !== updated.value || (old.label ?? null) !== (updated.label ?? null))) {
     await logEvent(t, 'person', id, person.id, `Upraven kontakt: ${CONTACT_TYPE_LABELS[updated.type]} ${updated.value}${updated.label ? ` (${updated.label})` : ''}`);

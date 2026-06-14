@@ -1,7 +1,7 @@
 /* ============================================================
    Skin: Trefoil · tmavý
    Báze: neutrální tmavá #121412 (sotva znatelný zelený nádech).
-   Zelená (#5cb85f / surface-2 / hover): podklady a plochy.
+   Zelená (#51a354 / surface-2 / hover): podklady a plochy.
    Růžová (#e04f7a): interaktivní prvky — accent, odkazy, aktivní nav.
    ============================================================ */
 :root[data-skin="trefoil-dark"] {
@@ -23,13 +23,13 @@
   --accent-soft: #2e1220;  /* tmavé růžové pozadí (vybraná položka, count badge) */
 
   /* Zelená = úspěch / pozitivní stav */
-  --teal: #5cb85f;
+  --teal: #51a354;
   --teal-soft: #182a19;
   --teal-ink: #9dd09f;
 
   --red: #ef5350;
   --red-soft: #3d1414;
-  --orange: #ffa726;
+  --orange: #c7821e;
   --pink: #e04f7a;         /* jetelová růžová = alias accentu v této paletě */
 
   /* Avatary */

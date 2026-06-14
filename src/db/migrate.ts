@@ -47,9 +47,13 @@ export async function migrate(): Promise<void> {
     .addColumn('expires_at', 'text', (c) => c.notNull())
     .addColumn('created_at', 'text', (c) => c.notNull())
     .execute();
+  // úklid prošlých sessions (viz cleanupExpiredSessions) jede přes expires_at
+  await db.schema.createIndex('sessions_expires_at').ifNotExists().on('sessions').columns(['expires_at']).execute();
 
   // --- modul Zákazníci ---
   await sql`ALTER TABLE persons ADD COLUMN note text`.execute(db).catch(() => {});
+  // jazyk UI per uživatel ('cs' | 'en'); starší DB idempotentně
+  await sql`ALTER TABLE persons ADD COLUMN lang text`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('clients')

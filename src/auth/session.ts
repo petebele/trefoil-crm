@@ -1,8 +1,28 @@
 import { randomBytes } from 'node:crypto';
+import { setCookie, deleteCookie } from 'hono/cookie';
+import type { Context } from 'hono';
 import { db } from '../db';
 import { now } from '../lib/util';
 import { config } from '../config';
 import type { PersonsTable } from '../db/schema';
+
+const COOKIE = 'sid';
+
+/** Nastaví přihlašovací cookie (jediné místo s parametry cookie). */
+export function setSessionCookie(c: Context, sid: string): void {
+  setCookie(c, COOKIE, sid, {
+    httpOnly: true,
+    sameSite: 'Lax',
+    secure: config.cookieSecure,
+    path: '/',
+    maxAge: config.sessionTtlDays * 86_400,
+  });
+}
+
+/** Smaže přihlašovací cookie (odhlášení). */
+export function clearSessionCookie(c: Context): void {
+  deleteCookie(c, COOKIE, { path: '/' });
+}
 
 /** Vytvoří serverovou session a vrátí její token (ukládá se do httpOnly cookie). */
 export async function createSession(personId: string): Promise<string> {
@@ -37,4 +57,13 @@ export async function getSessionPerson(sessionId: string | undefined): Promise<P
 
 export async function destroySession(sessionId: string | undefined): Promise<void> {
   if (sessionId) await db.deleteFrom('sessions').where('id', '=', sessionId).execute();
+}
+
+/**
+ * Smaže prošlé sessions (volá se při startu). Bez úklidu by opuštěné záznamy
+ * — po odhlášení/zavření okna — v DB zůstávaly navždy.
+ */
+export async function cleanupExpiredSessions(): Promise<number> {
+  const res = await db.deleteFrom('sessions').where('expires_at', '<', now()).executeTakeFirst();
+  return Number(res?.numDeletedRows ?? 0);
 }

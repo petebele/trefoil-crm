@@ -19,6 +19,7 @@ import {
 import type { ClientsTable, PersonsTable } from '../db/schema';
 import { WorkRecordRow, MonthNav } from './vykazy';
 import { fmtMinutes, type WorkRecord, type MonthMoney } from '../domain/workRecords';
+import { tr, fmtNum } from '../i18n';
 
 /**
  * Záložka Služby v detailu zákazníka (Krok 5): paušál hodin, přidělené služby
@@ -32,7 +33,7 @@ const ERRORS: Record<string, string> = {
   povinne: 'Vyberte službu z katalogu.',
 };
 
-const kc = (n: number) => n.toLocaleString('cs-CZ');
+const kc = (n: number) => fmtNum(n);
 
 function num(v: unknown): number | null {
   const s = String(v ?? '').trim().replace(',', '.');
@@ -53,15 +54,15 @@ function ServiceModal(props: {
   const s = props.service;
   const mode = s?.mode ?? 'retainer';
   return (
-    <ModalShell title={s ? `Upravit službu · ${s.label}${s.detail ? ` · ${s.detail}` : ''}` : 'Přidělit službu'}>
+    <ModalShell title={s ? `${tr('Upravit službu')} · ${s.label}${s.detail ? ` · ${s.detail}` : ''}` : tr('Přidělit službu')}>
       <form method="post" action={s ? `${props.base}/sluzby/${s.id}` : `${props.base}/sluzby`}>
         {s ? null : (
           <div class="field">
-            <label>Služba z katalogu <span class="req">*</span></label>
+            <label>{tr('Služba z katalogu')} <span class="req">*</span></label>
             {/* data-set-* = výchozí hodnoty; app.js je při výběru propíše do polí
                 a u odpovídající volby režimu ukáže „(výchozí)" */}
             <select class="input" name="catalog_item_id" required data-defaults autofocus>
-              <option value="">— vyberte službu —</option>
+              <option value="">{tr('— vyberte službu —')}</option>
               {props.available.map((it) => (
                 <option value={it.id} data-set-mode={it.meta.mode} data-set-rate={it.meta.price ?? ''}>
                   {it.label}
@@ -71,41 +72,41 @@ function ServiceModal(props: {
           </div>
         )}
         <div class="field">
-          <label>Upřesnění služby</label>
-          <input class="input" name="detail" value={s?.detail ?? ''} placeholder="odliší opakovaná přidělení (např. „Sklik“)" />
+          <label>{tr('Upřesnění služby')}</label>
+          <input class="input" name="detail" value={s?.detail ?? ''} placeholder={tr('odliší opakovaná přidělení (např. „Sklik“)')} />
         </div>
         <div class="field">
-          <label>Režim účtování</label>
+          <label>{tr('Režim účtování')}</label>
           <select class="input" name="mode">
-            <option value="retainer" selected={mode === 'retainer'}>{SERVICE_MODE_LABELS.retainer}</option>
-            <option value="payg" selected={mode === 'payg'}>{SERVICE_MODE_LABELS.payg}</option>
-            <option value="subscription" selected={mode === 'subscription'}>{SERVICE_MODE_LABELS.subscription}</option>
+            <option value="retainer" selected={mode === 'retainer'}>{tr(SERVICE_MODE_LABELS.retainer)}</option>
+            <option value="payg" selected={mode === 'payg'}>{tr(SERVICE_MODE_LABELS.payg)}</option>
+            <option value="subscription" selected={mode === 'subscription'}>{tr(SERVICE_MODE_LABELS.subscription)}</option>
           </select>
         </div>
         <div class={`field ${mode === 'subscription' ? 'hidden' : ''}`} data-depends-on="mode" data-depends-value="retainer,payg">
-          <label>Sazba (Kč/h)</label>
+          <label>{tr('Sazba')} ({tr('Kč/h')})</label>
           <input class="input" type="number" name="rate" min="0" step="1" value={s?.rate ?? ''} />
         </div>
         <div class={`field ${mode === 'subscription' ? '' : 'hidden'}`} data-depends-on="mode" data-depends-value="subscription">
-          <label>Částka předplatného (Kč/měs)</label>
+          <label>{tr('Částka předplatného')} ({tr('Kč/měs')})</label>
           <input class="input" type="number" name="monthly_amount" min="0" step="1" value={s?.monthly_amount ?? ''} />
         </div>
         <div class="field">
-          <label>Popis služby</label>
-          <textarea class="input" name="description" rows={2} placeholder="co v rámci služby pro klienta děláme">{s?.description ?? ''}</textarea>
+          <label>{tr('Popis služby')}</label>
+          <textarea class="input" name="description" rows={2} placeholder={tr('co v rámci služby pro klienta děláme')}>{s?.description ?? ''}</textarea>
         </div>
         <div class="field">
-          <label>Odpovědná osoba za službu</label>
+          <label>{tr('Odpovědná osoba za službu')}</label>
           <select class="input" name="owner_id">
-            <option value="">— nikdo —</option>
+            <option value="">{tr('— nikdo —')}</option>
             {props.coworkers.map((u) => (
               <option value={u.id} selected={(s ? s.owner_id : props.defaultOwnerId) === u.id}>{u.name}</option>
             ))}
           </select>
         </div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">{s ? 'Uložit změny' : 'Přidělit službu'}</button>
-          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+          <button class="btn btn-primary" type="submit">{s ? tr('Uložit změny') : tr('Přidělit službu')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
     </ModalShell>
@@ -115,26 +116,26 @@ function ServiceModal(props: {
 function RetainerModal(props: { base: string; client: ClientsTable }) {
   const c = props.client;
   return (
-    <ModalShell title="Paušál hodin">
+    <ModalShell title={tr('Paušál hodin')}>
       <form method="post" action={`${props.base}/pausal`}>
         <div class="field">
-          <label>Hodiny měsíčně <span class="req">*</span></label>
+          <label>{tr('Hodiny měsíčně')} <span class="req">*</span></label>
           <input class="input" type="number" name="hours" min="0" step="0.5" value={c.hours_budget_monthly ?? ''} required autofocus />
-          <span class="help">Jeden paušál na zákazníka — kryje všechny jeho služby v režimu „{SERVICE_MODE_LABELS.retainer}".</span>
+          <span class="help">{tr('Jeden paušál na zákazníka — kryje všechny jeho služby v režimu „{mode}".', { mode: tr(SERVICE_MODE_LABELS.retainer) })}</span>
         </div>
         <div class="field">
-          <label>Cena paušálu (Kč/měs)</label>
+          <label>{tr('Cena paušálu')} ({tr('Kč/měs')})</label>
           <input class="input" type="number" name="price" min="0" step="1" value={c.retainer_price ?? ''} />
         </div>
         <div class="field">
           <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer">
             <input type="checkbox" name="rollover" value="1" checked={c.hours_rollover === 1} style="width:16px;height:16px;accent-color:var(--accent)" />
-            Převádět nevyčerpané hodiny do dalšího měsíce
+            {tr('Převádět nevyčerpané hodiny do dalšího měsíce')}
           </label>
         </div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">Uložit</button>
-          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+          <button class="btn btn-primary" type="submit">{tr('Uložit')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
     </ModalShell>
@@ -145,63 +146,65 @@ function RetainerModal(props: { base: string; client: ClientsTable }) {
 
 function serviceMoneyLine(s: ClientService): string {
   if (s.mode === 'subscription') {
-    return s.monthly_amount !== null ? `předplatné ${kc(s.monthly_amount)} Kč/měs` : 'předplatné (bez částky)';
+    return s.monthly_amount !== null ? `${tr('předplatné')} ${kc(s.monthly_amount)} ${tr('Kč/měs')}` : tr('předplatné (bez částky)');
   }
-  return s.rate !== null ? `sazba ${kc(s.rate)} Kč/h` : 'sazba neuvedena';
+  return s.rate !== null ? `${tr('sazba')} ${kc(s.rate)} ${tr('Kč/h')}` : tr('sazba neuvedena');
 }
 
 function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; vykazyMonth?: string }) {
   const { base, s, isAdmin } = props;
   const vykazatBack = props.vykazyMonth ? `${base}?tab=sluzby&mesic=${props.vykazyMonth}` : `${base}?tab=sluzby`;
+  const canVykaz = !!(props.vykazyMonth && s.status === 'active');
+  const hasMenu = s.status !== 'ended' && (isAdmin || canVykaz);
   return (
     <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.6' : ''}`}>
       <span style="flex:1">
         <span style="font-weight:600">{s.label}</span>
         {s.detail ? <span class="sub" style="font-weight:600"> · {s.detail}</span> : null}
         <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
-          {SERVICE_MODE_LABELS[s.mode]}
+          {tr(SERVICE_MODE_LABELS[s.mode])}
         </span>
         {s.status !== 'active' ? (
           <span class={`chip ${s.status === 'paused' ? 'chip-soft-orange' : 'chip-soft-gray'}`} style="margin-left:.35rem">
-            {SERVICE_STATUS_LABELS[s.status]}
+            {tr(SERVICE_STATUS_LABELS[s.status])}
           </span>
         ) : null}
         <span class="sub" style="display:block">
           {serviceMoneyLine(s)}
           {' · '}
-          {s.owner_name ? `odpovídá ${s.owner_name}` : 'bez odpovědné osoby'}
+          {s.owner_name ? tr('odpovídá {name}', { name: s.owner_name }) : tr('bez odpovědné osoby')}
         </span>
         {s.description ? <span class="sub" style="display:block;font-size:.78rem">{s.description}</span> : null}
       </span>
-      {s.status !== 'ended' ? (
-        <span class="row-actions" style="white-space:nowrap;display:flex;gap:.8rem">
-          {props.vykazyMonth && s.status === 'active' ? (
+      {hasMenu ? (
+        <span class="row-actions"><KebabMenu id={`svcRow-${s.id}`} label={tr('Možnosti služby')}>
+          {canVykaz ? (
             <button
-              class="subtle-action"
+              class="opt"
               type="button"
               hx-get={`/vykazy/modal/novy?klient=${s.client_id}&sluzba=${s.id}&back=${encodeURIComponent(vykazatBack)}`}
               hx-target="#modal"
               hx-swap="innerHTML"
             >
-              Vykázat
+              {tr('Vykázat')}
             </button>
           ) : null}
           {isAdmin ? (
             <>
-              <button class="subtle-action" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
-                Upravit
+              <button class="opt" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
+                {tr('Upravit')}
               </button>
               <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
                 <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
-                <button class="subtle-action" type="submit">{s.status === 'paused' ? 'Obnovit' : 'Pozastavit'}</button>
+                <button class="opt" type="submit">{s.status === 'paused' ? tr('Obnovit') : tr('Pozastavit')}</button>
               </form>
-              <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit="return confirm('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')">
+              <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit={`return confirm('${tr('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')}')`}>
                 <input type="hidden" name="status" value="ended" />
-                <button class="subtle-action" type="submit">Ukončit</button>
+                <button class="opt" type="submit">{tr('Ukončit')}</button>
               </form>
             </>
           ) : null}
-        </span>
+        </KebabMenu></span>
       ) : null}
     </div>
   );
@@ -231,26 +234,26 @@ export function SluzbyZakaznikaTab(props: {
   if (hasRetainer) {
     lines.push({
       label: vMoney
-        ? `Paušál hodin (čerpáno ${fmtMinutes(vMoney.usedRetainerMinutes)} z ${fmtMinutes(vMoney.budgetMinutes ?? 0)})`
-        : `Paušál hodin (${kc(client.hours_budget_monthly!)} h/měs)`,
+        ? tr('Paušál hodin (čerpáno {used} z {budget})', { used: fmtMinutes(vMoney.usedRetainerMinutes), budget: fmtMinutes(vMoney.budgetMinutes ?? 0) })
+        : tr('Paušál hodin ({hours} {unit})', { hours: kc(client.hours_budget_monthly!), unit: tr('h/měs') }),
       amount: client.retainer_price,
-      note: client.retainer_price === null ? 'cena nenastavena' : null,
+      note: client.retainer_price === null ? tr('cena nenastavena') : null,
     });
   } else if (active.some((s) => s.mode === 'retainer')) {
-    lines.push({ label: 'Paušál hodin', amount: null, note: 'není nastaven — služby v režimu paušálu se nemají z čeho odečítat' });
+    lines.push({ label: tr('Paušál hodin'), amount: null, note: tr('není nastaven — služby v režimu paušálu se nemají z čeho odečítat') });
   }
   for (const s of active) {
     const name = s.detail ? `${s.label} · ${s.detail}` : s.label;
     if (s.mode === 'subscription') {
-      lines.push({ label: name, amount: s.monthly_amount, note: s.monthly_amount === null ? 'bez částky' : null });
+      lines.push({ label: name, amount: s.monthly_amount, note: s.monthly_amount === null ? tr('bez částky') : null });
     } else if (s.mode === 'payg') {
-      lines.push({ label: name, amount: null, note: s.rate !== null ? `dle výkazů × ${kc(s.rate)} Kč/h` : 'dle vykázané práce' });
+      lines.push({ label: name, amount: null, note: s.rate !== null ? tr('dle výkazů × {rate} {unit}', { rate: kc(s.rate), unit: tr('Kč/h') }) : tr('dle vykázané práce') });
     }
   }
   const v = props.vykazy;
   if (v && v.money.billedCost + v.money.overageCost > 0) {
     lines.push({
-      label: `Vícepráce — schváleno (${fmtMinutes(v.money.billedMinutes + v.money.overageMinutes)})`,
+      label: tr('Vícepráce — schváleno ({mins})', { mins: fmtMinutes(v.money.billedMinutes + v.money.overageMinutes) }),
       amount: Math.round(v.money.billedCost + v.money.overageCost),
       note: null,
     });
@@ -258,7 +261,7 @@ export function SluzbyZakaznikaTab(props: {
   // čekající výkazy = rezervovaný čas a očekávané příjmy — do součtu patří také
   if (v && v.money.pendingExtraMinutes > 0) {
     lines.push({
-      label: `Vícepráce — čeká na schválení (${fmtMinutes(v.money.pendingExtraMinutes)})`,
+      label: tr('Vícepráce — čeká na schválení ({mins})', { mins: fmtMinutes(v.money.pendingExtraMinutes) }),
       amount: Math.round(v.money.pendingExtraCost),
       note: null,
     });
@@ -267,68 +270,69 @@ export function SluzbyZakaznikaTab(props: {
 
   return (
     <>
-      {props.err && ERRORS[props.err] ? <div class="form-error">{ERRORS[props.err]}</div> : null}
+      {props.err && ERRORS[props.err] ? <div class="form-error">{tr(ERRORS[props.err]!)}</div> : null}
 
       {/* Akce sekcí: ⋯ v pravém rohu (vždy viditelné), prázdná sekce má textovou akci. */}
       <div class="card">
         <div class="card-head">
-          <h3>Paušál hodin</h3>
+          <h3>{tr('Paušál hodin')}</h3>
           {isAdmin ? (
             hasRetainer ? (
-              <KebabMenu id="pausalMenu" label="Možnosti paušálu hodin">
+              <KebabMenu id="pausalMenu" label={tr('Možnosti paušálu hodin')}>
                 <button class="opt" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
-                  Upravit paušál
+                  {tr('Upravit paušál')}
                 </button>
-                <form method="post" action={`${base}/pausal`} class="m0" onsubmit="return confirm('Zrušit paušál hodin u tohoto zákazníka?')">
-                  <button class="opt" type="submit" name="hours" value="">Zrušit paušál</button>
+                <form method="post" action={`${base}/pausal`} class="m0" onsubmit={`return confirm('${tr('Zrušit paušál hodin u tohoto zákazníka?')}')`}>
+                  <button class="opt" type="submit" name="hours" value="">{tr('Zrušit paušál')}</button>
                 </form>
               </KebabMenu>
             ) : (
               <button class="subtle-action" type="button" hx-get={`${base}/pausal/modal`} hx-target="#modal" hx-swap="innerHTML">
-                Nastavit paušál hodin
+                {tr('Nastavit paušál hodin')}
               </button>
             )
           ) : null}
         </div>
         {hasRetainer ? (
           <div>
-            <b>{kc(client.hours_budget_monthly!)} h</b> měsíčně
-            {client.retainer_price !== null ? <> za <b>{kc(client.retainer_price)} Kč/měs</b></> : null}
+            <b>{kc(client.hours_budget_monthly!)} {tr('h')}</b> {tr('měsíčně')}
+            {client.retainer_price !== null ? <> {tr('za')} <b>{kc(client.retainer_price)} {tr('Kč/měs')}</b></> : null}
             <span class="sub" style="display:block">
-              Nevyčerpané hodiny se {client.hours_rollover === 1 ? 'převádějí do dalšího měsíce' : 'nepřevádějí (propadají)'}.
-              Kryje služby v režimu „{SERVICE_MODE_LABELS.retainer}".
+              {client.hours_rollover === 1 ? tr('Nevyčerpané hodiny se převádějí do dalšího měsíce.') : tr('Nevyčerpané hodiny se nepřevádějí (propadají).')}
+              {' '}
+              {tr('Kryje služby v režimu „{mode}".', { mode: tr(SERVICE_MODE_LABELS.retainer) })}
             </span>
           </div>
         ) : (
-          <p class="sub" style="margin:0">Bez paušálu hodin.</p>
+          <p class="sub" style="margin:0">{tr('Bez paušálu hodin.')}</p>
         )}
       </div>
 
       <div class="card" style="margin-top:1rem">
         <div class="card-head">
-          <h3>Služby</h3>
+          <h3>{tr('Služby')}</h3>
           {isAdmin && available.length > 0 ? (
             running.length > 0 ? (
-              <KebabMenu id="svcMenu" label="Možnosti služeb">
+              <KebabMenu id="svcMenu" label={tr('Možnosti služeb')}>
                 <button class="opt" type="button" hx-get={`${base}/sluzby/modal/nova`} hx-target="#modal" hx-swap="innerHTML">
-                  Přidělit službu
+                  {tr('Přidělit službu')}
                 </button>
               </KebabMenu>
             ) : (
               <button class="subtle-action" type="button" hx-get={`${base}/sluzby/modal/nova`} hx-target="#modal" hx-swap="innerHTML">
-                Přidělit službu
+                {tr('Přidělit službu')}
               </button>
             )
           ) : null}
         </div>
         {isAdmin && available.length === 0 ? (
           <p class="sub" style="margin:0">
-            Nejdřív přidejte služby do katalogu v <a href="/administrace?tab=sluzby">Administraci</a>.
+            {tr('Nejdřív přidejte služby do katalogu v')} <a href="/administrace?tab=sluzby">{tr('Administraci')}</a>.
           </p>
         ) : null}
 
         {running.length === 0 && archived.length === 0 ? (
-          <EmptyState text="Zatím žádné služby. Přidělte první službu z katalogu." />
+          <EmptyState text={tr('Zatím žádné služby. Přidělte první službu z katalogu.')} />
         ) : (
           <div style="margin-top:.4rem">
             {running.map((s) => (
@@ -340,7 +344,7 @@ export function SluzbyZakaznikaTab(props: {
         {archived.length > 0 ? (
           <div style="margin-top:.8rem">
             <button type="button" class="subtle-action" data-reveal="svcArchive" aria-controls="svcArchive">
-              Ukončené služby ({archived.length})
+              {tr('Ukončené služby ({n})', { n: archived.length })}
             </button>
             <div id="svcArchive" class="hidden">
               {archived.map((s) => (
@@ -354,10 +358,10 @@ export function SluzbyZakaznikaTab(props: {
       {v ? (
         <div class="card" style="margin-top:1rem">
           <div class="card-head">
-            <h3>Výkazy</h3>
+            <h3>{tr('Výkazy')}</h3>
             <span style="display:flex;gap:.6rem;align-items:center">
               <MonthNav month={v.month} hrefFor={(m) => `${base}?tab=sluzby&mesic=${m}`} />
-              <KebabMenu id="vykazyMenu" label="Možnosti výkazů">
+              <KebabMenu id="vykazyMenu" label={tr('Možnosti výkazů')}>
                 <button
                   class="opt"
                   type="button"
@@ -365,28 +369,28 @@ export function SluzbyZakaznikaTab(props: {
                   hx-target="#modal"
                   hx-swap="innerHTML"
                 >
-                  Vykázat práci
+                  {tr('Vykázat práci')}
                 </button>
               </KebabMenu>
             </span>
           </div>
           <p class="sub" style="margin:0 0 .4rem">
-            Vykázáno <b>{fmtMinutes(v.money.totalMinutes)}</b>
+            {tr('Vykázáno')} <b>{fmtMinutes(v.money.totalMinutes)}</b>
             {v.money.budgetMinutes !== null ? (
               <>
-                {' · '}paušál: čerpáno <b>{fmtMinutes(Math.min(v.money.usedRetainerMinutes, v.money.budgetMinutes))}</b> z {fmtMinutes(v.money.budgetMinutes)}
-                {v.money.carryMinutes > 0 ? ` (z toho převedeno ${fmtMinutes(v.money.carryMinutes)})` : ''}
+                {' · '}{tr('paušál: čerpáno')} <b>{fmtMinutes(Math.min(v.money.usedRetainerMinutes, v.money.budgetMinutes))}</b> {tr('z')} {fmtMinutes(v.money.budgetMinutes)}
+                {v.money.carryMinutes > 0 ? ` ${tr('(z toho převedeno {mins})', { mins: fmtMinutes(v.money.carryMinutes) })}` : ''}
                 {v.money.overageMinutes > 0 ? (
-                  <span style="color:var(--red);font-weight:600"> · přečerpáno {fmtMinutes(v.money.overageMinutes)}</span>
+                  <span style="color:var(--red);font-weight:600"> · {tr('přečerpáno')} {fmtMinutes(v.money.overageMinutes)}</span>
                 ) : (
-                  <> · zbývá <b>{fmtMinutes(Math.max(0, v.money.budgetMinutes - v.money.usedRetainerMinutes))}</b></>
+                  <> · {tr('zbývá')} <b>{fmtMinutes(Math.max(0, v.money.budgetMinutes - v.money.usedRetainerMinutes))}</b></>
                 )}
               </>
             ) : null}
-            {v.money.pendingCount > 0 ? ` · ${v.money.pendingCount} čeká na schválení` : ''}
+            {v.money.pendingCount > 0 ? ` ${tr('· {n} čeká na schválení', { n: v.money.pendingCount })}` : ''}
           </p>
           {v.records.length === 0 ? (
-            <EmptyState text="Tento měsíc zatím nikdo nevykázal žádnou práci." />
+            <EmptyState text={tr('Tento měsíc zatím nikdo nevykázal žádnou práci.')} />
           ) : (
             <div>
               {v.records.map((r) => (
@@ -399,21 +403,21 @@ export function SluzbyZakaznikaTab(props: {
 
       {lines.length > 0 ? (
         <div class="card" style="margin-top:1rem">
-          <div class="card-head"><h3>Měsíčně celkem</h3></div>
+          <div class="card-head"><h3>{tr('Měsíčně celkem')}</h3></div>
           {lines.map((l) => (
             <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--line);font-size:.88rem">
               <span>{l.label}</span>
-              {l.amount !== null ? <span style="white-space:nowrap">{kc(l.amount)} Kč</span> : <span class="sub" style="white-space:nowrap">{l.note}</span>}
+              {l.amount !== null ? <span style="white-space:nowrap">{kc(l.amount)} {tr('Kč')}</span> : <span class="sub" style="white-space:nowrap">{l.note}</span>}
             </div>
           ))}
           <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;border-top:2px solid var(--line);font-weight:700">
-            <span>{v ? `Očekávaný měsíc ${v.month}` : 'Pevné platby celkem'}</span>
-            <span>{kc(total)} Kč/měs</span>
+            <span>{v ? tr('Očekávaný měsíc {month}', { month: v.month }) : tr('Pevné platby celkem')}</span>
+            <span>{kc(total)} {tr('Kč/měs')}</span>
           </div>
           <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">
             {v
-              ? 'Pevné platby (paušál + předplatná) + vícepráce z výkazů zvoleného měsíce — schválené i čekající (rezervovaný čas a očekávané příjmy). Práce „z paušálu" v rámci limitu nemění částku, jen čerpá hodiny.'
-              : 'Jen pevné měsíční platby (paušál + předplatná). Vícepráce se doplní z výkazů práce (zapněte modul Výkazy).'}
+              ? tr('Pevné platby (paušál + předplatná) + vícepráce z výkazů zvoleného měsíce — schválené i čekající (rezervovaný čas a očekávané příjmy). Práce „z paušálu" v rámci limitu nemění částku, jen čerpá hodiny.')
+              : tr('Jen pevné měsíční platby (paušál + předplatná). Vícepráce se doplní z výkazů práce (zapněte modul Výkazy).')}
           </p>
         </div>
       ) : null}

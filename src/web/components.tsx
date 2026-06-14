@@ -2,6 +2,7 @@ import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
 import { IconPhone, IconMail, IconGlobe, IconPlus, IconTag } from './icons';
+import { tr, fmtDateTime } from '../i18n';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
 
@@ -17,25 +18,9 @@ export function avColor(name: string): string {
   return ['av-g', 'av-p', 'av-b', 'av-y'][h % 4]!;
 }
 
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('cs-CZ', {
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-export function relTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const min = Math.floor(diff / 60_000);
-  if (min < 1) return 'právě teď';
-  if (min < 60) return `před ${min} min`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `před ${h} h`;
-  const d = Math.floor(h / 24);
-  return d === 1 ? 'včera' : `před ${d} dny`;
+/** Lokalizovaný štítek typu kontaktu (Telefon/E-mail/…). */
+function contactTypeLabel(type: PersonContactsTable['type']): string {
+  return tr(CONTACT_TYPE_LABELS[type]);
 }
 
 export function EmptyState(props: { text: string; children?: Child }) {
@@ -100,7 +85,7 @@ export function ModalShell(props: { title: string; children?: Child }) {
       <div class="modal-card">
         <div class="modal-head">
           <h3>{props.title}</h3>
-          <button type="button" class="icon-btn" data-modal-close aria-label="Zavřít">✕</button>
+          <button type="button" class="icon-btn" data-modal-close aria-label={tr('Zavřít')}>✕</button>
         </div>
         {props.children}
       </div>
@@ -113,21 +98,21 @@ export function ModalContactRows(props: { labels: Array<{ label: string }> }) {
   const row = (
     <div style="display:flex;gap:.4rem;margin-bottom:.4rem">
       <select class="input" name="c_type" style="max-width:6.5rem">
-        <option value="phone">Telefon</option>
-        <option value="email" selected>E-mail</option>
-        <option value="web">Web</option>
-        <option value="other">Jiné</option>
+        <option value="phone">{tr('Telefon')}</option>
+        <option value="email" selected>{tr('E-mail')}</option>
+        <option value="web">{tr('Web')}</option>
+        <option value="other">{tr('Jiné')}</option>
       </select>
-      <input class="input" name="c_value" placeholder="Hodnota" style="flex:1" />
-      <input class="input" name="c_label" list="contactLabelsModal" placeholder="Štítek (Práce…)" autocomplete="off" style="max-width:8rem" />
+      <input class="input" name="c_value" placeholder={tr('Hodnota')} style="flex:1" />
+      <input class="input" name="c_label" list="contactLabelsModal" placeholder={tr('Štítek (Práce…)')} autocomplete="off" style="max-width:8rem" />
     </div>
   );
   return (
     <div class="field">
-      <label>Kontakty</label>
+      <label>{tr('Kontakty')}</label>
       <template id="modalContactRow">{row}</template>
       {row}
-      <button class="btn btn-ghost" type="button" data-add-row="modalContactRow">+ další kontakt</button>
+      <button class="btn btn-ghost" type="button" data-add-row="modalContactRow">{tr('+ další kontakt')}</button>
       <datalist id="contactLabelsModal">
         {props.labels.map((l) => (
           <option value={l.label}></option>
@@ -139,17 +124,19 @@ export function ModalContactRows(props: { labels: Array<{ label: string }> }) {
 
 // ---------- Úprava jednoho pole = malý panel (žádná inline editace, katalog §18) ----------
 
-/** Velký název záznamu + ⋯ (malý panel s polem). */
-export function TitleBox(props: { base: string; label: string; value: string }) {
+/** Velký název záznamu + ⋯ (malý panel s polem). Extra akce jako children. */
+export function TitleBox(props: { base: string; label: string; value: string; children?: Child }) {
+  const label = tr(props.label);
   return (
     <div id="f-name" style="display:flex;align-items:baseline;gap:.5rem">
       <span class="record-name" style="margin:0;flex:1">{props.value}</span>
-      <Picker id="nameEdit" trigger="⋯" triggerClass="icon-btn" triggerLabel={`${props.label} — upravit`} alignRight>
+      <Picker id="nameEdit" trigger="⋯" triggerClass="icon-btn" triggerLabel={tr('{label} — upravit', { label })} alignRight>
         <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
-          <div class="opt-group" style="padding-left:0">{props.label}</div>
-          <input class="input" name="value" value={props.value} required autofocus aria-label={props.label} />
-          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+          <div class="opt-group" style="padding-left:0">{label}</div>
+          <input class="input" name="value" value={props.value} required autofocus aria-label={label} />
+          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
         </form>
+        {props.children}
       </Picker>
     </div>
   );
@@ -160,18 +147,18 @@ export function NoteSection(props: { base: string; value: string | null }) {
   return (
     <div class="side-section" id="f-note">
       <h4>
-        Poznámka
+        {tr('Poznámka')}
         <Picker
           id="noteEdit"
-          trigger={props.value ? '⋯' : 'Přidat poznámku'}
+          trigger={props.value ? '⋯' : tr('Přidat poznámku')}
           triggerClass={props.value ? 'icon-btn' : 'subtle-action'}
-          triggerLabel="Poznámka — upravit"
+          triggerLabel={tr('Poznámka — upravit')}
           alignRight
         >
           <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
-            <div class="opt-group" style="padding-left:0">Poznámka</div>
-            <textarea class="input" name="value" rows={4} autofocus aria-label="Poznámka">{props.value ?? ''}</textarea>
-            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+            <div class="opt-group" style="padding-left:0">{tr('Poznámka')}</div>
+            <textarea class="input" name="value" rows={4} autofocus aria-label={tr('Poznámka')}>{props.value ?? ''}</textarea>
+            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
           </form>
         </Picker>
       </h4>
@@ -191,8 +178,8 @@ export function StatusBox(props: {
     <div class="hover-row" id="f-status" style="display:flex;align-items:center;gap:.4rem">
       <StatusChip value={props.value} items={props.items} />
       <span class="row-actions">
-        <Picker id="statusPicker" trigger="změnit" triggerLabel="Změnit stav">
-          <div class="opt-group">Stav</div>
+        <Picker id="statusPicker" trigger="⋯" triggerClass="icon-btn" triggerLabel={tr('Změnit stav')} alignRight>
+          <div class="opt-group">{tr('Stav')}</div>
           {props.items.map((s) => (
             <button
               type="button"
@@ -221,8 +208,8 @@ export function OwnerBox(props: {
 }) {
   const picker = (trigger: Child, triggerClass?: string, label?: string) => (
     <Picker id="ownerPicker" trigger={trigger} triggerClass={triggerClass} triggerLabel={label} alignRight={triggerClass === 'icon-btn'}>
-      <input class="input" data-filter-list placeholder="Hledat kolegu…" aria-label="Hledat kolegu" />
-      <div class="opt-group">Kolegové</div>
+      <input class="input" data-filter-list placeholder={tr('Hledat kolegu…')} aria-label={tr('Hledat kolegu')} />
+      <div class="opt-group">{tr('Kolegové')}</div>
       {props.coworkers.map((u) => (
         <button
           type="button"
@@ -249,7 +236,7 @@ export function OwnerBox(props: {
           hx-target="#owner-box"
           hx-swap="outerHTML"
         >
-          Zrušit přiřazení
+          {tr('Zrušit přiřazení')}
         </button>
       ) : null}
     </Picker>
@@ -258,8 +245,8 @@ export function OwnerBox(props: {
   return (
     <div class="side-section" id="owner-box">
       <h4>
-        Odpovědná osoba
-        {props.owner ? picker('⋯', 'icon-btn', 'Změnit odpovědnou osobu') : null}
+        {tr('Odpovědná osoba')}
+        {props.owner ? picker('⋯', 'icon-btn', tr('Změnit odpovědnou osobu')) : null}
       </h4>
       {props.owner ? (
         <div class="person-row">
@@ -267,7 +254,7 @@ export function OwnerBox(props: {
           <span class="nm" style="flex:1">{props.owner.name}</span>
         </div>
       ) : (
-        picker('Přiřadit osobu')
+        picker(tr('Přiřadit osobu'))
       )}
     </div>
   );
@@ -282,15 +269,15 @@ export function TagsSection(props: {
   return (
     <div id="tags">
       <div class="chips" style="align-items:center">
-        {props.tags.map((t) => (
+        {props.tags.map((tag) => (
           <span class="chip hover-row">
-            {t.label}
+            {tag.label}
             <button
               type="button"
               class="row-actions"
               style="border:none;background:none;cursor:pointer;padding:0 0 0 .3rem;font-size:.8em;color:var(--muted)"
-              aria-label={`Odebrat štítek ${t.label}`}
-              hx-post={`${props.base}/stitek/${t.id}/smazat`}
+              aria-label={tr('Odebrat štítek {label}', { label: tag.label })}
+              hx-post={`${props.base}/stitek/${tag.id}/smazat`}
               hx-target="#tags"
               hx-swap="outerHTML"
             >
@@ -314,19 +301,20 @@ function contactTypeIcon(t: PersonContactsTable['type']) {
 
 function QuickAddPanel(props: { base: string; type: PersonContactsTable['type']; labels: Array<{ label: string }> }) {
   const id = `addContact-${props.type}`;
+  const typeLabel = contactTypeLabel(props.type);
   return (
     <Picker
       id={id}
       trigger={contactTypeIcon(props.type)}
       triggerClass="icon-btn"
-      triggerLabel={`Přidat: ${CONTACT_TYPE_LABELS[props.type]}`}
+      triggerLabel={tr('Přidat: {type}', { type: typeLabel })}
     >
       <form hx-post={`${props.base}/kontakt`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
         <input type="hidden" name="type" value={props.type} />
-        <div class="opt-group" style="padding-left:0">{CONTACT_TYPE_LABELS[props.type]}</div>
-        <input class="input" name="value" placeholder="Hodnota" required autocomplete="off" aria-label="Hodnota kontaktu" />
-        <input class="input" name="label" list="contactLabels" placeholder="Štítek (Práce, Domů…)" autocomplete="off" aria-label="Štítek kontaktu" />
-        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Přidat</button>
+        <div class="opt-group" style="padding-left:0">{typeLabel}</div>
+        <input class="input" name="value" placeholder={tr('Hodnota')} required autocomplete="off" aria-label={tr('Hodnota kontaktu')} />
+        <input class="input" name="label" list="contactLabels" placeholder={tr('Štítek (Práce, Domů…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
+        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Přidat')}</button>
       </form>
     </Picker>
   );
@@ -378,21 +366,21 @@ export function ContactsSection(props: {
   );
   // Rychlé přidání žije v řádku nadpisu a je VŽDY viditelné (indikace, že tu akce jsou).
   const quickAdd = (
-    <span class="quick-add" style="margin:0" role="group" aria-label="Rychlé přidání kontaktu, štítku nebo osoby">
+    <span class="quick-add" style="margin:0" role="group" aria-label={tr('Rychlé přidání kontaktu, štítku nebo osoby')}>
       {props.personAdd ?? null}
       <QuickAddPanel base={props.base} type="phone" labels={props.labels} />
       <QuickAddPanel base={props.base} type="email" labels={props.labels} />
       <QuickAddPanel base={props.base} type="web" labels={props.labels} />
       <QuickAddPanel base={props.base} type="other" labels={props.labels} />
-      <Picker id="addTag" trigger={<IconTag />} triggerClass="icon-btn" triggerLabel="Přidat štítek">
+      <Picker id="addTag" trigger={<IconTag />} triggerClass="icon-btn" triggerLabel={tr('Přidat štítek')}>
         <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
-          <div class="opt-group" style="padding-left:0">Štítek</div>
-          <input class="input" name="label" data-filter-list placeholder="Najít nebo vytvořit…" autocomplete="off" aria-label="Název štítku" />
+          <div class="opt-group" style="padding-left:0">{tr('Štítek')}</div>
+          <input class="input" name="label" data-filter-list placeholder={tr('Najít nebo vytvořit…')} autocomplete="off" aria-label={tr('Název štítku')} />
           <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">
-            Přidat napsaný štítek
+            {tr('Přidat napsaný štítek')}
           </button>
         </form>
-        {availableTags.length ? <div class="opt-group">Existující štítky</div> : null}
+        {availableTags.length ? <div class="opt-group">{tr('Existující štítky')}</div> : null}
         {availableTags.map((t) => (
           <button
             type="button"
@@ -411,9 +399,9 @@ export function ContactsSection(props: {
 
   return (
     <div id="contacts" class={`side-section ${hasContacts ? 'hover-area' : ''}`} style="border-top:none;margin-top:.4rem;padding-top:0">
-      <h4>Kontakty {quickAdd}</h4>
+      <h4>{tr('Kontakty')} {quickAdd}</h4>
 
-      {people.length > 0 && groups.length > 0 ? groupLabel('Osoby') : null}
+      {people.length > 0 && groups.length > 0 ? groupLabel(tr('Osoby')) : null}
       {people.map((p) => (
         <div style="padding:.2rem 0">
           <div class="person-row hover-row" style="padding:0">
@@ -423,14 +411,13 @@ export function ContactsSection(props: {
               {p.role_at_client ? <span class="sub">{p.role_at_client}</span> : null}
             </span>
             {props.unlinkBase ? (
-              <form
-                method="post"
-                action={`${props.unlinkBase}/osoba/${p.id}/odebrat`}
-                class="m0 row-actions"
-                onsubmit="return confirm('Odebrat osobu z této firmy?')"
-              >
-                <button type="submit" class="subtle-action" aria-label={`Odebrat ${p.name} z firmy`}>Odebrat</button>
-              </form>
+              <span class="row-actions">
+                <KebabMenu id={`pMenu-${p.id}`} label={tr('Možnosti pro {name}', { name: p.name })}>
+                  <form method="post" action={`${props.unlinkBase}/osoba/${p.id}/odebrat`} class="m0" onsubmit={`return confirm('${tr('Odebrat osobu z této firmy?')}')`}>
+                    <button type="submit" class="opt">{tr('Odebrat z firmy')}</button>
+                  </form>
+                </KebabMenu>
+              </span>
             ) : null}
           </div>
           {p.contacts.length > 0 ? (
@@ -448,42 +435,43 @@ export function ContactsSection(props: {
         </div>
       ))}
 
-      {people.length > 0 && groups.length > 0 ? groupLabel('Firma') : null}
+      {people.length > 0 && groups.length > 0 ? groupLabel(tr('Firma')) : null}
       {groups.map((g) => (
         <div class="fact">
-          <span class="lbl" style="margin-bottom:.15rem">{CONTACT_TYPE_LABELS[g.type]}</span>
+          <span class="lbl" style="margin-bottom:.15rem">{contactTypeLabel(g.type)}</span>
           {g.rows.map((c) => (
             <div class="hover-row" id={`c-${c.id}`} style="display:flex;align-items:baseline;gap:.45rem">
               <span class="val">
                 <ContactValue c={c} />
               </span>
               {c.label ? <span class="meta-lbl">{c.label}</span> : null}
-              <span class="row-actions" style="margin-left:auto;white-space:nowrap;display:flex;gap:.7rem">
-                <Picker id={`cEdit-${c.id}`} trigger="Upravit" triggerLabel="Upravit kontakt">
+              <span class="row-actions" style="margin-left:auto">
+                <KebabMenu id={`cMenu-${c.id}`} label={tr('Možnosti kontaktu')}>
                   <form hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
-                    <div class="opt-group" style="padding-left:0">{CONTACT_TYPE_LABELS[c.type]}</div>
-                    <input class="input" name="value" value={c.value} required aria-label="Hodnota kontaktu" />
-                    <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder="Štítek (Práce…)" autocomplete="off" aria-label="Štítek kontaktu" />
-                    <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">Uložit</button>
+                    <div class="opt-group" style="padding-left:0">{contactTypeLabel(c.type)}</div>
+                    <input class="input" name="value" value={c.value} required aria-label={tr('Hodnota kontaktu')} />
+                    <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder={tr('Štítek (Práce…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
+                    <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
                   </form>
-                </Picker>
-                <button
-                  type="button"
-                  class="subtle-action"
-                  aria-label="Smazat kontakt"
-                  hx-post={`${props.base}/kontakt/${c.id}/smazat`}
-                  hx-confirm="Smazat tento kontakt?"
-                  hx-target="#contacts"
-                  hx-swap="outerHTML"
-                >
-                  Smazat
-                </button>
+                  <div style="border-top:1px solid var(--line);margin:.25rem 0 .1rem" />
+                  <button
+                    type="button"
+                    class="opt"
+                    style="color:var(--red)"
+                    hx-post={`${props.base}/kontakt/${c.id}/smazat`}
+                    hx-confirm={tr('Smazat tento kontakt?')}
+                    hx-target="#contacts"
+                    hx-swap="outerHTML"
+                  >
+                    {tr('Smazat')}
+                  </button>
+                </KebabMenu>
               </span>
             </div>
           ))}
         </div>
       ))}
-      {!hasContacts ? <p class="sub m0" style="padding:.3rem 0">Zatím žádný kontakt.</p> : null}
+      {!hasContacts ? <p class="sub m0" style="padding:.3rem 0">{tr('Zatím žádný kontakt.')}</p> : null}
       <datalist id="contactLabels">
         {props.labels.map((l) => (
           <option value={l.label}></option>
@@ -502,11 +490,11 @@ export function DetailTabs(props: { base: string; active: string }) {
     </a>
   );
   return (
-    <nav class="tabs" style="margin-top:0" aria-label="Sekce detailu">
-      {tab('nastenka', 'Nástěnka')}
-      {tab('sluzby', 'Služby')}
-      {tab('projekty', 'Projekty')}
-      {tab('historie', 'Historie')}
+    <nav class="tabs" style="margin-top:0" aria-label={tr('Sekce detailu')}>
+      {tab('nastenka', tr('Nástěnka'))}
+      {tab('sluzby', tr('Služby'))}
+      {tab('projekty', tr('Projekty'))}
+      {tab('historie', tr('Historie'))}
     </nav>
   );
 }
@@ -515,10 +503,10 @@ export function EventRow(props: { e: { id: string; action: string; created_at: s
   const { e } = props;
   return (
     <div style="display:flex;gap:.7rem;padding:.5rem 0;border-top:1px solid var(--line);font-size:.83rem">
-      <span class="sub" style="white-space:nowrap">{formatDateTime(e.created_at)}</span>
+      <span class="sub" style="white-space:nowrap">{fmtDateTime(e.created_at)}</span>
       <span style="font-weight:600;white-space:nowrap">{e.person_name ?? '—'}</span>
       <span style="flex:1">{e.action}</span>
-      <span class="sub" title={`ID záznamu: ${e.id}`} style="font-size:.7rem">#{e.id.slice(0, 8)}</span>
+      <span class="sub" title={tr('ID záznamu: {id}', { id: e.id })} style="font-size:.7rem">#{e.id.slice(0, 8)}</span>
     </div>
   );
 }

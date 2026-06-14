@@ -7,6 +7,7 @@ import { listCustomerPersons, getCustomerPerson } from '../domain/people';
 import { itemsByKey, tagsForEntities, listEntityTags } from '../domain/lists';
 import { primaryContactsFor, listContacts } from '../domain/contacts';
 import { initials, avColor, StatusChip, EmptyState } from './components';
+import { tr } from '../i18n';
 
 export const zakazniciRoutes = new Hono<AppEnv>();
 
@@ -25,7 +26,7 @@ type Row = {
   href: string;
   name: string;
   subtitle: string | null;
-  subtitleLink?: { href: string; text: string } | null;
+  subtitleLink?: { href: string; role: string | null; clientName: string } | null;
   email?: string;
   emailLabel?: string | null;
   phone?: string;
@@ -60,7 +61,7 @@ async function buildRows(
       id: c.id,
       href: `/firmy/${c.id}`,
       name: c.name,
-      subtitle: c.website ? `Firma · ${c.website.replace(/^https?:\/\//, '')}` : 'Firma',
+      subtitle: c.website ? `${tr('Firma')} · ${c.website.replace(/^https?:\/\//, '')}` : tr('Firma'),
       subtitleLink: null,
       ...clientContacts.get(c.id),
       tags: clientTags.get(c.id) ?? [],
@@ -74,8 +75,8 @@ async function buildRows(
         id: p.id,
         href: `/osoby/${p.id}`,
         name: p.name,
-        subtitle: firm ? null : 'Osoba',
-        subtitleLink: firm ? { href: `/firmy/${firm.clientId}`, text: firm.role ? `${firm.role} v ${firm.clientName}` : firm.clientName } : null,
+        subtitle: firm ? null : tr('Osoba'),
+        subtitleLink: firm ? { href: `/firmy/${firm.clientId}`, role: firm.role, clientName: firm.clientName } : null,
         ...personContacts.get(p.id),
         tags: personTags.get(p.id) ?? [],
         createdAt: p.created_at,
@@ -106,7 +107,8 @@ function RowsTable(props: { rows: Row[]; statusItems: Array<{ value: string; lab
                 <span class="sub">
                   {r.subtitleLink ? (
                     <>
-                      {r.subtitleLink.text.split(' v ')[0]} v <a href={r.subtitleLink.href}>{r.subtitleLink.text.split(' v ').slice(1).join(' v ')}</a>
+                      {r.subtitleLink.role ? <>{r.subtitleLink.role} {tr('v')} </> : null}
+                      <a href={r.subtitleLink.href}>{r.subtitleLink.clientName}</a>
                     </>
                   ) : (
                     r.subtitle
@@ -143,11 +145,11 @@ function RowsTable(props: { rows: Row[]; statusItems: Array<{ value: string; lab
         <tr>
           <td colspan={5}>
             {props.hasFilter ? (
-              <EmptyState text="Nic nenalezeno. Zkus jiné hledání." />
+              <EmptyState text={tr('Nic nenalezeno. Zkus jiné hledání.')} />
             ) : (
-              <EmptyState text="Zatím tu nikdo není.">
-                <button class="btn btn-sm btn-primary" type="button" style="margin-right:.4rem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat firmu</button>
-                <button class="btn btn-sm" type="button" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat osobu</button>
+              <EmptyState text={tr('Zatím tu nikdo není.')}>
+                <button class="btn btn-sm btn-primary" type="button" style="margin-right:.4rem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">{tr('Přidat firmu')}</button>
+                <button class="btn btn-sm" type="button" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">{tr('Přidat osobu')}</button>
               </EmptyState>
             )}
           </td>
@@ -184,21 +186,22 @@ zakazniciRoutes.get('/zakaznici', async (c) => {
     return `/zakaznici?${p.toString()}`;
   };
   const tabHref = (k: string) => href({ typ: k });
+  const sortLabel = sort === 'za' ? tr('Název Z→A') : sort === 'new' ? tr('Nejnovější') : tr('Název A→Z');
 
   return c.html(
-    <Layout title="Zákazníci" person={person} modules={c.get('modules')} active="zakaznici">
+    <Layout title={tr('Zákazníci')} person={person} modules={c.get('modules')} active="zakaznici">
       <div class="page-head">
-        <h1>Zákazníci</h1>
+        <h1>{tr('Zákazníci')}</h1>
         <div class="page-actions">
-          <button class="btn btn-primary" type="button" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat osobu</button>
-          <button class="btn btn-primary" type="button" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">Přidat firmu</button>
+          <button class="btn btn-primary" type="button" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">{tr('Přidat osobu')}</button>
+          <button class="btn btn-primary" type="button" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">{tr('Přidat firmu')}</button>
         </div>
       </div>
 
-      <nav class="tabs" aria-label="Typ zákazníka">
-        <a class={`tab ${typ === 'vse' ? 'active' : ''}`} href={tabHref('vse')}>Vše <span class="cnt">{firmCount + personCount}</span></a>
-        <a class={`tab ${typ === 'firmy' ? 'active' : ''}`} href={tabHref('firmy')}>Firmy <span class="cnt">{firmCount}</span></a>
-        <a class={`tab ${typ === 'osoby' ? 'active' : ''}`} href={tabHref('osoby')}>Osoby <span class="cnt">{personCount}</span></a>
+      <nav class="tabs" aria-label={tr('Typ zákazníka')}>
+        <a class={`tab ${typ === 'vse' ? 'active' : ''}`} href={tabHref('vse')}>{tr('Vše')} <span class="cnt">{firmCount + personCount}</span></a>
+        <a class={`tab ${typ === 'firmy' ? 'active' : ''}`} href={tabHref('firmy')}>{tr('Firmy')} <span class="cnt">{firmCount}</span></a>
+        <a class={`tab ${typ === 'osoby' ? 'active' : ''}`} href={tabHref('osoby')}>{tr('Osoby')} <span class="cnt">{personCount}</span></a>
       </nav>
 
       <div class="frow" style="align-items:center">
@@ -217,32 +220,32 @@ zakazniciRoutes.get('/zakaznici', async (c) => {
           <input type="hidden" name="stitek" value={stitek} />
           <input type="hidden" name="stav" value={stav} />
           <input type="hidden" name="sort" value={sort} />
-          <input class="input" type="search" name="q" value={q} placeholder="Jméno obsahuje…" aria-label="Hledat podle jména" style="max-width:14rem" />
+          <input class="input" type="search" name="q" value={q} placeholder={tr('Jméno obsahuje…')} aria-label={tr('Hledat podle jména')} style="max-width:14rem" />
         </form>
 
         <div class="menu" id="fltStitek">
           <button type="button" class="fpill" data-menu-toggle="fltStitek" aria-haspopup="true">
-            Štítek: <b>{allTags.find((x) => x.id === stitek)?.label ?? 'Vše'}</b> <span class="chev">▾</span>
+            {tr('Štítek')}: <b>{allTags.find((x) => x.id === stitek)?.label ?? tr('Vše')}</b> <span class="chev">▾</span>
           </button>
           <div class="menu-list panel" role="menu">
-            {allTags.length > 6 ? <input class="input" data-filter-list placeholder="Hledat štítek…" aria-label="Hledat štítek" /> : null}
-            <a class="opt" href={href({ stitek: '' })}>Vše {!stitek ? <span class="tick">✓</span> : null}</a>
+            {allTags.length > 6 ? <input class="input" data-filter-list placeholder={tr('Hledat štítek…')} aria-label={tr('Hledat štítek')} /> : null}
+            <a class="opt" href={href({ stitek: '' })}>{tr('Vše')} {!stitek ? <span class="tick">✓</span> : null}</a>
             {allTags.map((tg) => (
               <a class="opt" href={href({ stitek: tg.id })}>
                 {tg.label}
                 {stitek === tg.id ? <span class="tick">✓</span> : null}
               </a>
             ))}
-            {allTags.length === 0 ? <div class="sub" style="padding:.4rem .6rem">Zatím žádné štítky.</div> : null}
+            {allTags.length === 0 ? <div class="sub" style="padding:.4rem .6rem">{tr('Zatím žádné štítky.')}</div> : null}
           </div>
         </div>
 
         <div class="menu" id="fltStav">
           <button type="button" class="fpill" data-menu-toggle="fltStav" aria-haspopup="true">
-            Stav: <b>{statusItems.find((x) => x.value === stav)?.label ?? 'Vše'}</b> <span class="chev">▾</span>
+            {tr('Stav')}: <b>{statusItems.find((x) => x.value === stav)?.label ?? tr('Vše')}</b> <span class="chev">▾</span>
           </button>
           <div class="menu-list panel" role="menu">
-            <a class="opt" href={href({ stav: '' })}>Vše {!stav ? <span class="tick">✓</span> : null}</a>
+            <a class="opt" href={href({ stav: '' })}>{tr('Vše')} {!stav ? <span class="tick">✓</span> : null}</a>
             {statusItems.map((s) => (
               <a class="opt" href={href({ stav: s.value })}>
                 {s.label}
@@ -256,29 +259,29 @@ zakazniciRoutes.get('/zakaznici', async (c) => {
 
         <div class="menu" id="fltSort">
           <button type="button" class="fpill" data-menu-toggle="fltSort" aria-haspopup="true">
-            Řadit: <b>{sort === 'za' ? 'Název Z→A' : sort === 'new' ? 'Nejnovější' : 'Název A→Z'}</b> <span class="chev">▾</span>
+            {tr('Řadit')}: <b>{sortLabel}</b> <span class="chev">▾</span>
           </button>
           <div class="menu-list panel" role="menu">
-            <a class="opt" href={href({ sort: 'az' })}>Název A→Z {sort === 'az' ? <span class="tick">✓</span> : null}</a>
-            <a class="opt" href={href({ sort: 'za' })}>Název Z→A {sort === 'za' ? <span class="tick">✓</span> : null}</a>
-            <a class="opt" href={href({ sort: 'new' })}>Nejnovější {sort === 'new' ? <span class="tick">✓</span> : null}</a>
+            <a class="opt" href={href({ sort: 'az' })}>{tr('Název A→Z')} {sort === 'az' ? <span class="tick">✓</span> : null}</a>
+            <a class="opt" href={href({ sort: 'za' })}>{tr('Název Z→A')} {sort === 'za' ? <span class="tick">✓</span> : null}</a>
+            <a class="opt" href={href({ sort: 'new' })}>{tr('Nejnovější')} {sort === 'new' ? <span class="tick">✓</span> : null}</a>
           </div>
         </div>
       </div>
 
       <div class="list-meta">
-        <span>Zobrazeno 1–{rows.length} z {rows.length}</span>
+        <span>{tr('Zobrazeno 1–{n} z {total}', { n: rows.length, total: rows.length })}</span>
       </div>
 
       <div class="card card-table" style="overflow-x:auto">
         <table class="tbl">
           <thead>
             <tr>
-              <th>Souhrn</th>
-              <th>E-mail</th>
-              <th>Telefon</th>
-              <th>Štítky</th>
-              <th>Stav</th>
+              <th>{tr('Souhrn')}</th>
+              <th>{tr('E-mail')}</th>
+              <th>{tr('Telefon')}</th>
+              <th>{tr('Štítky')}</th>
+              <th>{tr('Stav')}</th>
             </tr>
           </thead>
           <RowsTable rows={rows} statusItems={statusItems} hasFilter={hasFilter} />
@@ -304,7 +307,7 @@ zakazniciRoutes.get('/zakaznici/nahled/:kind/:id', async (c) => {
     return c.html(
       <QuickView
         name={client.name}
-        sub={client.website ? client.website.replace(/^https?:\/\//, '') : 'Firma'}
+        sub={client.website ? client.website.replace(/^https?:\/\//, '') : tr('Firma')}
         href={`/firmy/${client.id}`}
         tags={tags}
         contacts={contacts.map((x) => ({ value: x.value, label: x.label, type: x.type }))}
@@ -323,7 +326,7 @@ zakazniciRoutes.get('/zakaznici/nahled/:kind/:id', async (c) => {
   return c.html(
     <QuickView
       name={p.name}
-      sub={firm ? (firm.role_at_client ? `${firm.role_at_client} v ${firm.name}` : firm.name) : 'Osoba'}
+      sub={firm ? (firm.role_at_client ? `${firm.role_at_client} ${tr('v')} ${firm.name}` : firm.name) : tr('Osoba')}
       href={`/osoby/${p.id}`}
       tags={tags}
       contacts={contacts.map((x) => ({ value: x.value, label: x.label, type: x.type }))}
@@ -339,14 +342,14 @@ function QuickView(props: {
   contacts: Array<{ value: string; label: string | null; type: string }>;
 }) {
   return (
-    <aside class="quickview" aria-label="Rychlý náhled">
+    <aside class="quickview" aria-label={tr('Rychlý náhled')}>
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <span class={`av av-lg ${avColor(props.name)}`}>{initials(props.name)}</span>
         <button
           type="button"
           class="btn btn-sm"
-          aria-label="Zavřít náhled"
-          onclick="document.getElementById('quickview').innerHTML=''"
+          aria-label={tr('Zavřít náhled')}
+          onclick="document.getElementById('quickview').replaceChildren()"
         >
           ✕
         </button>
@@ -364,13 +367,13 @@ function QuickView(props: {
         <div class="fact">
           <span class="val">{x.type === 'email' ? <a href={`mailto:${x.value}`}>{x.value}</a> : x.value}</span>
           <span class="lbl">
-            {x.type === 'phone' ? 'Telefon' : x.type === 'email' ? 'E-mail' : x.type === 'web' ? 'Web' : 'Jiné'}
+            {x.type === 'phone' ? tr('Telefon') : x.type === 'email' ? tr('E-mail') : x.type === 'web' ? tr('Web') : tr('Jiné')}
             {x.label ? ` · ${x.label}` : ''}
           </span>
         </div>
       ))}
       <div class="side-section" style="margin-top:.9rem;padding-top:.9rem">
-        <a href={props.href}>Zobrazit celý profil ›</a>
+        <a href={props.href}>{tr('Zobrazit celý profil ›')}</a>
       </div>
     </aside>
   );

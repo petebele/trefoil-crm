@@ -4,11 +4,8 @@ import { MODULES } from '../modules';
 import { SKINS } from './skins';
 import { HeadAssets, ASSET_V } from './head';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?';
-}
+import { initials } from './components';
+import { tr, getLocale, LOCALES } from '../i18n';
 
 /**
  * Společný obal stránky. Lišta ukazuje Nástěnku (vždy), JEN zapnuté moduly
@@ -24,9 +21,10 @@ export function Layout(props: {
   const { title, person, children } = props;
   const enabled = props.modules ?? new Set<string>();
   const active = props.active ?? '';
+  const locale = getLocale();
 
   return (
-    <html lang="cs">
+    <html lang={locale}>
       <head>
         <HeadAssets title={`${title} · Trefoil CRM`} />
         <script src="/static/htmx.min.js" defer></script>
@@ -35,8 +33,8 @@ export function Layout(props: {
       <body>
         {person ? (
           <header class="topbar">
-            <nav class="nav-icons" aria-label="Hlavní navigace">
-              <a class={`nico ${active === 'nastenka' ? 'active' : ''}`} href="/" title="Nástěnka" aria-label="Nástěnka">
+            <nav class="nav-icons" aria-label={tr('Hlavní navigace')}>
+              <a class={`nico ${active === 'nastenka' ? 'active' : ''}`} href="/" title={tr('Nástěnka')} aria-label={tr('Nástěnka')}>
                 <IconHome />
               </a>
               {MODULES.filter((m) => enabled.has(m.key)).map((m) =>
@@ -44,13 +42,13 @@ export function Layout(props: {
                   <a
                     class={`nico ${active === m.key ? 'active' : ''}`}
                     href={m.path}
-                    title={m.label}
-                    aria-label={m.label}
+                    title={tr(m.label)}
+                    aria-label={tr(m.label)}
                   >
                     {moduleIcon(m.icon)}
                   </a>
                 ) : (
-                  <span class="nico" style="opacity:.4;cursor:default" title={`${m.label} — připravujeme`} aria-label={`${m.label} — připravujeme`}>
+                  <span class="nico" style="opacity:.4;cursor:default" title={tr('{label} — připravujeme', { label: tr(m.label) })} aria-label={tr('{label} — připravujeme', { label: tr(m.label) })}>
                     {moduleIcon(m.icon)}
                   </span>
                 ),
@@ -59,17 +57,17 @@ export function Layout(props: {
                 <a
                   class={`nico ${active === 'administrace' ? 'active' : ''}`}
                   href="/administrace"
-                  title="Administrace"
-                  aria-label="Administrace"
+                  title={tr('Administrace')}
+                  aria-label={tr('Administrace')}
                 >
                   <IconSliders />
                 </a>
               ) : null}
             </nav>
 
-            <div class="search" role="search" title="Vyhledávání připravujeme">
+            <div class="search" role="search" title={tr('Vyhledávání připravujeme')}>
               <IconSearch />
-              <span>Hledat firmu, osobu, zakázku…</span>
+              <span>{tr('Hledat firmu, osobu, zakázku…')}</span>
               <kbd>/</kbd>
             </div>
 
@@ -78,29 +76,29 @@ export function Layout(props: {
                 {enabled.has('zakaznici') || enabled.has('vykazy') ? (
                   <>
                     <button class="btn" type="button" data-menu-toggle="addMenu" aria-haspopup="true">
-                      Přidat <IconPlus />
+                      {tr('Přidat')} <IconPlus />
                     </button>
                     <div class="menu-list" role="menu">
                       {enabled.has('zakaznici') ? (
                         <>
                           <button class="menu-item" type="button" role="menuitem" hx-get="/firmy/modal/nova" hx-target="#modal" hx-swap="innerHTML">
-                            Nová firma
+                            {tr('Nová firma')}
                           </button>
                           <button class="menu-item" type="button" role="menuitem" hx-get="/osoby/modal/nova" hx-target="#modal" hx-swap="innerHTML">
-                            Nová osoba
+                            {tr('Nová osoba')}
                           </button>
                         </>
                       ) : null}
                       {enabled.has('vykazy') ? (
                         <button class="menu-item" type="button" role="menuitem" hx-get="/vykazy/modal/novy" hx-target="#modal" hx-swap="innerHTML">
-                          Výkaz práce
+                          {tr('Výkaz práce')}
                         </button>
                       ) : null}
                     </div>
                   </>
                 ) : (
-                  <button class="btn" type="button" title="Připravujeme" aria-label="Přidat — připravujeme">
-                    Přidat <IconPlus />
+                  <button class="btn" type="button" title={tr('Připravujeme')} aria-label={tr('Přidat — připravujeme')}>
+                    {tr('Přidat')} <IconPlus />
                   </button>
                 )}
               </div>
@@ -116,22 +114,39 @@ export function Layout(props: {
                 <div class="menu-list" role="menu">
                   <div class="submenu">
                     <button class="menu-item has-sub" type="button" data-submenu-toggle aria-haspopup="true">
-                      Vzhledy
+                      {tr('Vzhledy')}
                       <span class="sub-arrow" aria-hidden="true">›</span>
                     </button>
-                    <div class="menu-list submenu-list" role="menu" aria-label="Vzhledy">
+                    <div class="menu-list submenu-list" role="menu" aria-label={tr('Vzhledy')}>
                       {SKINS.map((s) => (
                         <button class="opt" type="button" role="menuitemradio" aria-checked="false" data-skin-set={s.id}>
-                          <span>{s.label}</span>
+                          <span>{tr(s.label)}</span>
                           <span class="tick">✓</span>
                         </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div class="submenu">
+                    <button class="menu-item has-sub" type="button" data-submenu-toggle aria-haspopup="true">
+                      {tr('Jazyk a formáty')}
+                      <span class="sub-arrow" aria-hidden="true">›</span>
+                    </button>
+                    <div class="menu-list submenu-list" role="menu" aria-label={tr('Jazyk a formáty')}>
+                      {LOCALES.map((l) => (
+                        <form method="post" action="/jazyk" class="m0">
+                          <input type="hidden" name="lang" value={l.id} />
+                          <button class="opt" type="submit" role="menuitemradio" aria-checked={locale === l.id ? 'true' : 'false'}>
+                            <span>{l.label}</span>
+                            {locale === l.id ? <span class="tick">✓</span> : null}
+                          </button>
+                        </form>
                       ))}
                     </div>
                   </div>
                   <div class="menu-sep"></div>
                   <form method="post" action="/logout" class="m0">
                     <button class="menu-item" type="submit" role="menuitem">
-                      Odhlásit
+                      {tr('Odhlásit')}
                     </button>
                   </form>
                 </div>

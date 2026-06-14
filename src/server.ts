@@ -6,6 +6,7 @@ import { addClient, removeClient } from './realtime';
 import type { AppEnv } from './types';
 import { db } from './db';
 import { getSessionPerson } from './auth/session';
+import { runWithLocale, isLocale, DEFAULT_LOCALE, type Locale } from './i18n';
 import { setupRoutes } from './web/setup';
 import { authRoutes } from './web/auth';
 import { dashboardRoutes } from './web/dashboard';
@@ -33,14 +34,24 @@ app.use('*', async (c, next) => {
   }
   c.set('modules', enabled);
 
-  c.set('person', await getSessionPerson(getCookie(c, 'sid')));
-  await next();
+  const person = await getSessionPerson(getCookie(c, 'sid'));
+  c.set('person', person);
+
+  // jazyk UI: volba uživatele (DB) > cookie (před přihlášením) > výchozí
+  const userLang = person?.lang ?? undefined;
+  const cookieLang = getCookie(c, 'lang');
+  const locale: Locale = isLocale(userLang) ? userLang : isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE;
+  c.set('locale', locale);
+
+  // zbytek požadavku (vč. vykreslení JSX) běží v kontextu jazyka → t()/formátovače
+  return runWithLocale(locale, next);
 });
 
 // Tok přístupu: prázdná DB → průvodce založením; bez přihlášení → login
 app.use('*', async (c, next) => {
   const path = c.req.path;
   if (path.startsWith('/static/')) return next();
+  if (path === '/jazyk') return next(); // přepnutí jazyka funguje i bez přihlášení
 
   const tenant = c.get('tenant');
   const person = c.get('person');
@@ -60,10 +71,17 @@ app.get('/live', (c) => {
     const send = (data: string) => void stream.writeSSE({ data });
     addClient(send);
     stream.onAbort(() => removeClient(send));
-    while (true) {
+    // Keep-alive ping; při odpojení klienta smyčku ukončíme, ať nepíšeme do zavřeného streamu.
+    while (!stream.aborted) {
       await stream.sleep(25_000);
-      await stream.writeSSE({ event: 'ping', data: '' });
+      if (stream.aborted) break;
+      try {
+        await stream.writeSSE({ event: 'ping', data: '' });
+      } catch {
+        break;
+      }
     }
+    removeClient(send);
   });
 });
 

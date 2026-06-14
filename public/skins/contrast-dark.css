@@ -16,16 +16,16 @@
   --track: #3a3a3a;
 
   /* Akcent a stavové barvy (projasněné pro kontrast na černé) */
-  --accent: #4da3ff;
+  --accent: #4694e8;
   --accent-hover: #7bbcff;
   --accent-soft: #11243c;
-  --teal: #2ed27a;
+  --teal: #24a560;
   --teal-soft: #0e2417;
   --teal-ink: #5fe39a;
   --red: #ff5a52;
   --red-soft: #3a1413;
-  --orange: #ffb22e;
-  --pink: #ff7aa8;
+  --orange: #c08623;
+  --pink: #e06b93;
 
   /* Avatary */
   --av-g-bg: #0e2417; --av-g-ink: #5fe39a;

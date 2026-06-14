@@ -2,7 +2,7 @@
  TREFOIL CRM v2 — SOLUTION SUMMARY   (projekt dříve „Conviu CRM")
  Kompletní shrnutí: kontext, historie, rozhodnutí, stav a plán dalších fází.
  Sepsáno: 2026-06-14. Doplňuj při dalších milnících.
- (Technický „jak to funguje" je v architecture.txt; tady je „co, proč a kam dál".)
+ (Technický „jak to funguje" je v ARCHITECTURE.md; tady je „co, proč a kam dál".)
 
  REBRAND (2026-06-14): projekt se přejmenovává Conviu CRM → Trefoil CRM. Hotová je
  složka (D:\Internet\Trefoil CRM) a dokumentace. Přejmenování v KÓDU/REPU (titulek
@@ -11,18 +11,26 @@
 ===============================================================================
 
 -------------------------------------------------------------------------------
- 0) RYCHLÝ STAV K 2026-06-14
+ 0) RYCHLÝ STAV K 2026-06-14 (aktualizováno průběžně)
 -------------------------------------------------------------------------------
   - Aplikace běží lokálně (port 3000, launcher na ploše). Stack: TS+Hono+SQLite+htmx.
   - Funguje: Zákazníci (firmy/osoby/kontakty/detail/Historie), Administrace
     (Moduly, Tým, katalog Služeb), Služby u zákazníka (+ „Měsíčně celkem" / billing),
-    Výkazy práce (/vykazy: Můj výkaz, Schvalování, Přehled), systém SKINŮ (6 motivů).
+    Výkazy práce (/vykazy: Můj výkaz, Schvalování, Přehled), systém SKINŮ (7 motivů).
   - Projekt byl 2026-06-14 PŘESUNUT z C:\Users\Jetel\dev\conviu-crm-2 do
     D:\Internet\Trefoil CRM (git repo zůstává „conviu-crm-2").
-  - Další na řadě: dlouho odkládané ÚKOLY + plnohodnotná NÁSTĚNKA (vč. auto-úkolu
-    „schval výkazy"). Pak Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
-  - Otevřené k rozhodnutí: pushnout 2 lokální commity (dark mode + skiny)?
-    udělat „Conviu · světlý" výchozím skinem? přejmenovat i GitHub repo?
+  - Přidáno po 2026-06-14:
+      • i18n systém (src/i18n/): češtína jako klíč, anglický slovník (en.ts),
+        AsyncLocalStorage pro locale bez protahování parametru, funkce tr()/fmtDate() atd.
+      • Kontextové akce přepracovány: hover-row + row-actions → KebabMenu (⋯),
+        sekční nadpisy mají ⋯ vždy viditelné, řádky v seznamech jen při najetí.
+      • TitleBox rozšířen o children prop (extra akce v ⋯ menu — Upravit/Smazat firmu).
+      • WCAG AA kontrast opraven ve všech 7 skinech (21 hodnot tokenů).
+      • OLED dark skin přidán (8. motiv — true #000000).
+      • CLAUDE.md vytvořen (instrukce pro AI asistenta, reference na docs/).
+  - Další na řadě: ÚKOLY + plnohodnotná NÁSTĚNKA (vč. auto-úkolu „schval výkazy").
+    Pak Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
+  - Otevřené: dokončit rebrand v kódu (dev login, package.json, GitHub repo).
 
 -------------------------------------------------------------------------------
  1) KONTEXT — kdo, co, proč
@@ -175,6 +183,41 @@
       smazání originálu → oprava zástupce na ploše (D:\Plocha\Conviu CRM.lnk → nový
       start-crm.bat; ten je nezávislý na cestě díky cd /d "%~dp0"). Název složky je
       „Trefoil CRM", ale git repo/remote zůstává „conviu-crm-2".
+
+-------------------------------------------------------------------------------
+ 6b) PO 2026-06-14 — co přibylo
+-------------------------------------------------------------------------------
+  (a) SKINY — WCAG AA opravy + OLED dark + Trefoil rodina:
+      Přidán 7. skin „OLED · tmavý" (true #000000 = pixely vypnuty). Skiny přejmenov.
+      conviu-* → trefoil-* (barvy rostliny jetele: luční zelená #2d6b31, jetelová
+      růžová #c0186a). Ve všech 7 skinech opraveny WCAG AA kontrasty (21 tokenů).
+      mockupy/styl.css drží inline kopii tokenů pro standalone mockupy — aktualizovat
+      souběžně s public/skins/*.css.
+
+  (b) i18n SYSTÉM (src/i18n/):
+      Přidána lokalizace bez protahování locale parametrem. Princip: ČEŠTINA je klíč
+      → `tr('Zákazníci')` vrací česky přesně klíč, anglicky překlad z en.ts. Chybí-li
+      překlad, text zůstane česky (nic se nerozbije). AsyncLocalStorage nese locale
+      pro celý request — `tr()` a formátovače fungují kdekoliv (i hluboko v komponentách).
+      Exporty: tr(), fmtDate(), fmtDateTime(), fmtNum(), currency(), relTime(),
+      monthLabel(), fmtDateLong(). Importovat vždy z 'src/i18n' (ne z podmodulů).
+
+  (c) KONTEXTOVÉ AKCE — systémová refaktorace:
+      Problém: skryté hover-akce zobrazovaly sadu textových odkazů „Upravit · Smazat
+      · Pozastavit" rozložených horizontálně — braly místo obsahu i skryté.
+      Řešení (v souladu s Capsule/Linear/HubSpot):
+        - Nadpisy sekcí (.card-head, h4): KebabMenu (⋯) vždy viditelné.
+        - Řádky v seznamech: hover-row + row-actions → jediný KebabMenu (⋯) odkrytý
+          hoverem. Na dotyku (@media hover:none) vždy viditelné.
+        - Trigger je VŽDY icon-btn s ⋯, nikdy textový odkaz.
+      Upraveno: sluzbyZakaznika.tsx (ServiceRow), vykazy.tsx (WorkRecordRow),
+      components.tsx (ContactsSection, PersonRow), admin.tsx (TymTab, SluzbyTab),
+      firmy.tsx (Upravit/Smazat firmu přesunuto do TitleBox ⋯ menu).
+      TitleBox: rozšířen o children prop pro extra akce v ⋯ panelu.
+
+  (d) CLAUDE.md:
+      Vytvořen instrukční soubor pro AI asistenta — reference na docs/, projektová
+      pravidla (port 3000, spec-first, htmx first, i18n, tokeny), komunikační profil.
 
 -------------------------------------------------------------------------------
  7) CO ŘEŠIT V DALŠÍCH FÁZÍCH (plán)

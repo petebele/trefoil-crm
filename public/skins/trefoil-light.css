@@ -1,6 +1,6 @@
 /* ============================================================
    Skin: Trefoil · světlý — "letní louka"
-   Zelená: luční #2d6b31 (akcent/listy), světlejší #4caf50 (úspěch).
+   Zelená: luční #2d6b31 (akcent/listy), světlejší #47a34b (úspěch).
    Růžová: jetelový květ #c0186a (pink token, avatary, chipy).
    ============================================================ */
 :root[data-skin="trefoil-light"] {
@@ -8,7 +8,7 @@
 
   /* Plochy a text */
   --ink: #1b2c1d;          /* tmavě zelená (skoro černá se zeleným nádechem) */
-  --muted: #5c7260;
+  --muted: #596e5c;
   --bg: #f0f6f1;           /* velmi světlá luční zelená */
   --card: #ffffff;
   --line: #cce0ce;
@@ -20,7 +20,7 @@
   --accent: #2d6b31;       /* luční zelená (listy jetele) */
   --accent-hover: #1d4e21;
   --accent-soft: #e3f2e5;
-  --teal: #4caf50;         /* projasněná zelená = úspěch */
+  --teal: #47a34b;         /* projasněná zelená = úspěch */
   --teal-soft: #e8f5e9;
   --teal-ink: #2e7d32;
   --red: #c62828;
@@ -32,11 +32,11 @@
   --av-g-bg: #e3f0e5; --av-g-ink: #2e7d32;
   --av-p-bg: #fde8f1; --av-p-ink: #c0186a;
   --av-b-bg: #e3effd; --av-b-ink: #1565c0;
-  --av-y-bg: #fff8e1; --av-y-ink: #e65100;
+  --av-y-bg: #fff8e1; --av-y-ink: #c44500;
 
   /* Chipy */
   --chip-bg: #e1ece3;
-  --chip-orange-bg: #fff3e0; --chip-orange-ink: #e65100;
+  --chip-orange-bg: #fff3e0; --chip-orange-ink: #c44500;
   --chip-dark-bg: #d6e4d8;   --chip-dark-ink: #1b2c1d;
 
   /* Ostatní */

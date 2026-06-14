@@ -333,7 +333,9 @@ Zavření: ✕ (`data-modal-close`), klik na pozadí, klávesa Esc (app.js). Kom
 - **Výjimka — prázdná sekce:** když v sekci nic není, přidávací akce je **viditelná rovnou**
   (jinak by ji nikdo nenašel) — „Přiřadit odpovědnou osobu", „+ štítek", ikonky kontaktů.
 - **Dotyková zařízení** (bez hoveru): `.row-actions` jsou vždy viditelné (media `hover: none`).
-- **Jednota akčních odkazů:** `.subtle-action` je **vždy podtržený** (je jasné, že jde o akci).
+- **Trigger řádkové akce je VŽDY `⋯` (icon-btn)** — nikdy textový `.subtle-action` odkaz
+  v `.row-actions`. Použij komponentu `KebabMenu` (id, label, alignRight). Tím uživatel
+  vidí, že akce existují, ještě před najetím.
 - **Akce sekce patří do řádku nadpisu (vpravo)** — `h4`/`.card-head` jsou flex
   se `space-between`, takže akce využije existující výšku nadpisu a nerezervuje
   žádné svislé místo.

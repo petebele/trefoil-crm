@@ -93,6 +93,10 @@ První spuštění s prázdnou DB tě průvodcem provede založením Organizace 
     modules.ts          REGISTR MODULŮ (klíč, popisek, ikona, cesta, built?)
     realtime.ts         In-memory SSE event bus (addClient/removeClient/broadcast)
     lib/util.ts         newId(), now() a další drobnosti
+    i18n/
+      index.ts          Lokalizační jádro: tr(), fmtDate/Num/DateTime/relTime…,
+                        AsyncLocalStorage pro locale, LOCALES registr
+      en.ts             Anglický slovník (klíč = čeština, hodnota = angličtina)
     db/
       index.ts          Jediný přístupový bod k DB (Kysely nad better-sqlite3, WAL, FK)
       schema.ts         Typový popis všech tabulek (kontrakt pro Kysely)
@@ -240,6 +244,36 @@ Moduly se připojují přes app.route('/', xRoutes) v server.ts. Gating modulů
   - Cache-busting statiky: ASSET_V v src/web/head.tsx (zvednout při změně CSS/JS).
 
 -------------------------------------------------------------------------------
+ 11b) LOKALIZACE (i18n) — src/i18n/
+-------------------------------------------------------------------------------
+  Lokalizace bez protahování locale parametrem přes celý strom.
+
+  PRINCIP: čeština je zároveň klíč. `tr('Zákazníci')` vrací v češtině přesně klíč,
+  v angličtině překlad ze slovníku EN (en.ts). Chybí-li překlad, text zůstane česky
+  — nic se nerozbije, přeložené věci fungují, nepřeložené zůstanou jako stub.
+
+  LOCALE KONTEXT: AsyncLocalStorage (node:async_hooks). Middleware v server.ts
+  obalí každý request do `runWithLocale(locale, () => next())`. Kdekoliv v kódu
+  (i hluboko v komponentách) stačí zavolat `tr()` nebo formátovač — locale se
+  přenese automaticky, žádný parametr `locale` není třeba protahovat.
+
+  EXPORTY z 'src/i18n' (importuj vždy z tohoto aliasu):
+    tr(key, params?)    překlad s parametry: tr('Smazat {name}?', { name })
+    fmtDate(iso)        datum (14. 6. 2026 / 14/06/2026)
+    fmtDateTime(iso)    datum + čas
+    fmtNum(n, opts?)    číslo s oddělovači (cs: mezera tisíce, en: čárka)
+    currency()          token měny aktivního jazyka (Kč / CZK)
+    relTime(iso)        relativní čas (před 5 min / 5 min ago)
+    monthLabel(month)   měsíc+rok dlouze (červen 2026 / June 2026)
+    fmtDateLong(date)   s dnem v týdnu (sobota 14. června 2026 / Saturday…)
+
+  SLOVNÍK en.ts: klíč = česky přesně (vč. interpunkce), hodnota = anglicky.
+  Parametry v klíči jako {name}. Přidávej průběžně k novým UI textům.
+
+  PŘIDÁNÍ JAZYKA: nový soubor src/i18n/<id>.ts + položka v LOCALES + podmínka
+  v `tr()`. Formáty se přizpůsobí přes Intl (intl: 'cs-CZ' / 'en-GB').
+
+-------------------------------------------------------------------------------
  12) SKINY (motivy vzhledu) — vzhled NENÍ natvrdo
 -------------------------------------------------------------------------------
   Barvy jsou výhradně CSS tokeny. Strukturu drží public/theme.css (jen var(--token)),
@@ -311,8 +345,15 @@ Moduly se připojují přes app.route('/', xRoutes) v server.ts. Gating modulů
   - UI nevymýšlí nové prvky — používá KATALOG (docs/KOMPONENTY.md + mockupy/
     komponenty.html). Co chybí, nejdřív přibude do katalogu.
   - Jednotná terminologie (docs/SLOVNIK.md): stejné slovo v UI i v kódu.
-  - Lidský jazyk v UI, čeština (i komentáře a popisky). Pozor na diakritiku v
-    curl testech (UTF-8).
+  - Lokalizace: všechny UI texty přes `tr()` z 'src/i18n'. Anglický překlad
+    přidat do en.ts. Čeština je klíč — nepřeložené texty zůstanou česky.
+  - Kontextové akce (docs/KOMPONENTY.md §20):
+      • Nadpisy sekcí (card-head, h4): KebabMenu (⋯) VŽDY viditelné.
+      • Řádky v seznamech: class="hover-row" + span.row-actions s KebabMenu
+        (⋯ se ukáže najetím). Na dotyku vždy viditelné (@media hover:none).
+      • Trigger JE VŽDY icon-btn s ⋯ — nikdy textový odkaz v row-actions.
+  - Barvy NIKDY natvrdo — vždy var(--token). Tokeny v public/skins/*.css,
+    struktura v public/theme.css. Při změně tokenů aktualizovat i mockupy/styl.css.
   - better-sqlite3 >= 12 (prebuildy pro nové Node), build skripty povolené v
     pnpm-workspace.yaml (allowBuilds: better-sqlite3, esbuild).
   - Kód nikdy na Google Disk. .bat soubory s CRLF (.gitattributes).

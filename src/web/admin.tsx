@@ -4,7 +4,8 @@ import type { AppEnv } from '../types';
 import { db } from '../db';
 import { Layout } from './layout';
 import { MODULES, isModuleKey } from '../modules';
-import { ModalShell, EmptyState, initials, avColor } from './components';
+import { ModalShell, EmptyState, initials, avColor, KebabMenu } from './components';
+import { readForm } from '../lib/util';
 import { logEvent } from '../domain/events';
 import {
   listTeam,
@@ -28,6 +29,7 @@ import {
 } from '../domain/services';
 import type { PersonsTable } from '../db/schema';
 import type { CatalogService } from '../domain/services';
+import { tr, fmtNum } from '../i18n';
 
 export const adminRoutes = new Hono<AppEnv>();
 
@@ -55,7 +57,7 @@ const ERRORS: Record<string, string> = {
 };
 
 function fmtPrice(n: number | null): string {
-  return n === null ? '—' : `${n.toLocaleString('cs-CZ')} Kč/h`;
+  return n === null ? '—' : `${fmtNum(n)} ${tr('Kč/h')}`;
 }
 
 // ---------- záložka Moduly ----------
@@ -64,11 +66,10 @@ function ModulyTab(props: { enabled: Set<string> }) {
   return (
     <div class="card" style="max-width:560px">
       <div class="card-head">
-        <h3>Moduly</h3>
+        <h3>{tr('Moduly')}</h3>
       </div>
       <p class="sub" style="margin-top:-.4rem">
-        Zapnuté moduly vidí všichni v organizaci. Vypnutím se nic nemaže — modul jen zmizí
-        z aplikace a po zapnutí je vše zpátky.
+        {tr('Zapnuté moduly vidí všichni v organizaci. Vypnutím se nic nemaže — modul jen zmizí z aplikace a po zapnutí je vše zpátky.')}
       </p>
       <form method="post" action="/administrace/moduly">
         {MODULES.map((m) => (
@@ -81,15 +82,15 @@ function ModulyTab(props: { enabled: Set<string> }) {
               style="width:17px;height:17px;margin-top:.15rem;accent-color:var(--accent)"
             />
             <span>
-              <span style="font-weight:600">{m.label}</span>
-              {m.built ? null : <span class="chip chip-soft-gray" style="margin-left:.45rem">připravujeme</span>}
-              <span class="sub" style="display:block">{m.desc}</span>
+              <span style="font-weight:600">{tr(m.label)}</span>
+              {m.built ? null : <span class="chip chip-soft-gray" style="margin-left:.45rem">{tr('připravujeme')}</span>}
+              <span class="sub" style="display:block">{tr(m.desc)}</span>
             </span>
           </label>
         ))}
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">
-            Uložit
+            {tr('Uložit')}
           </button>
         </div>
       </form>
@@ -105,10 +106,10 @@ function TymTab(props: { team: PersonsTable[]; meId: string }) {
       <table class="tbl">
         <thead>
           <tr>
-            <th>Jméno</th>
-            <th>Přihlašovací e-mail</th>
-            <th>Role</th>
-            <th>Stav</th>
+            <th>{tr('Jméno')}</th>
+            <th>{tr('Přihlašovací e-mail')}</th>
+            <th>{tr('Role')}</th>
+            <th>{tr('Stav')}</th>
             <th style="width:1%"></th>
           </tr>
         </thead>
@@ -120,37 +121,33 @@ function TymTab(props: { team: PersonsTable[]; meId: string }) {
                   <span class={`av ${avColor(u.name)}`}>{initials(u.name)}</span>
                   <span style="font-weight:600">
                     {u.name}
-                    {u.id === props.meId ? <span class="sub" style="font-weight:400"> (vy)</span> : null}
+                    {u.id === props.meId ? <span class="sub" style="font-weight:400"> {tr('(vy)')}</span> : null}
                   </span>
                 </span>
               </td>
               <td>{u.login_email}</td>
               <td>
                 <span class={`chip ${u.is_admin === 1 ? 'chip-soft-dark' : 'chip-soft-gray'}`}>
-                  {u.is_admin === 1 ? 'Admin' : 'Uživatel'}
+                  {u.is_admin === 1 ? tr('Admin') : tr('Uživatel')}
                 </span>
               </td>
               <td>
                 <span class={`chip ${u.is_active === 1 ? 'chip-soft-teal' : 'chip-soft-gray'}`}>
-                  {u.is_active === 1 ? 'Aktivní' : 'Deaktivován'}
+                  {u.is_active === 1 ? tr('Aktivní') : tr('Deaktivován')}
                 </span>
               </td>
-              <td class="row-actions" style="white-space:nowrap;text-align:right">
-                <button
-                  class="subtle-action"
-                  type="button"
-                  hx-get={`/administrace/tym/${u.id}/modal`}
-                  hx-target="#modal"
-                  hx-swap="innerHTML"
-                >
-                  Upravit
-                </button>
-                <form method="post" action={`/administrace/tym/${u.id}/aktivni`} class="m0" style="display:inline;margin-left:.8rem">
-                  <input type="hidden" name="active" value={u.is_active === 1 ? '0' : '1'} />
-                  <button class="subtle-action" type="submit">
-                    {u.is_active === 1 ? 'Deaktivovat' : 'Aktivovat'}
-                  </button>
-                </form>
+              <td style="text-align:right">
+                <span class="row-actions">
+                  <KebabMenu id={`tmRow-${u.id}`} label={tr('Možnosti pro {name}', { name: u.name })}>
+                    <button class="opt" type="button" hx-get={`/administrace/tym/${u.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
+                      {tr('Upravit')}
+                    </button>
+                    <form method="post" action={`/administrace/tym/${u.id}/aktivni`} class="m0">
+                      <input type="hidden" name="active" value={u.is_active === 1 ? '0' : '1'} />
+                      <button class="opt" type="submit">{u.is_active === 1 ? tr('Deaktivovat') : tr('Aktivovat')}</button>
+                    </form>
+                  </KebabMenu>
+                </span>
               </td>
             </tr>
           ))}
@@ -163,38 +160,38 @@ function TymTab(props: { team: PersonsTable[]; meId: string }) {
 function TeamModal(props: { member: PersonsTable | null }) {
   const m = props.member;
   return (
-    <ModalShell title={m ? `Upravit uživatele · ${m.name}` : 'Nový uživatel'}>
+    <ModalShell title={m ? `${tr('Upravit uživatele')} · ${m.name}` : tr('Nový uživatel')}>
       <form method="post" action={m ? `/administrace/tym/${m.id}` : '/administrace/tym'}>
         <div class="field">
-          <label>Jméno a příjmení <span class="req">*</span></label>
+          <label>{tr('Jméno a příjmení')} <span class="req">*</span></label>
           <input class="input" name="name" value={m?.name ?? ''} required autofocus />
         </div>
         <div class="field">
-          <label>Přihlašovací e-mail <span class="req">*</span></label>
+          <label>{tr('Přihlašovací e-mail')} <span class="req">*</span></label>
           <input class="input" type="email" name="email" value={m?.login_email ?? ''} required />
         </div>
         <div class="field">
-          <label>Role</label>
+          <label>{tr('Role')}</label>
           <select class="input" name="role">
-            <option value="user" selected={!m || m.is_admin !== 1}>Uživatel</option>
-            <option value="admin" selected={m?.is_admin === 1}>Admin — spravuje tým, služby a moduly</option>
+            <option value="user" selected={!m || m.is_admin !== 1}>{tr('Uživatel')}</option>
+            <option value="admin" selected={m?.is_admin === 1}>{tr('Admin — spravuje tým, služby a moduly')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Heslo {m ? null : <span class="req">*</span>}</label>
+          <label>{tr('Heslo')} {m ? null : <span class="req">*</span>}</label>
           <input
             class="input"
             type="password"
             name="password"
             autocomplete="new-password"
             required={!m}
-            placeholder={m ? 'Vyplňte jen pro změnu hesla' : ''}
+            placeholder={m ? tr('Vyplňte jen pro změnu hesla') : ''}
           />
-          {m ? null : <span class="help">Nastavte první heslo a předejte ho kolegovi — změní si ho po přihlášení. Pozvánky e-mailem připravujeme.</span>}
+          {m ? null : <span class="help">{tr('Nastavte první heslo a předejte ho kolegovi — změní si ho po přihlášení. Pozvánky e-mailem připravujeme.')}</span>}
         </div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">{m ? 'Uložit změny' : 'Vytvořit uživatele'}</button>
-          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+          <button class="btn btn-primary" type="submit">{m ? tr('Uložit změny') : tr('Vytvořit uživatele')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
     </ModalShell>
@@ -206,9 +203,9 @@ function TeamModal(props: { member: PersonsTable | null }) {
 function SluzbyTab(props: { catalog: CatalogService[] }) {
   if (props.catalog.length === 0) {
     return (
-      <EmptyState text="Zatím žádné služby. Přidejte první službu, kterou klientům poskytujete.">
+      <EmptyState text={tr('Zatím žádné služby. Přidejte první službu, kterou klientům poskytujete.')}>
         <button class="btn btn-primary" type="button" hx-get="/administrace/sluzby/modal/nova" hx-target="#modal" hx-swap="innerHTML">
-          Přidat službu
+          {tr('Přidat službu')}
         </button>
       </EmptyState>
     );
@@ -218,10 +215,10 @@ function SluzbyTab(props: { catalog: CatalogService[] }) {
       <table class="tbl">
         <thead>
           <tr>
-            <th>Služba</th>
-            <th>Režim účtování</th>
-            <th>Výchozí cena</th>
-            <th>Stav</th>
+            <th>{tr('Služba')}</th>
+            <th>{tr('Režim účtování')}</th>
+            <th>{tr('Výchozí cena')}</th>
+            <th>{tr('Stav')}</th>
             <th style="width:1%"></th>
           </tr>
         </thead>
@@ -238,31 +235,27 @@ function SluzbyTab(props: { catalog: CatalogService[] }) {
               </td>
               <td>
                 <span class={`chip ${s.meta.mode === 'retainer' ? 'chip-soft-teal' : s.meta.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`}>
-                  {SERVICE_MODE_LABELS[s.meta.mode]}
+                  {tr(SERVICE_MODE_LABELS[s.meta.mode])}
                 </span>
               </td>
               <td>{fmtPrice(s.meta.price)}</td>
               <td>
                 <span class={`chip ${s.active === 1 ? 'chip-soft-teal' : 'chip-soft-gray'}`}>
-                  {s.active === 1 ? 'Aktivní' : 'Deaktivována'}
+                  {s.active === 1 ? tr('Aktivní') : tr('Deaktivována')}
                 </span>
               </td>
-              <td class="row-actions" style="white-space:nowrap;text-align:right">
-                <button
-                  class="subtle-action"
-                  type="button"
-                  hx-get={`/administrace/sluzby/${s.id}/modal`}
-                  hx-target="#modal"
-                  hx-swap="innerHTML"
-                >
-                  Upravit
-                </button>
-                <form method="post" action={`/administrace/sluzby/${s.id}/aktivni`} class="m0" style="display:inline;margin-left:.8rem">
-                  <input type="hidden" name="active" value={s.active === 1 ? '0' : '1'} />
-                  <button class="subtle-action" type="submit">
-                    {s.active === 1 ? 'Deaktivovat' : 'Aktivovat'}
-                  </button>
-                </form>
+              <td style="text-align:right">
+                <span class="row-actions">
+                  <KebabMenu id={`svcAdmin-${s.id}`} label={tr('Možnosti pro {name}', { name: s.label })}>
+                    <button class="opt" type="button" hx-get={`/administrace/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
+                      {tr('Upravit')}
+                    </button>
+                    <form method="post" action={`/administrace/sluzby/${s.id}/aktivni`} class="m0">
+                      <input type="hidden" name="active" value={s.active === 1 ? '0' : '1'} />
+                      <button class="opt" type="submit">{s.active === 1 ? tr('Deaktivovat') : tr('Aktivovat')}</button>
+                    </form>
+                  </KebabMenu>
+                </span>
               </td>
             </tr>
           ))}
@@ -276,37 +269,35 @@ function ServiceModal(props: { service: CatalogService | null }) {
   const s = props.service;
   const mode = s?.meta.mode ?? 'retainer';
   return (
-    <ModalShell title={s ? `Upravit službu · ${s.label}` : 'Nová služba'}>
+    <ModalShell title={s ? `${tr('Upravit službu')} · ${s.label}` : tr('Nová služba')}>
       <form method="post" action={s ? `/administrace/sluzby/${s.id}` : '/administrace/sluzby'}>
         <div class="field">
-          <label>Název <span class="req">*</span></label>
+          <label>{tr('Název')} <span class="req">*</span></label>
           <input class="input" name="name" value={s?.label ?? ''} required autofocus />
         </div>
         <div class="field">
-          <label>Popis</label>
+          <label>{tr('Popis')}</label>
           <textarea class="input" name="description" rows={2}>{s?.meta.description ?? ''}</textarea>
         </div>
         <div class="field">
-          <label>Výchozí režim účtování</label>
+          <label>{tr('Výchozí režim účtování')}</label>
           <select class="input" name="mode">
-            <option value="retainer" selected={mode === 'retainer'}>Domluvený paušál hodin — čas práce se odečítá z domluveného paušálu</option>
-            <option value="payg" selected={mode === 'payg'}>Samostatná fakturace — práci účtujeme samostatně</option>
-            <option value="subscription" selected={mode === 'subscription'}>Předplatné v aplikaci — individuální částka předplatného</option>
+            <option value="retainer" selected={mode === 'retainer'}>{tr('Domluvený paušál hodin — čas práce se odečítá z domluveného paušálu')}</option>
+            <option value="payg" selected={mode === 'payg'}>{tr('Samostatná fakturace — práci účtujeme samostatně')}</option>
+            <option value="subscription" selected={mode === 'subscription'}>{tr('Předplatné v aplikaci — individuální částka předplatného')}</option>
           </select>
         </div>
         <div class="field">
-          <label>Výchozí cena (Kč/h)</label>
+          <label>{tr('Výchozí cena')} ({tr('Kč/h')})</label>
           <input class="input" type="number" name="price" min="0" step="1" value={s?.meta.price ?? ''} />
-          <span class="help">Hodinová sazba práce na službě, volitelná.</span>
+          <span class="help">{tr('Hodinová sazba práce na službě, volitelná.')}</span>
         </div>
         <p class="sub" style="font-size:.78rem">
-          Tohle jsou výchozí hodnoty pro celou firmu — při přidělení služby konkrétnímu zákazníkovi
-          půjde vše nastavit jinak. Paušál hodin a měsíční částky (předplatné) se nastavují
-          u zákazníka.
+          {tr('Tohle jsou výchozí hodnoty pro celou firmu — při přidělení služby konkrétnímu zákazníkovi půjde vše nastavit jinak. Paušál hodin a měsíční částky (předplatné) se nastavují u zákazníka.')}
         </p>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">{s ? 'Uložit změny' : 'Vytvořit službu'}</button>
-          <button class="btn btn-ghost" type="button" data-modal-close>Zavřít</button>
+          <button class="btn btn-primary" type="submit">{s ? tr('Uložit změny') : tr('Vytvořit službu')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
     </ModalShell>
@@ -329,26 +320,26 @@ adminRoutes.get('/administrace', async (c) => {
   ]);
 
   return c.html(
-    <Layout title="Administrace" person={person} modules={enabled} active="administrace">
+    <Layout title={tr('Administrace')} person={person} modules={enabled} active="administrace">
       <div class="page-head">
-        <h1>Administrace</h1>
+        <h1>{tr('Administrace')}</h1>
         {tab === 'tym' ? (
           <button class="btn btn-primary" type="button" hx-get="/administrace/tym/modal/novy" hx-target="#modal" hx-swap="innerHTML">
-            Přidat uživatele
+            {tr('Přidat uživatele')}
           </button>
         ) : null}
         {tab === 'sluzby' ? (
           <button class="btn btn-primary" type="button" hx-get="/administrace/sluzby/modal/nova" hx-target="#modal" hx-swap="innerHTML">
-            Přidat službu
+            {tr('Přidat službu')}
           </button>
         ) : null}
       </div>
-      <p class="sub" style="margin-top:.2rem">Organizace: <b>{tenant.name}</b></p>
+      <p class="sub" style="margin-top:.2rem">{tr('Organizace')}: <b>{tenant.name}</b></p>
 
-      <nav class="tabs" aria-label="Sekce administrace">
+      <nav class="tabs" aria-label={tr('Sekce administrace')}>
         {TABS.map((t) => (
           <a class={`tab ${tab === t.key ? 'active' : ''}`} href={`/administrace?tab=${t.key}`}>
-            {t.label}
+            {tr(t.label)}
           </a>
         ))}
       </nav>
@@ -363,7 +354,7 @@ adminRoutes.get('/administrace', async (c) => {
         hx-disinherit="*"
         style="margin-top:1rem"
       >
-        {err && ERRORS[err] ? <div class="form-error">{ERRORS[err]}</div> : null}
+        {err && ERRORS[err] ? <div class="form-error">{tr(ERRORS[err]!)}</div> : null}
         {tab === 'moduly' ? <ModulyTab enabled={enabled} /> : null}
         {tab === 'tym' ? <TymTab team={team} meId={person.id} /> : null}
         {tab === 'sluzby' ? <SluzbyTab catalog={catalog} /> : null}
@@ -399,11 +390,11 @@ adminRoutes.get('/administrace/tym/:id/modal', async (c) => {
 adminRoutes.post('/administrace/tym', async (c) => {
   const person = c.get('person')!;
   const tenant = c.get('tenant')!;
-  const body = await c.req.parseBody();
-  const name = String(body.name ?? '').trim();
-  const email = String(body.email ?? '').trim().toLowerCase();
-  const password = String(body.password ?? '');
-  const isAdmin = String(body.role ?? 'user') === 'admin';
+  const f = readForm(await c.req.parseBody());
+  const name = f.str('name');
+  const email = f.email('email');
+  const password = f.raw('password');
+  const isAdmin = f.str('role') === 'admin';
 
   if (!name || !email || !password) return c.redirect('/administrace?tab=tym&err=povinne');
   if (await loginEmailTaken(tenant.id, email)) return c.redirect('/administrace?tab=tym&err=email');
@@ -420,11 +411,11 @@ adminRoutes.post('/administrace/tym/:id', async (c) => {
   const member = await getTeamMember(tenant.id, id);
   if (!member) return c.notFound();
 
-  const body = await c.req.parseBody();
-  const name = String(body.name ?? '').trim();
-  const email = String(body.email ?? '').trim().toLowerCase();
-  const password = String(body.password ?? '').trim() || null;
-  const isAdmin = String(body.role ?? 'user') === 'admin';
+  const f = readForm(await c.req.parseBody());
+  const name = f.str('name');
+  const email = f.email('email');
+  const password = f.strOrNull('password');
+  const isAdmin = f.str('role') === 'admin';
 
   if (!name || !email) return c.redirect('/administrace?tab=tym&err=povinne');
   if (await loginEmailTaken(tenant.id, email, id)) return c.redirect('/administrace?tab=tym&err=email');
@@ -455,8 +446,7 @@ adminRoutes.post('/administrace/tym/:id/aktivni', async (c) => {
   const member = await getTeamMember(tenant.id, id);
   if (!member) return c.notFound();
 
-  const body = await c.req.parseBody();
-  const active = String(body.active ?? '') === '1';
+  const active = readForm(await c.req.parseBody()).flag('active');
 
   // pojistka: poslední aktivní admin nesmí být deaktivován
   if (!active && member.is_admin === 1 && member.is_active === 1 && (await activeAdminCount(tenant.id)) <= 1) {
@@ -499,7 +489,7 @@ adminRoutes.post('/administrace/sluzby', async (c) => {
   const person = c.get('person')!;
   const tenant = c.get('tenant')!;
   const body = await c.req.parseBody();
-  const name = String(body.name ?? '').trim();
+  const name = readForm(body).str('name');
   if (!name) return c.redirect('/administrace?tab=sluzby&err=povinne');
 
   const meta = metaFromBody(body as Record<string, unknown>);
@@ -518,7 +508,7 @@ adminRoutes.post('/administrace/sluzby/:id', async (c) => {
   if (!service) return c.notFound();
 
   const body = await c.req.parseBody();
-  const name = String(body.name ?? '').trim();
+  const name = readForm(body).str('name');
   if (!name) return c.redirect('/administrace?tab=sluzby&err=povinne');
 
   const meta = normalizeMeta(metaFromBody(body as Record<string, unknown>));
@@ -540,8 +530,7 @@ adminRoutes.post('/administrace/sluzby/:id/aktivni', async (c) => {
   const service = await getCatalogService(tenant.id, id);
   if (!service) return c.notFound();
 
-  const body = await c.req.parseBody();
-  const active = String(body.active ?? '') === '1';
+  const active = readForm(await c.req.parseBody()).flag('active');
   await setCatalogServiceActive(tenant.id, id, active);
   await logEvent(
     tenant.id,

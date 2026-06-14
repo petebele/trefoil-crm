@@ -7,7 +7,7 @@
 
 /* ============================================================
    Skin: Trefoil · světlý — "letní louka"
-   Zelená: luční #2d6b31 (akcent/listy), světlejší #4caf50 (úspěch).
+   Zelená: luční #2d6b31 (akcent/listy), světlejší #47a34b (úspěch).
    Růžová: jetelový květ #c0186a (pink token, avatary, chipy).
    ============================================================ */
 :root[data-skin="trefoil-light"] {
@@ -15,7 +15,7 @@
 
   /* Plochy a text */
   --ink: #1b2c1d;          /* tmavě zelená (skoro černá se zeleným nádechem) */
-  --muted: #5c7260;
+  --muted: #596e5c;
   --bg: #f0f6f1;           /* velmi světlá luční zelená */
   --card: #ffffff;
   --line: #cce0ce;
@@ -27,7 +27,7 @@
   --accent: #2d6b31;       /* luční zelená (listy jetele) */
   --accent-hover: #1d4e21;
   --accent-soft: #e3f2e5;
-  --teal: #4caf50;         /* projasněná zelená = úspěch */
+  --teal: #47a34b;         /* projasněná zelená = úspěch */
   --teal-soft: #e8f5e9;
   --teal-ink: #2e7d32;
   --red: #c62828;
@@ -39,11 +39,11 @@
   --av-g-bg: #e3f0e5; --av-g-ink: #2e7d32;
   --av-p-bg: #fde8f1; --av-p-ink: #c0186a;
   --av-b-bg: #e3effd; --av-b-ink: #1565c0;
-  --av-y-bg: #fff8e1; --av-y-ink: #e65100;
+  --av-y-bg: #fff8e1; --av-y-ink: #c44500;
 
   /* Chipy */
   --chip-bg: #e1ece3;
-  --chip-orange-bg: #fff3e0; --chip-orange-ink: #e65100;
+  --chip-orange-bg: #fff3e0; --chip-orange-ink: #c44500;
   --chip-dark-bg: #d6e4d8;   --chip-dark-ink: #1b2c1d;
 
   /* Ostatní */
@@ -55,7 +55,7 @@
 /* ============================================================
    Skin: Trefoil · tmavý
    Báze: neutrální tmavá #121412 (sotva znatelný zelený nádech).
-   Zelená (#5cb85f / surface-2 / hover): podklady a plochy.
+   Zelená (#51a354 / surface-2 / hover): podklady a plochy.
    Růžová (#e04f7a): interaktivní prvky — accent, odkazy, aktivní nav.
    ============================================================ */
 :root[data-skin="trefoil-dark"] {
@@ -77,13 +77,13 @@
   --accent-soft: #2e1220;  /* tmavé růžové pozadí (vybraná položka, count badge) */
 
   /* Zelená = úspěch / pozitivní stav */
-  --teal: #5cb85f;
+  --teal: #51a354;
   --teal-soft: #182a19;
   --teal-ink: #9dd09f;
 
   --red: #ef5350;
   --red-soft: #3d1414;
-  --orange: #ffa726;
+  --orange: #c7821e;
   --pink: #e04f7a;         /* jetelová růžová = alias accentu v této paletě */
 
   /* Avatary */
@@ -114,7 +114,7 @@
 
   /* Plochy a text */
   --ink: #c4ccc4;          /* off-white se stopou zeleně — ne #fff (dráždí oči) */
-  --muted: #708070;        /* zeleno-šedá — 5.0:1 na #000, 4.7:1 na card */
+  --muted: #718171;        /* zeleno-šedá — 5.1:1 na #000, 4.5:1 na surface-2 */
   --bg: #000000;           /* OLED: pixely zcela vypnuté */
   --card: #0a0c0a;         /* karta: skoro černá, sotva znatelný zelený nádech */
   --line: #181c18;         /* rámečky: téměř neviditelné */
@@ -164,7 +164,7 @@
 
   /* Plochy a text */
   --ink: #1e2235;
-  --muted: #6b7280;
+  --muted: #676e7b;
   --bg: #f6f7f9;
   --card: #ffffff;
   --line: #e7e9ee;
@@ -173,26 +173,26 @@
   --track: #e9ebef;       /* dráha ukazatele průběhu */
 
   /* Akcent a stavové barvy */
-  --accent: #635df5;
+  --accent: #5c56e4;
   --accent-hover: #5246e0;
   --accent-soft: #eceafd;
   --teal: #0aa789;
   --teal-soft: #e0f5f0;
   --teal-ink: #067a64;
-  --red: #e5484d;
+  --red: #c23d41;
   --red-soft: #fdebec;
-  --orange: #f59e0b;
+  --orange: #c98209;
   --pink: #ec5b78;
 
   /* Avatary (jemné pozadí + sytý text) */
   --av-g-bg: #d9f0e5; --av-g-ink: #1e7a52;
   --av-p-bg: #fde4ec; --av-p-ink: #b0387a;
   --av-b-bg: #dde9fd; --av-b-ink: #2b5fb8;
-  --av-y-bg: #fdf0d4; --av-y-ink: #9a6b08;
+  --av-y-bg: #fdf0d4; --av-y-ink: #926508;
 
   /* Chipy */
   --chip-bg: #eef0f3;
-  --chip-orange-bg: #fdf0d4; --chip-orange-ink: #9a6b08;
+  --chip-orange-bg: #fdf0d4; --chip-orange-ink: #926508;
   --chip-dark-bg: #e4e5e9;   --chip-dark-ink: #3a3f51;
 
   /* Ostatní */
@@ -219,16 +219,16 @@
   --track: #2b2f3d;
 
   /* Akcent a stavové barvy (na tmavém pozadí o něco světlejší) */
-  --accent: #7d79f7;
+  --accent: #8a86f8;
   --accent-hover: #938ffa;
   --accent-soft: #292654;
-  --teal: #1fc29f;
+  --teal: #1aa386;
   --teal-soft: #123430;
   --teal-ink: #57d6b4;
   --red: #f2565b;
   --red-soft: #3a1e21;
-  --orange: #f5a623;
-  --pink: #ee6b85;
+  --orange: #c4851c;
+  --pink: #e66881;
 
   /* Avatary (tmavý tón + světlý text) */
   --av-g-bg: #143a2c; --av-g-ink: #5fd6a6;
@@ -311,16 +311,16 @@
   --track: #3a3a3a;
 
   /* Akcent a stavové barvy (projasněné pro kontrast na černé) */
-  --accent: #4da3ff;
+  --accent: #4694e8;
   --accent-hover: #7bbcff;
   --accent-soft: #11243c;
-  --teal: #2ed27a;
+  --teal: #24a560;
   --teal-soft: #0e2417;
   --teal-ink: #5fe39a;
   --red: #ff5a52;
   --red-soft: #3a1413;
-  --orange: #ffb22e;
-  --pink: #ff7aa8;
+  --orange: #c08623;
+  --pink: #e06b93;
 
   /* Avatary */
   --av-g-bg: #0e2417; --av-g-ink: #5fe39a;

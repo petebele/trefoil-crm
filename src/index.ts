@@ -2,10 +2,18 @@ import { serve } from '@hono/node-server';
 import { app } from './server';
 import { migrate } from './db/migrate';
 import { seed } from './db/seed';
+import { cleanupExpiredSessions } from './auth/session';
 import { config } from './config';
 
-await migrate();
-await seed();
+try {
+  await migrate();
+  await seed();
+  await cleanupExpiredSessions();
+} catch (err) {
+  console.error('\n  Inicializace databáze selhala — aplikace se nespustí.');
+  console.error('  Důvod:', err instanceof Error ? err.message : err);
+  process.exit(1);
+}
 
 /**
  * Start s tolerancí: při restartu (tsx watch) může starý proces port ještě

@@ -86,7 +86,7 @@ export async function updateContact(
     const item = await ensureItemByLabel(tenantId, 'contact_labels', data.label);
     label = item?.label ?? data.label.trim();
   }
-  await db.updateTable('person_contacts').set({ value, label }).where('id', '=', id).execute();
+  await db.updateTable('person_contacts').set({ value, label }).where('tenant_id', '=', tenantId).where('id', '=', id).execute();
   return { ...row, value, label };
 }
 
@@ -98,7 +98,7 @@ export async function removeContact(tenantId: string, id: string): Promise<Perso
     .where('id', '=', id)
     .executeTakeFirst();
   if (!row) return null;
-  await db.deleteFrom('person_contacts').where('id', '=', id).execute();
+  await db.deleteFrom('person_contacts').where('tenant_id', '=', tenantId).where('id', '=', id).execute();
   return row;
 }
 

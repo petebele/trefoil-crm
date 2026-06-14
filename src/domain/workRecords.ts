@@ -1,6 +1,9 @@
 import { db } from '../db';
 import { newId, now } from '../lib/util';
+import { tr } from '../i18n';
 import type { WorkRecordsTable, ClientsTable } from '../db/schema';
+
+export { monthLabel } from '../i18n';
 
 /**
  * Výkazy práce (Krok 6). Záznam se váže na zákazníka + jeho službu a má režim
@@ -182,11 +185,6 @@ export function shiftMonth(month: string, delta: number): string {
   return monthKey(new Date(y!, m! - 1 + delta, 1));
 }
 
-export function monthLabel(month: string): string {
-  const [y, m] = month.split('-').map(Number);
-  return new Date(y!, m! - 1, 1).toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' });
-}
-
 async function approvedRetainerMinutes(tenantId: string, clientId: string, month: string): Promise<number> {
   const row = await db
     .selectFrom('work_records')
@@ -298,7 +296,8 @@ export async function clientMonthMoney(tenantId: string, client: ClientsTable, m
 
 /** Formát minut: „12:30 h". */
 export function fmtMinutes(min: number): string {
-  const h = Math.floor(min / 60);
-  const m = Math.round(min % 60);
-  return `${h}:${String(m).padStart(2, '0')} h`;
+  const total = Math.round(min); // zaokrouhlit celek, ať nevznikne „1:60 h"
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${h}:${String(m).padStart(2, '0')} ${tr('h')}`;
 }
