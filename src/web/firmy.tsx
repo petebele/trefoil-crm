@@ -91,7 +91,6 @@ firmyRoutes.get('/firmy/modal/nova', async (c) => {
           <label>{tr('Název firmy')} <span class="req">*</span></label>
           <input class="input" name="name" required autofocus />
         </div>
-        <div class="field"><label>{tr('Web')}</label><input class="input" name="website" placeholder="https://…" /></div>
         <div class="field"><label>{tr('IČO')}</label><input class="input" name="ico" /></div>
         <div class="field"><label>{tr('DIČ')}</label><input class="input" name="dic" /></div>
         <div class="field"><label>{tr('Adresa')}</label><textarea class="input" name="address" rows={2}></textarea></div>
@@ -144,7 +143,6 @@ firmyRoutes.get('/firmy/:id/modal/upravit', async (c) => {
           <label>{tr('Název firmy')} <span class="req">*</span></label>
           <input class="input" name="name" value={client.name} required />
         </div>
-        <div class="field"><label>{tr('Web')}</label><input class="input" name="website" value={client.website ?? ''} placeholder="https://…" /></div>
         <div class="field"><label>{tr('IČO')}</label><input class="input" name="ico" value={client.ico ?? ''} /></div>
         <div class="field"><label>{tr('DIČ')}</label><input class="input" name="dic" value={client.dic ?? ''} /></div>
         <div class="opt-group" style="padding-left:0">{tr('Adresa')}</div>
@@ -202,7 +200,6 @@ firmyRoutes.post('/firmy/:id/upravit', async (c) => {
   const data = {
     name,
     displayName: f.strOrNull('display_name'),
-    website: f.strOrNull('website'),
     ico: f.strOrNull('ico'),
     dic: f.strOrNull('dic'),
     address: addr,
@@ -214,7 +211,6 @@ firmyRoutes.post('/firmy/:id/upravit', async (c) => {
   const changes: string[] = [];
   if (client.name !== data.name) changes.push('název firmy');
   if ((client.display_name ?? null) !== data.displayName) changes.push('název zákazníka');
-  if ((client.website ?? null) !== data.website) changes.push('web');
   if ((client.ico ?? null) !== data.ico) changes.push('IČO');
   if ((client.dic ?? null) !== data.dic) changes.push('DIČ');
   if ((client.address ?? null) !== newAddr) changes.push('adresa');
@@ -287,7 +283,6 @@ firmyRoutes.post('/firmy', async (c) => {
   const id = await createClient(t, {
     name,
     displayName: f.strOrNull('display_name'),
-    website: f.strOrNull('website'),
     ico: f.strOrNull('ico'),
     dic: f.strOrNull('dic'),
     status: f.str('status') || 'lead',
@@ -332,14 +327,13 @@ export function ClientField(props: { base: string; field: FirmField; label: stri
 function FirmInfoBlock(props: {
   base: string;
   client: {
-    name: string; website: string | null; ico: string | null; dic: string | null;
+    name: string; ico: string | null; dic: string | null;
     street: string | null; house_no: string | null; address2: string | null;
     city: string | null; postal_code: string | null; country: string | null; address: string | null;
   };
 }) {
   const c = props.client;
   const addr = composeAddress(c);
-  const web = c.website ? (c.website.startsWith('http') ? c.website : `https://${c.website}`) : null;
   return (
     <div class="field-row" id="f-firma-info">
       <div class="editable" style="display:block;padding-top:.42rem;padding-bottom:.42rem">
@@ -359,12 +353,6 @@ function FirmInfoBlock(props: {
           <div><span class="field-label">{tr('IČO')}</span>{c.ico ?? '—'}</div>
           <div><span class="field-label">{tr('DIČ')}</span>{c.dic ?? '—'}</div>
         </div>
-        {web ? (
-          <div style="margin-top:.3rem">
-            <span class="field-label">{tr('Web')}</span>
-            <a href={web} target="_blank" rel="noreferrer">{c.website}</a>
-          </div>
-        ) : null}
         <button type="button" class="pen-ind" data-tip={tr('Upravit firemní údaje')} aria-label={tr('Upravit firemní údaje')} hx-get={`${props.base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
           <PencilIcon />
         </button>

@@ -470,11 +470,10 @@ export function ContactsSection(props: {
           {p.contacts.length > 0 ? (
             <div style="margin-left:2.05rem">
               {p.contacts.map((c) => (
-                <div style="display:flex;align-items:baseline;gap:.45rem;font-size:.83rem;padding:.05rem 0">
-                  <span class="val" style="font-weight:400">
-                    <ContactValue c={c} />
-                  </span>
-                  {c.label ? <span class="meta-lbl">{c.label}</span> : null}
+                <div class="contact-row" style="font-size:.83rem">
+                  <span class="cico" aria-hidden="true">{contactTypeIcon(c.type)}</span>
+                  <span class="val"><ContactValue c={c} /></span>
+                  {c.label ? <span class="tagaft">{c.label}</span> : null}
                 </div>
               ))}
             </div>
@@ -483,39 +482,33 @@ export function ContactsSection(props: {
       ))}
 
       {people.length > 0 && groups.length > 0 ? groupLabel(tr('Kontakty firmy')) : null}
-      {groups.map((g) => (
-        <div class="fact">
-          <span class="lbl" style="margin-bottom:.15rem">{contactTypeLabel(g.type)}</span>
-          {g.rows.map((c) => (
-            <div class="hover-row" id={`c-${c.id}`} style="display:flex;align-items:baseline;gap:.45rem">
-              <span class="val">
-                <ContactValue c={c} />
-              </span>
-              {c.label ? <span class="meta-lbl">{c.label}</span> : null}
-              <span class="row-actions" style="margin-left:auto">
-                <KebabMenu id={`cMenu-${c.id}`} label={tr('Možnosti kontaktu')}>
-                  <form hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
-                    <div class="opt-group" style="padding-left:0">{contactTypeLabel(c.type)}</div>
-                    <input class="input" name="value" value={c.value} required aria-label={tr('Hodnota kontaktu')} />
-                    <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder={tr('Štítek (Práce…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
-                    <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
-                  </form>
-                  <div style="border-top:1px solid var(--line);margin:.25rem 0 .1rem" />
-                  <button
-                    type="button"
-                    class="opt"
-                    style="color:var(--red)"
-                    hx-post={`${props.base}/kontakt/${c.id}/smazat`}
-                    hx-confirm={tr('Smazat tento kontakt?')}
-                    hx-target="#contacts"
-                    hx-swap="outerHTML"
-                  >
-                    {tr('Smazat')}
-                  </button>
-                </KebabMenu>
-              </span>
-            </div>
-          ))}
+      {groups.flatMap((g) => g.rows).map((c) => (
+        <div class="contact-row hover-row" id={`c-${c.id}`}>
+          <span class="cico" aria-hidden="true">{contactTypeIcon(c.type)}</span>
+          <span class="val"><ContactValue c={c} /></span>
+          {c.label ? <span class="tagaft">{c.label}</span> : null}
+          <span class="row-actions" style="margin-left:auto">
+            <KebabMenu id={`cMenu-${c.id}`} label={tr('Možnosti kontaktu')}>
+              <form hx-post={`${props.base}/kontakt/${c.id}`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
+                <div class="opt-group" style="padding-left:0">{contactTypeLabel(c.type)}</div>
+                <input class="input" name="value" value={c.value} required aria-label={tr('Hodnota kontaktu')} />
+                <input class="input" name="label" value={c.label ?? ''} list="contactLabels" placeholder={tr('Štítek (Práce…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
+                <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
+              </form>
+              <div style="border-top:1px solid var(--line);margin:.25rem 0 .1rem" />
+              <button
+                type="button"
+                class="opt"
+                style="color:var(--red)"
+                hx-post={`${props.base}/kontakt/${c.id}/smazat`}
+                hx-confirm={tr('Smazat tento kontakt?')}
+                hx-target="#contacts"
+                hx-swap="outerHTML"
+              >
+                {tr('Smazat')}
+              </button>
+            </KebabMenu>
+          </span>
         </div>
       ))}
       {!hasContacts ? (

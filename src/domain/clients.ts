@@ -59,7 +59,6 @@ export async function createClient(
   data: {
     name: string;
     displayName?: string | null;
-    website?: string | null;
     ico?: string | null;
     dic?: string | null;
     status?: string;
@@ -81,7 +80,7 @@ export async function createClient(
       display_name: data.displayName ?? null,
       ico: data.ico ?? null,
       dic: data.dic ?? null,
-      website: data.website ?? null,
+      website: null,
       address: null,
       street: a.street ?? null,
       house_no: a.house_no ?? null,
@@ -111,7 +110,6 @@ export async function updateClientMain(
   data: {
     name: string;
     displayName: string | null;
-    website: string | null;
     ico: string | null;
     dic: string | null;
     address: ClientAddressInput;
@@ -128,7 +126,6 @@ export async function updateClientMain(
     .set({
       name: data.name,
       display_name: data.displayName,
-      website: data.website,
       ico: data.ico,
       dic: data.dic,
       street: a.street,

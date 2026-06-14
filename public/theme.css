@@ -433,6 +433,14 @@ summary.subtle-action::marker { content: ''; }
 .empty-inline { color: var(--muted); font-weight: 400; font-style: normal; }
 .emptylink { color: var(--accent); cursor: pointer; }
 .emptylink:hover { text-decoration: underline; }
+/* Kontaktní řádek (styl z example-zakaznik): ikona typu + hodnota + štítek označení.
+   Typ pozná uživatel z ikony/hodnoty → žádný textový popisek „Telefon/E-mail". */
+.contact-row { display: flex; align-items: center; gap: .5rem; padding: .18rem 0; }
+.contact-row .val { font-weight: 400; }
+.cico { display: inline-flex; flex: none; color: var(--muted); }
+.cico svg { width: 15px; height: 15px; }
+.tagaft { font-size: .7rem; color: var(--muted); background: var(--surface-2);
+  border-radius: 999px; padding: .06rem .45rem; font-weight: 500; }
 /* hodnota uvnitř textu (víc hodnot v jednom řádku): čárkované podtržení (vždy viditelné) */
 .editable-inline {
   cursor: pointer; border-bottom: 1px dashed var(--muted);
