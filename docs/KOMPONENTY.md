@@ -128,21 +128,50 @@ Velké tučné číslo + malý šedý popisek. Na detailu fixně `style="grid-te
 Řádek: checkbox · avatar · **tučné jméno** + šedý podtitulek (role jako odkaz). Nad tabulkou
 `.list-meta` („Zobrazeno 1–50 z 240" + hromadné akce). Responzivně obalit `overflow-x:auto`.
 
-## 9. Fakta a levý sloupec detailu
+## 9. Levý sloupec detailu — identita + sekce `.group`
+
+Levý panel detailu firmy/osoby skládá **identifikační blok** (`.idblock`) nahoře a pod ním
+**sekce** (`.group`) s velkým UPPERCASE nadpisem (`.group-h`). Akce sekce jdou do nadpisu
+vpravo přes `.ha` (header-actions, `margin-left:auto`). Mockup-etalon: `mockupy/example-zakaznik.html`.
 
 ```html
-<div class="fact"><span class="val">+420 601 111 222</span><span class="lbl">Telefon · Práce</span></div>
+<!-- IDENTITA: avatar + „Upravit ▾" + název + štítky + stav -->
+<div class="idblock">
+  <span class="av av-lg av-p">SE</span>
+  <!-- Picker (split button) → velký modál §21 -->
+  <button class="btn btn-sm" data-menu-toggle="firmActions">Upravit <span class="btn-split">▾</span></button>
+  <div class="editable">
+    <span class="idname field-strong">Severka s.r.o.</span>    <!-- Název firmy (clients.name) -->
+    <span class="pen-ind" data-menu-toggle="f-name" …></span>  <!-- §18 -->
+  </div>
+  <span class="id-badges"><span class="chip">E-shop</span></span>  <!-- štítky (mini-panel §18) -->
+  <!-- StatusChip přes EditField (mini-panel) -->
+</div>
 
-<div class="side-section">
-  <h4>Lidé <a href="…">+ Přidat</a></h4>
-  <div class="person-row">
-    <span class="av av-sm av-g">JB</span>
-    <span><span class="nm">Jan Borovec</span><span class="sub">Jednatel · +420 …</span></span>
+<!-- SEKCE: nadpis + akce vpravo (.ha) -->
+<div class="group">
+  <div class="group-h">Kontakty <span class="ha">＋ ✎</span></div>
+  <div class="contact-row">                         <!-- ikona typu + hodnota + štítek označení -->
+    <span class="cico"><!-- IconPhone/Mail/Globe --></span>
+    <span class="val">+420 601 111 222</span>
+    <span class="tagaft">Práce</span>               <!-- „označení", NE typ -->
   </div>
 </div>
+
+<!-- LIDÉ (jen u firmy, nad Kontakty): řádky osob -->
+<div class="prow">
+  <span class="av av-sm av-g">JB</span>
+  <span><span class="nm">Jan Borovec</span><span class="sub">Jednatel · +420 …</span></span>
+</div>
+
+<!-- Firemní údaje: blok (jen velký modál §21) + IČO/DIČ na .minirow -->
+<div class="minirow">IČO 123 · DIČ CZ123</div>
 ```
 
-**Hodnota normálně, popisek malý šedý POD ní** — sekundární údaje nikdy velké.
+**Zásady:** identita vlevo zarovnaná (Capsule styl). U kontaktu se liší **typ** (telefon/
+e-mail/web → ikona `.cico`) od **označení** (domů/pracovní → pilulka `.tagaft`) — typ se
+NEpíše textem. **Web patří do Kontaktů, ne do adresy.** Hodnota normálně (`font-weight:400`),
+popisky malé šedé. „Firemní údaje" a „Poznámka" jsou **normal**, ne tučně.
 
 ## 10. Timeline
 
@@ -200,6 +229,21 @@ Ikony typů: 📝 poznámka · ✉️ e-mail · 📞 hovor · 👥 schůzka.
 
 **Vždy:** krátká věta + kontextová akce. Nikdy „Přidej tlačítkem X" (viz UI zásady §6).
 
+## 13b. Inline prázdný stav `.empty-inline` (uvnitř sekce/pole)
+
+Pro prázdné **pole/sekci v levém panelu** (ne celá karta) — věta + **odkaz**, který otevře
+příslušný mini-panel (§18). Levé zarovnání, tlumený text, normal font.
+
+```html
+<span class="empty-inline">Žádná poznámka.
+  <a class="emptylink" data-menu-toggle="note-field" role="button" tabindex="0">Přidat poznámku.</a></span>
+```
+
+Ustálené texty (→ vždy přes `tr()` + `en.ts`): „Žádná poznámka. **Přidat poznámku.**" ·
+„Žádné štítky. **Přidat štítek.**" · „Žádné kontakty. **Přidat kontakt.**" · „Žádní lidé.
+**Přidat osobu.**" · „Žádná odpovědná osoba. **Přiřadit osobu.**" · „Žádná uvedená adresa.
+**Vyplnit adresu.**". (`.empty` ze §13 zůstává pro velké prázdné stavy v kartách středu/vpravo.)
+
 ## 14. Progress bar
 
 ```html
@@ -249,47 +293,61 @@ Chyba formuláře: `<div class="form-error">Neplatný e-mail nebo heslo.</div>` 
 
 Otevírání řeší `public/app.js` (klik na `[data-menu-toggle]` přepne `.open`, klik mimo zavře).
 
-## 18. Editace pole = mini-panel (spouštěč = klik na hodnotu)
+## 18. Editace pole = mini-panel (spouštěč = tužka ✎; u hodnot v textu sama hodnota)
 
-**Princip:** editaci spouští **klik na hodnotu** (celé pole / řádek je terč), ne ikonka ani
-text „Upravit". Otevře se **mini-panel** (§19) ukotvený k hodnotě s polem a Uložit/Zrušit;
-**kurzor je hned v poli, text označený**. Enter uloží, Esc zruší (textarea Ctrl+Enter).
-Odpověď serveru vymění blok (htmx `hx-target` na obal). Náhled/varianty: `mockupy/editace.html`.
+**Princip:** editaci dílčího pole spouští **tužka ✎** — ne klik na hodnotu. Hodnota je jen
+**zobrazená a označitelná** (uživatel ji musí jít označit/zkopírovat, aniž se otevře editor).
+Tužka je **akční prvek** (zakulacený čtverec, styl ladí s ikonkami hlavního menu), ne pouhý
+indikátor. Klik otevře **mini-panel** (§19) ukotvený k poli s formulářem a Uložit; **kurzor je
+hned v poli, text označený**. Enter uloží, Esc zruší (textarea Ctrl+Enter). Odpověď serveru
+vymění blok (htmx `hx-target`/`hx-swap="outerHTML"` na obal `#…`). Komponenta: **`EditField`**
+(`src/web/components.tsx`); ikona **`PencilIcon`**.
 
 **Afordance (jak poznat, že pole jde upravit):**
-- **Pole s vlastním řádkem** → podbarvení řádku na hover + **tužka ✎ jako pouhý indikátor**
-  vpravo nahoře (neklikací, jen náznak — sám klik patří hodnotě).
-- **Hodnota uvnitř textu** (víc hodnot v jednom řádku) → lehké **čárkované podtržení** (vždy viditelné).
-- **Prázdná hodnota** → „— doplnit —" (šedě), klik otevře panel.
+- **Pole s vlastním řádkem / blok** (`block`) → spouštěč = **tužka ✎** (`.pen-ind`, nese
+  `data-menu-toggle`). Skrytá, **objeví se na hover** `.editable` (na dotyku trvale), na hover
+  tužky se **podbarví `--accent-soft`** + **okamžitý tooltip** (`data-tip`, bez prodlevy).
+- **Hodnota uvnitř textu** (víc hodnot v jednom řádku, prop `inline`) → spouštěčem je **sama
+  hodnota** (`.editable-inline`) s **čárkovaným podtržením** (vždy viditelné), bez tužky.
+- **Prázdná hodnota** → **`.empty-inline`** věta + **`.emptylink`** odkaz, který otevře týž
+  mini-panel (`data-menu-toggle` na cíl). Vzor: „Žádná poznámka. **Přidat poznámku.**",
+  „Žádné štítky. **Přidat štítek.**", „Žádné kontakty. **Přidat kontakt.**" (viz §13b).
 
-**Mini-panel — chování:** kurzor v poli na otevření (focus + select); textové pole na desktopu
-**široké** (~2× běžné); **textarea roste s obsahem** (min 3, max ~10 řádků); panel **se posouvá
-se stránkou** a když by spadl pod fold, **vyskočí nad pole** (flip — řeší `app.js`).
-Výběry (stav, osoba) uloží hned klikem na položku. **Štítky = multiselect:** nahoře input pro
-novou možnost, u hodnot **zaškrtávátka**; nově zadaná možnost se rovnou zaškrtne.
+**Mini-panel — chování:** kurzor v poli na otevření (focus + select); jednořádkový vstup =
+panel **`.wide`** (~300 px), textarea = panel **`.area`** (~380 px) a **roste s obsahem**
+(`data-autogrow`); panel **se posouvá se stránkou** a u foldu **vyskočí nad pole** (flip — vše
+`app.js`). Výběry (stav, osoba) uloží hned klikem na položku. **Štítky** = mini-panel:
+nahoře input „Najít nebo vytvořit", pak přiřazené (✕ odebere) a „Další štítky" (klik přiřadí).
 
 ```html
-<!-- hodnota = spouštěč; tužka jen indikuje; panel je server-rendered fragment (§19) -->
-<div class="editable" data-edit hx-get="/firmy/ID/pole/name/panel" hx-target="#editpanel" hx-swap="innerHTML"
-     role="button" tabindex="0">
-  <span class="lbl">Název firmy</span>
-  <span class="val">Severka s.r.o.</span>
-  <span class="pen-ind" aria-hidden="true">✎</span>
+<!-- standardní pole: JEDINÝ spouštěč = tužka; hodnota jen zobrazená (lze označit) -->
+<div class="menu" id="f-name">
+  <div class="editable">
+    <span class="idname field-strong">Severka s.r.o.</span>
+    <span class="pen-ind" data-menu-toggle="f-name" role="button" tabindex="0"
+          aria-label="Název firmy — upravit" data-tip="Název firmy — upravit"><!-- PencilIcon --></span>
+  </div>
+  <div class="menu-list panel wide" role="menu"><!-- server-rendered formulář (§19) --></div>
 </div>
+
+<!-- prázdná hodnota: odkaz otevře týž panel -->
+<span class="empty-inline">Žádná poznámka.
+  <a class="emptylink" data-menu-toggle="note-field" role="button" tabindex="0">Přidat poznámku.</a></span>
 ```
 
 **Malá vs. velká akce — rozhoduje povaha pole, ne jeho název:**
 
 | Mini-panel (malá akce) | Velký modál §21 (velká akce) |
 |---|---|
-| dílčí parametr záznamu: sazba, odpovědná osoba, stav, štítky, termín, číslo | identita/struktura: název služby (= katalog), režim účtování |
-| jednoduchý atribut: web, IČO, telefon, poznámka | založení nového záznamu; úprava více polí najednou; akce s navazujícími přepočty |
+| **jeden** dílčí údaj: sazba, odpovědná osoba, stav, štítky, termín, telefon, poznámka | **více polí / blok**: firemní údaje (název + IČO/DIČ + adresa), kontakty hromadně |
+| rychlé přidání jednoho kontaktu (＋ → typ + hodnota) | identita/struktura: název služby (= katalog), režim účtování; **založení** záznamu; akce s přepočty |
 
-(Příklad: název firmy v kartě = mini-panel; název služby v řádku = velký panel. Seznam doplňujeme.)
+(Příklad: poznámka, stav, jeden štítek = mini-panel; **Firemní údaje** a **Upravit vše**
+u kontaktů = velký modál. Pravidlo: jeden údaj → mini-panel, více polí/blok → velký modál §21.)
 
-**Více akcí u záznamu** (řádek služby ap.): viditelně **✎ = úprava celého záznamu** (velký panel);
-ostatní akce v **⋯** menu textem, destruktivní dole červeně (viz §20). Dílčí hodnoty v řádku
-(sazba, osoba) jdou upravit i jednotlivě mini-panelem (čárkované podtržení).
+**Úprava celého záznamu** (firma/osoba): v identifikačním bloku (§9b) tlačítko
+**„Upravit ▾"** (`Picker`, split button) → otevře velký modál §21 (kompletní formulář).
+Řádkové akce (kontakt, přiřazená osoba) mají **⋯ KebabMenu** (úprava + smazání, viz §20).
 
 **Badge:** stav, štítky i další badge = jedna velikost (`.chip`, stejný padding i font).
 *(Editovatelná barva textu/pozadí štítků a stavů — plánováno, zatím ne.)*
@@ -363,8 +421,11 @@ Zavření: ✕ (`data-modal-close`), klik na pozadí, klávesa Esc (app.js). Kom
   jen **řádkové** akce (`.hover-row` + `.row-actions`) a řádek rychlého přidání
   v Kontaktech je viditelný trvale. Prázdná sekce má místo ⋯ viditelnou textovou akci
   („Přiřadit osobu", „Zadat údaje", „Nastavit paušál hodin").
-- **Rychlé přidání kontaktů:** řádek ikonek `.quick-add` (telefon/e-mail/web/+), každá otevře
-  dropdown panel s minimálním formulářem. Žádné trvale viditelné selecty mimo filtry/řazení.
+- **Přidání/úprava kontaktů (aktuální vzor):** v nadpisu sekce Kontakty (`.group-h .ha`)
+  jsou **dvě ikonky** — **＋** (`Picker`: dropdown s `<select>` typu + hodnota + štítek →
+  přidá jeden kontakt) a **✎** (jen když kontakty existují → velký modál **„Upravit vše"**,
+  komponenta `ContactsEditAll`: opakovatelné řádky `.crow` typ/hodnota/štítek, přidat/odebrat,
+  hromadné uložení přepíše sadu kontaktů). Žádné trvale viditelné selecty mimo filtry/řazení.
 
 ## 17. Horní lišta `.topbar`
 

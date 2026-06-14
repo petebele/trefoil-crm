@@ -6,10 +6,11 @@
 > Sepsáno: 2026-06-14. Doplňuj při dalších milnících.
 > Technický „jak to funguje" je v [ARCHITECTURE.md](ARCHITECTURE.md); tady je „co, proč a kam dál".
 
-> **REBRAND (2026-06-14):** projekt se přejmenovává Conviu CRM → Trefoil CRM. Hotová je
-> složka (`D:\Internet\Trefoil CRM`) a dokumentace. Přejmenování v KÓDU/REPU (titulek
-> aplikace, README, `package.json`, dev login, id skinů `conviu-*` → `trefoil-*`, GitHub
-> repo) zatím ČEKÁ — proto níže historie ještě používá název Conviu. Viz bod 10.
+> **REBRAND (2026-06-14):** projekt přejmenován Conviu CRM → Trefoil CRM. **HOTOVO i v kódu/repu**:
+> složka `D:\Internet\Trefoil CRM`, `package.json` = `trefoil-crm`, titulky/menu aplikace,
+> id a soubory skinů `trefoil-*`, GitHub repo `petebele/trefoil-crm`. První admin se zakládá
+> průvodcem (žádný hardcoded „conviu" login). Slovo „Conviu" zůstává už jen ve **firemním**
+> kontextu (agentura, doména `conviu.cz`) a v historických pasážích níže.
 
 ## 0) Rychlý stav k 2026-06-14 (aktualizováno průběžně)
 
@@ -28,9 +29,13 @@
   - WCAG AA kontrast opraven ve všech 7 skinech (21 hodnot tokenů).
   - OLED dark skin přidán (8. motiv — true `#000000`).
   - `CLAUDE.md` vytvořen (instrukce pro AI asistenta, reference na `docs/`).
+  - Levý panel detailu předělán dle mockupu: editace **tužkou ✎**, sekce `.group`/`.idblock`,
+    Název firmy v hlavičce + strukturovaná adresa, kontakty (＋ / „Upravit vše"), fonty. Viz 6b(e).
+  - Tým (kolegové): **Pozice** (text) + vlastní **Kontakty** (modál v Administraci · Tým).
+  - Rebrand Conviu → Trefoil dokončen i v kódu (package.json, skiny `trefoil-*`, titulky);
+    revizní Tier-1 nálezy (fmtMinutes, tenant-scope kontaktů, SSE smyčka, try-catch migrace) hotové.
 - Další na řadě: ÚKOLY + plnohodnotná NÁSTĚNKA (vč. auto-úkolu „schval výkazy").
   Pak Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
-- Otevřené: dokončit rebrand v kódu (dev login, `package.json`, GitHub repo).
 
 ## 1) Kontext — kdo, co, proč
 
@@ -96,6 +101,8 @@ Nezačínej další modul bez jeho „jedem".
 
 - INLINE EDITACE ZRUŠENA (§18). Úprava jednoho pole = malý panel/modál; kompletní
   založení/úprava = VELKÝ modál na střed („režim soustředění", tmavé pozadí).
+  Spouštěč mini-panelu = **tužka ✎** (hodnota zůstává jen zobrazená a označitelná);
+  úprava celého záznamu = **„Upravit ▾"** (split button → velký modál). Viz 6b(e).
 - Akce jako TEXT (Upravit/Smazat/Změnit), ikony jen u rychlého přidání a u přiřazení
   odpovědné osoby. Skryté kontextové akce: v pravém rohu sekce vždy indikátor ⋯
   (KebabMenu); nevynechává se bílé místo pro skryté odkazy (akce v řádku nadpisu).
@@ -230,6 +237,33 @@ TitleBox: rozšířen o `children` prop pro extra akce v ⋯ panelu.
 Vytvořen instrukční soubor pro AI asistenta — reference na `docs/`, projektová
 pravidla (port 3000, spec-first, htmx first, i18n, tokeny), komunikační profil.
 
+### (e) Levý panel detailu zákazníka — předělaný podle mockupu (Capsule styl)
+
+Iterativní redesign levého sloupce detailu (firma i osoba), etalon
+`mockupy/example-zakaznik.html`. Promítnuto do aplikace (`firmy.tsx`, `osoby.tsx`,
+`components.tsx`, `theme.css`, doména, schéma). Hlavní změny:
+
+- **Spouštěč editace = tužka ✎** (`.pen-ind`, zakulacený čtverec jako ikonky menu;
+  hover `--accent-soft` + okamžitý tooltip). Hodnota zůstává **označitelná** (nešlo
+  by, kdyby spouštěčem byl klik na hodnotu). Výjimka: víc hodnot na řádku → spouští
+  sama hodnota (`.editable-inline`, čárkované podtržení). Komponenty `EditField`/`PencilIcon`.
+- **Struktura sekcí**: identita `.idblock` (avatar + „Upravit ▾" + název + štítky + stav),
+  pod ní sekce `.group` s UPPERCASE nadpisem `.group-h` a akcemi v nadpisu (`.ha`).
+- **Název firmy** (`clients.name`, právní/fakturační) se zobrazuje i v hlavičce detailu.
+  *(Samostatný „Název zákazníka"/`display_name` byl po zkoušce zrušen — sloupec v DB zůstal,
+  UI ho nepoužívá.)* **Strukturovaná mezinárodní adresa** (nové sloupce, legacy `address`
+  jako fallback). **Web přesunut z adresy do Kontaktů.**
+- **Tým (kolegové)** má nově **Pozici** (prostý text) a vlastní **Kontakty** (víc, přes
+  sdílenou `ContactRowsField`) — editují se v modálu uživatele v Administraci · Tým.
+- **Kontakty**: ikona typu `.cico` + hodnota + pilulka **označení** `.tagaft` (typ se
+  nepíše textem). Přidání = jeden **＋** (dropdown typ/hodnota/štítek) + **✎ „Upravit vše"**
+  (modál `ContactsEditAll`, hromadná správa). U firmy navíc sekce **Lidé** nad Kontakty.
+- **Inline prázdné stavy** `.empty-inline` + odkaz `.emptylink` otevírající mini-panel
+  („Žádná poznámka. Přidat poznámku." apod.).
+- **Fonty**: Inter (tělo) / Poppins (nadpisy) / JetBrains Mono (kód) přes tokeny.
+- Vše do `docs/KOMPONENTY.md` (§9, §13b, §18, §20), `docs/DATOVY-MODEL.md`,
+  `docs/UI-ZASADY.md` §3. Cache-busting `ASSET_V` zvednut.
+
 ## 7) Co řešit v dalších fázích (plán)
 
 **Nejbližší** — dlouho odkládané, vrací se na řadu:
@@ -280,24 +314,20 @@ OLED černá, Nord, Solarized. Přidání skinu = 1 soubor + položka v `SKINS`.
 | Položka | Hodnota |
 |---|---|
 | Projekt | `D:\Internet\Trefoil CRM` (git repo `trefoil-crm`) |
-| Spuštění | zástupce „Conviu CRM" na ploše (`D:\Plocha\Conviu CRM.lnk`) → `start-crm.bat` |
+| Spuštění | zástupce na ploše → `start-crm.bat` (název zástupce může být historicky „Conviu CRM") |
 | URL | `http://localhost:3000` |
-| Dev login | `admin@conviu.com` / `admin123` (změnit před ostrým provozem) |
+| První přihlášení | zakládá se průvodcem „Založení organizace" (žádný hardcoded admin v kódu) |
 | GitHub | `petebele/trefoil-crm` (private); v1 archiv `conviu-crm/conviu-crm` |
 | v1 archiv lok. | `C:\Users\Jetel\dev\conviu-crm-v1-archiv` (read-only reference) |
 | Capsule screeny | `D:\Download\capsule-crm` (vizuální etalon) |
 | Mockupy | `mockupy\*.html` (otevři v prohlížeči — klikací reference) |
-| Git identita | Petr Běloch \<petr.beloch@conviu.com\> (per-repo) |
+| Git identita | Petr Běloch \<246769165+petebele@users.noreply.github.com\> (skrytý gmail kvůli GH007) |
 
 ## 10) Otevřené body k rozhodnutí
 
-- **PUSH:** lokálně jsou 2 nepushnuté commity (dark mode + skiny). Pushnout na GitHub?
-- **VÝCHOZÍ SKIN:** nechat „Klasický · světlý", nebo udělat výchozím „Conviu · světlý"
+- **PUSH:** lokálně je víc nepushnutých commitů (`git status` ukazuje „ahead"). Pushnout na GitHub?
+  (Petr je netechnický — push nech jako vědomé rozhodnutí, ne automaticky.)
+- **VÝCHOZÍ SKIN:** nechat „Klasický · světlý", nebo udělat výchozím „Trefoil · světlý"
   (pro interní firemní nástroj dává smysl)?
-- **DOKONČIT REBRAND** Conviu CRM → Trefoil CRM V KÓDU (dokumentace už Trefoil názvosloví
-  používá, kód zatím ne): titulky a popisky v aplikaci (`layout.tsx`, login, setup,
-  uživatelské menu „Conviu CRM", `start-crm.bat` echo), `README.md`, `package.json` (name),
-  dev login `admin@conviu.com` → `admin@trefoil.cz`, id a soubory skinů `conviu-light/dark`
-  → `trefoil-light/dark` (+ `src/web/skins.ts`), zástupce na ploše, a případně přejmenovat
-  GitHub repo na `trefoil-crm`.
-- **VS Code:** stará složka byla smazána; otevři projekt na nové cestě `D:\Internet\Trefoil CRM`.
+- **VS Code:** projekt otevírej na cestě `D:\Internet\Trefoil CRM`.
+- **REBRAND HOTOVÝ** (kód i repo) — viz blockquote nahoře; už není co dořešit.

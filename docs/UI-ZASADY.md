@@ -75,7 +75,11 @@ text téže barvy `--av-*-ink`. V tmavém skinu jsou pozadí ztmavená a text pr
 
 ## 3. Typografie
 
-- Font: systémový sans (`Inter`-like stack: `-apple-system, "Segoe UI", Roboto, sans-serif`).
+- Fonty (webfonty, `@import` v `theme.css`, tokeny v `:root`): **Inter** = UI/tělo
+  (`--font-sans`), **Poppins** = nadpisy/brand (`--font-head`: `h1–h3`, `.record-name`,
+  `.field-strong`/`.idname`), **JetBrains Mono** = kód/ID (`--font-mono`: `code`, `kbd`,
+  `pre`, `.mono`). Každý token má systémový fallback; pro plně offline provoz lze self-hostovat
+  (`@import` → `@font-face` z `public/fonts`).
 - Škála: **H1 stránky 26–28 px / 650** · **název záznamu 22–24 px / 700** · sekce 15–16 px / 600 ·
   tělo 14 px · meta/popisky 12–13 px `--muted`.
 - **Velikost = význam.** Název záznamu je největší věc na stránce. Web, IČO, telefon = malé,

@@ -19,8 +19,8 @@ jednoduché a rozdělené (Zákazníci × Administrace). Žádný „object buil
 ### Lidé a klienti
 | Tabulka | Účel |
 |---|---|
-| `persons` | Všichni lidé — kolegové (mají `login_email`+`password_hash`) i kontakty (nemají). Povahu určují **role**. |
-| `clients` | Zákazník: `kind` = company/person; název, IČO/DIČ, web, stav (ze Seznamu), odpovědný (`owner_id`→persons), poznámka. |
+| `persons` | Všichni lidé — kolegové (mají `login_email`+`password_hash`) i kontakty (nemají). Povahu určují **role**. Kolegové (Tým) mají navíc **`position`** (pozice v týmu, prostý text) a mohou mít vlastní **kontakty** (`person_contacts`) stejně jako kontaktní osoby. |
+| `clients` | Zákazník: `kind` = company/person; **`name`** (Název firmy — právní/fakturační; zobrazuje se i vlevo nahoře v hlavičce detailu), IČO/DIČ, **strukturovaná adresa** (`street`, `house_no`, `address2`, `city`, `postal_code`, `country`; legacy `address` se drží jako fallback a synchronizuje přes `composeAddress`), `website` (**deprecated v UI** — web patří do kontaktů, sloupec čtou jen staré seznamy), stav (ze Seznamu), odpovědný (`owner_id`→persons), poznámka. Sloupec `display_name` v DB zůstává, ale **UI ho nepoužívá** (samostatný „Název zákazníka" byl zrušen). Helper `composeAddress()` v `src/domain/clients.ts`. Migrace = idempotentní `ALTER TABLE … ADD COLUMN` (`src/db/migrate.ts`). |
 | `person_clients` | M:N Osoba↔Firma + `role_at_client` (ze Seznamu) + `is_primary`. Osoba může působit u více Firem. |
 | `person_contacts` | Kontaktní údaje: `owner_kind` person/client + `owner_id`, `type` (ze Seznamu), `value`, `label`, volitelně `client_id` (kontext: firemní mobil), `is_primary`. |
 
