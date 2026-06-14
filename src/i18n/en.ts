@@ -437,4 +437,6 @@ export const EN: Record<string, string> = {
   'Žádná firma.': 'No company.',
   '+ štítek': '+ label',
   'Akce osoby': 'Person actions',
+  'Přiřazené': 'Assigned',
+  'Další štítky': 'More labels',
 };

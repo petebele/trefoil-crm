@@ -303,38 +303,37 @@ export function TagsSection(props: {
   const assigned = new Set(props.tags.map((t) => t.label));
   const available = (props.allTags ?? []).filter((t) => !assigned.has(t.label));
   return (
-    <div class="id-badges" id="tags" style="margin-top:.2rem">
-      {props.tags.length === 0 ? <span class="empty-inline" style="margin-right:.1rem">{tr('Žádné štítky.')}</span> : null}
+    <EditField
+      id="tags"
+      label={tr('Štítky')}
+      block
+      value={
+        props.tags.length ? (
+          <span class="id-badges">{props.tags.map((tag) => <span class="chip">{tag.label}</span>)}</span>
+        ) : (
+          <span class="empty-inline">{tr('Žádné štítky.')} <a class="emptylink" data-menu-toggle="tags" role="button" tabindex={0}>{tr('Přidat štítek.')}</a></span>
+        )
+      }
+    >
+      <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
+        <div class="opt-group" style="padding-left:0">{tr('Štítky')}</div>
+        <input class="input" name="label" data-filter-list placeholder={tr('Najít nebo vytvořit…')} autocomplete="off" aria-label={tr('Název štítku')} />
+        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">{tr('Přidat napsaný štítek')}</button>
+      </form>
+      {props.tags.length ? <div class="opt-group">{tr('Přiřazené')}</div> : null}
       {props.tags.map((tag) => (
-        <span class="chip hover-row">
-          {tag.label}
-          <button
-            type="button"
-            class="row-actions"
-            style="border:none;background:none;cursor:pointer;padding:0 0 0 .3rem;font-size:.8em;color:var(--muted)"
-            aria-label={tr('Odebrat štítek {label}', { label: tag.label })}
-            hx-post={`${props.base}/stitek/${tag.id}/smazat`}
-            hx-target="#tags"
-            hx-swap="outerHTML"
-          >
-            ✕
-          </button>
-        </span>
+        <button type="button" class="opt" aria-label={tr('Odebrat štítek {label}', { label: tag.label })} hx-post={`${props.base}/stitek/${tag.id}/smazat`} hx-target="#tags" hx-swap="outerHTML">
+          <span>{tag.label}</span>
+          <span class="tick">✕</span>
+        </button>
       ))}
-      <Picker id="addTag" trigger={tr('+ štítek')} triggerClass="chip chip-soft-gray" triggerLabel={tr('Přidat štítek')}>
-        <form hx-post={`${props.base}/stitek`} hx-target="#tags" hx-swap="outerHTML" class="m0">
-          <div class="opt-group" style="padding-left:0">{tr('Štítek')}</div>
-          <input class="input" name="label" data-filter-list placeholder={tr('Najít nebo vytvořit…')} autocomplete="off" aria-label={tr('Název štítku')} />
-          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-bottom:.35rem">{tr('Přidat napsaný štítek')}</button>
-        </form>
-        {available.length ? <div class="opt-group">{tr('Existující štítky')}</div> : null}
-        {available.map((t) => (
-          <button type="button" class="opt" hx-post={`${props.base}/stitek`} hx-vals={JSON.stringify({ label: t.label })} hx-target="#tags" hx-swap="outerHTML">
-            {t.label}
-          </button>
-        ))}
-      </Picker>
-    </div>
+      {available.length ? <div class="opt-group">{tr('Další štítky')}</div> : null}
+      {available.map((t) => (
+        <button type="button" class="opt" hx-post={`${props.base}/stitek`} hx-vals={JSON.stringify({ label: t.label })} hx-target="#tags" hx-swap="outerHTML">
+          {t.label}
+        </button>
+      ))}
+    </EditField>
   );
 }
 

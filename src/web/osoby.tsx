@@ -24,7 +24,7 @@ import {
   ContactsSection,
   DetailTabs,
   EventRow,
-  KebabMenu,
+  Picker,
   ModalShell,
   ModalContactRows,
 } from './components';
@@ -234,12 +234,12 @@ osobyRoutes.get('/osoby/:id', async (c) => {
           <div class="idblock">
             <div class="id-top">
               <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
-              <KebabMenu id="personActions" label={tr('Akce osoby')}>
+              <Picker id="personActions" trigger={<>{tr('Upravit')} <span class="btn-split">▾</span></>} triggerClass="btn btn-sm" triggerLabel={tr('Akce osoby')} alignRight>
                 <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit osobu')}</button>
                 <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto osobu?')}')`}>
                   <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat osobu')}</button>
                 </form>
-              </KebabMenu>
+              </Picker>
             </div>
             <TitleBox base={base} label="Jméno a příjmení" value={p.name} />
             <TagsSection base={base} tags={tags} allTags={allTags} />

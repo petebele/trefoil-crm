@@ -35,7 +35,6 @@ import {
   DetailTabs,
   EventRow,
   Picker,
-  KebabMenu,
   ModalShell,
   ModalContactRows,
 } from './components';
@@ -337,8 +336,8 @@ function FirmInfoBlock(props: {
   return (
     <div class="group" id="f-firma-info">
       <div class="group-h">{tr('Firemní údaje')}</div>
-      <div class="editable" style="display:block;padding:.3rem .4rem">
-        <div style="font-weight:500">{c.name}</div>
+      <div class="editable" style="display:block;padding:.3rem .4rem;font-weight:400">
+        <div>{c.name}</div>
         {addr.length ? (
           <div style="margin-top:.1rem">{addr.map((l) => <div>{l}</div>)}</div>
         ) : (
@@ -437,12 +436,12 @@ firmyRoutes.get('/firmy/:id', async (c) => {
           <div class="idblock">
             <div class="id-top">
               <span class={`av av-lg ${avColor(dn)}`}>{initials(dn)}</span>
-              <KebabMenu id="firmActions" label={tr('Akce firmy')}>
+              <Picker id="firmActions" trigger={<>{tr('Upravit')} <span class="btn-split">▾</span></>} triggerClass="btn btn-sm" triggerLabel={tr('Akce firmy')} alignRight>
                 <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit firemní údaje')}</button>
                 <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')}')`}>
                   <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat firmu')}</button>
                 </form>
-              </KebabMenu>
+              </Picker>
             </div>
             <div class="editable" style="display:block;margin-top:.45rem">
               <span class="idname field-strong">{dn}</span>
