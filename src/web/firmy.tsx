@@ -39,6 +39,7 @@ import {
   ContactsEditAll,
 } from './components';
 import { tr, relTime } from '../i18n';
+import { tasksForClient, TaskItemRow } from './ukoly';
 import { IconPhone, IconMail, IconUsers } from './icons';
 import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
 import { listClientServices } from '../domain/clientServices';
@@ -421,6 +422,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   ]);
   const base = `/firmy/${client.id}`;
   const dn = client.name;
+  const modules = c.get('modules');
+  const tasks = modules.has('ukoly') ? await tasksForClient(t, client.id) : [];
   const linkedIds = new Set(people.map((p) => p.id));
   const peopleContacts = await contactsForOwners(t, 'person', people.map((p) => p.id));
   const peopleWith = people.map((p) => ({ ...p, contacts: peopleContacts.filter((x) => x.owner_id === p.id) }));
@@ -529,11 +532,28 @@ firmyRoutes.get('/firmy/:id', async (c) => {
           )}
         </section>
 
-        {/* C) Pravý panel */}
+        {/* C) Pravý panel — úkoly zákazníka */}
         <aside>
           <div class="card">
-            <div class="card-head"><h3>{tr('Úkoly a události')}</h3></div>
-            <EmptyState text={tr('Úkoly přijdou s modulem Úkoly (Krok 4).')} />
+            <div class="card-head">
+              <h3>{tr('Úkoly')}</h3>
+              {modules.has('ukoly') ? (
+                <button class="btn btn-sm" type="button" hx-get={`/ukoly/modal/novy?klient=${client.id}&back=${encodeURIComponent(base)}`} hx-target="#modal" hx-swap="innerHTML">
+                  {tr('Přidat úkol')}
+                </button>
+              ) : null}
+            </div>
+            {modules.has('ukoly') ? (
+              <div id="client-tasks">
+                {tasks.length ? (
+                  tasks.map((tk) => <TaskItemRow t={tk} person={person} back={base} target="#client-tasks" />)
+                ) : (
+                  <EmptyState text={tr('K tomuto zákazníkovi není žádný úkol.')} />
+                )}
+              </div>
+            ) : (
+              <EmptyState text={tr('Úkoly se zapnou s modulem Úkoly.')} />
+            )}
           </div>
         </aside>
       </div>

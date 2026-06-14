@@ -17,6 +17,7 @@ export interface Database {
   events: EventsTable;
   services: ServicesTable;
   work_records: WorkRecordsTable;
+  tasks: TasksTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -178,5 +179,22 @@ export interface SessionsTable {
   id: string;
   person_id: string;
   expires_at: string;
+  created_at: string;
+}
+
+/** Úkol — osobní/týmové to‑do, volitelně navázané na zákazníka. */
+export interface TasksTable {
+  id: string;
+  tenant_id: string;
+  title: string;
+  category_item_id: string | null; // Seznam task_categories (barevný chip)
+  client_id: string | null; // vazba na zákazníka (volitelná)
+  assignee_id: string | null; // kdo má úkol splnit
+  due_at: string | null; // termín (YYYY-MM-DD)
+  done: number; // 0/1
+  done_at: string | null;
+  source_kind: string | null; // u auto‑úkolů původ záznamu, např. 'work_record'
+  source_id: string | null;
+  created_by_id: string | null;
   created_at: string;
 }

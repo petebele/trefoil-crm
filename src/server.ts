@@ -16,6 +16,7 @@ import { firmyRoutes } from './web/firmy';
 import { osobyRoutes } from './web/osoby';
 import { sluzbyZakaznikaRoutes } from './web/sluzbyZakaznika';
 import { vykazyRoutes } from './web/vykazy';
+import { ukolyRoutes } from './web/ukoly';
 
 export const app = new Hono<AppEnv>();
 
@@ -92,5 +93,6 @@ app.route('/', adminRoutes);
 app.route('/', zakazniciRoutes);
 app.route('/', sluzbyZakaznikaRoutes);
 app.route('/', vykazyRoutes);
+app.route('/', ukolyRoutes);
 app.route('/', firmyRoutes);
 app.route('/', osobyRoutes);

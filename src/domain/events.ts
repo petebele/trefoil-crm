@@ -21,6 +21,27 @@ export async function logEvent(
   broadcast({ kind: entityKind, id: entityId });
 }
 
+/** Poslední dění napříč celou Organizací (feed na Nástěnce): čas · autor · akce · odkaz. */
+export async function listRecentEvents(tenantId: string, limit = 12) {
+  return db
+    .selectFrom('events')
+    .leftJoin('persons', 'persons.id', 'events.person_id')
+    .leftJoin('clients', (join) => join.onRef('clients.id', '=', 'events.entity_id').on('events.entity_kind', '=', 'client'))
+    .where('events.tenant_id', '=', tenantId)
+    .select([
+      'events.id as id',
+      'events.action as action',
+      'events.created_at as created_at',
+      'events.entity_kind as entity_kind',
+      'events.entity_id as entity_id',
+      'persons.name as person_name',
+      'clients.name as client_name',
+    ])
+    .orderBy('events.created_at', 'desc')
+    .limit(limit)
+    .execute();
+}
+
 /** Události záznamu (Historie detailu), nejnovější první, včetně jména autora. */
 export async function listEvents(tenantId: string, entityKind: string, entityId: string, limit = 200) {
   return db

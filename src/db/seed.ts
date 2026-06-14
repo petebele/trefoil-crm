@@ -42,6 +42,17 @@ const DEFAULT_LISTS: Array<{
       { value: 'fakturace', label: 'Fakturace' },
     ],
   },
+  {
+    key: 'task_categories',
+    label: 'Kategorie úkolů',
+    items: [
+      { value: 'hovor', label: 'Hovor', color: 'teal' },
+      { value: 'email', label: 'E-mail', color: 'pink' },
+      { value: 'schuzka', label: 'Schůzka', color: 'red' },
+      { value: 'follow_up', label: 'Follow-up', color: 'orange' },
+      { value: 'ukol', label: 'Úkol', color: 'indigo' },
+    ],
+  },
 ];
 
 /** Doplní výchozí Seznamy jedné Organizaci (volá průvodce založením i start aplikace). */

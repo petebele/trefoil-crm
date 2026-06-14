@@ -73,7 +73,7 @@ export function Layout(props: {
 
             <div class="top-right">
               <div class="menu align-right" id="addMenu">
-                {enabled.has('zakaznici') || enabled.has('vykazy') ? (
+                {enabled.has('zakaznici') || enabled.has('vykazy') || enabled.has('ukoly') ? (
                   <>
                     <button class="btn" type="button" data-menu-toggle="addMenu" aria-haspopup="true">
                       {tr('Přidat')} <IconPlus />
@@ -88,6 +88,11 @@ export function Layout(props: {
                             {tr('Nová osoba')}
                           </button>
                         </>
+                      ) : null}
+                      {enabled.has('ukoly') ? (
+                        <button class="menu-item" type="button" role="menuitem" hx-get="/ukoly/modal/novy" hx-target="#modal" hx-swap="innerHTML">
+                          {tr('Úkol')}
+                        </button>
                       ) : null}
                       {enabled.has('vykazy') ? (
                         <button class="menu-item" type="button" role="menuitem" hx-get="/vykazy/modal/novy" hx-target="#modal" hx-swap="innerHTML">

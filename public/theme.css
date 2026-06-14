@@ -119,6 +119,8 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 }
 .fpill b { font-weight: 600; }
 .fpill .chev { color: var(--muted); }
+a.fpill { text-decoration: none; color: var(--ink); }
+.fpill.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 
 /* ---------- Karty ---------- */
 .card {

@@ -4,6 +4,7 @@ import type { AppEnv } from '../types';
 import { Layout } from './layout';
 import { ModalShell, EmptyState, KebabMenu } from './components';
 import { logEvent } from '../domain/events';
+import { createApprovalTask, closeSourceTasks } from '../domain/tasks';
 import { getClient, listClients } from '../domain/clients';
 import { listClientServices, type ClientService } from '../domain/clientServices';
 import {
@@ -432,7 +433,18 @@ vykazyRoutes.post('/vykazy', async (c) => {
   const id = await createWorkRecord(t, person.id, { ...input, clientId: client.id });
   // kdo by výkaz stejně schvaloval (odpovědná osoba / admin), má ho rovnou schválený
   const autoApprove = canApproveFor(person, client.owner_id ?? null);
-  if (autoApprove) await approveWorkRecord(t, id, person.id);
+  if (autoApprove) {
+    await approveWorkRecord(t, id, person.id);
+  } else if (c.get('modules').has('ukoly')) {
+    // jinak: auto‑úkol „schválit výkaz" pro odpovědnou osobu zákazníka
+    await createApprovalTask(t, {
+      clientId: client.id,
+      assigneeId: client.owner_id ?? null,
+      recordId: id,
+      title: `${tr('Schválit výkaz')}: ${input.description} (${fmtMinutes(input.minutes)})`,
+      createdById: person.id,
+    });
+  }
   await logEvent(
     t,
     'client',
@@ -472,6 +484,7 @@ vykazyRoutes.post('/vykazy/:id/smazat', async (c) => {
   if (!canEditRecord(person, record)) return c.redirect(back);
 
   await deleteWorkRecord(t, record.id);
+  await closeSourceTasks(t, 'work_record', record.id); // uzavři auto‑úkol „schválit výkaz"
   await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} smazán (${record.description}, ${fmtMinutes(record.minutes)})`);
   return c.redirect(back);
 });
@@ -488,6 +501,7 @@ vykazyRoutes.post('/vykazy/:id/schvalit', async (c) => {
   if (record.status !== 'pending' || !canApproveFor(person, client?.owner_id ?? null)) return c.redirect(back);
 
   await approveWorkRecord(t, record.id, person.id);
+  await closeSourceTasks(t, 'work_record', record.id); // uzavři auto‑úkol „schválit výkaz"
   await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} schválen (${record.description}, ${fmtMinutes(record.minutes)})`);
   return c.redirect(back);
 });

@@ -206,6 +206,28 @@ export async function migrate(): Promise<void> {
     .addPrimaryKeyConstraint('entity_list_items_pk', ['entity_kind', 'entity_id', 'list_item_id'])
     .execute();
 
+  // --- modul Úkoly (Krok 7) ---
+  await db.schema
+    .createTable('tasks')
+    .ifNotExists()
+    .addColumn('id', 'text', (c) => c.primaryKey())
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('title', 'text', (c) => c.notNull())
+    .addColumn('category_item_id', 'text', (c) => c.references('list_items.id'))
+    .addColumn('client_id', 'text', (c) => c.references('clients.id'))
+    .addColumn('assignee_id', 'text', (c) => c.references('persons.id'))
+    .addColumn('due_at', 'text')
+    .addColumn('done', 'integer', (c) => c.notNull().defaultTo(0))
+    .addColumn('done_at', 'text')
+    .addColumn('source_kind', 'text')
+    .addColumn('source_id', 'text')
+    .addColumn('created_by_id', 'text', (c) => c.references('persons.id'))
+    .addColumn('created_at', 'text', (c) => c.notNull())
+    .execute();
+  await db.schema.createIndex('tasks_assignee').ifNotExists().on('tasks').columns(['tenant_id', 'assignee_id', 'done']).execute();
+  await db.schema.createIndex('tasks_client').ifNotExists().on('tasks').columns(['client_id']).execute();
+  await db.schema.createIndex('tasks_source').ifNotExists().on('tasks').columns(['source_kind', 'source_id']).execute();
+
   await db.schema
     .createTable('events')
     .ifNotExists()

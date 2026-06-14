@@ -316,7 +316,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
                 ) : (
                   <EmptyState text={tr('Zatím se tu nic nestalo.')} />
                 )}
-                <p class="sub" style="margin:.8rem 0 0">{tr('Komunikace a úkoly přibudou s modulem Úkoly (Krok 4).')}</p>
+                <p class="sub" style="margin:.8rem 0 0">{tr('Komunikace přibude s dalšími moduly.')}</p>
               </div>
             </>
           )}
@@ -325,8 +325,8 @@ osobyRoutes.get('/osoby/:id', async (c) => {
         {/* C) Pravý panel */}
         <aside>
           <div class="card">
-            <div class="card-head"><h3>{tr('Úkoly a události')}</h3></div>
-            <EmptyState text={tr('Úkoly přijdou s modulem Úkoly (Krok 4).')} />
+            <div class="card-head"><h3>{tr('Úkoly')}</h3></div>
+            <EmptyState text={tr('Úkoly vedeme u firem — otevři firmu této osoby.')} />
           </div>
         </aside>
       </div>

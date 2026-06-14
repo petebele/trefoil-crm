@@ -29,7 +29,7 @@ export const MODULES: ModuleDef[] = [
     desc: 'Úkoly s kategoriemi a termíny, přehled Po termínu / Dnes.',
     icon: 'check',
     path: '/ukoly',
-    built: false,
+    built: true,
   },
   {
     key: 'sluzby',
