@@ -1,5 +1,7 @@
 # Specifikace modulu: Krok 5 — Služby u zákazníka
 
+🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
+
 > Nejdůležitější obrazovka účtování: tady se rozhoduje, jak se klientovi počítají
 > peníze. Od správného nastavení se odvíjí výkazy práce (Krok 6) i měsíční report.
 > Vychází z fakturačního modelu v `DATOVY-MODEL.md` (hybrid, vzor Accelo/Productive).

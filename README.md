@@ -15,17 +15,35 @@ Interní CRM systém **Trefoil**. Budoucí adresa: `https://crm.trefoil.cz`.
 - **Flexibilní datový základ** (z v1): Osoby a Firmy (Person/Client), vícenásobné kontaktní
   údaje, konfigurovatelné Seznamy, role a práva (RBAC).
 
-## Postup a dokumentace
+## Znalostní báze
 
-- [ROADMAP.md](ROADMAP.md) — kroky vývoje (spec-first)
-- [docs/UI-ZASADY.md](docs/UI-ZASADY.md) — designový manuál (replika Capsule)
-- [docs/KOMPONENTY.md](docs/KOMPONENTY.md) — katalog znovupoužitelných komponent (kódy + pravidla);
-  živý náhled: [mockupy/komponenty.html](mockupy/komponenty.html)
-- [docs/SLOVNIK.md](docs/SLOVNIK.md) — jednotná terminologie
-- [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md) — datový základ (Person/Client/Seznamy/RBAC)
-- [docs/specs/](docs/specs/) — specifikace modulů (vznikají před stavbou)
-- [mockupy/](mockupy/) — **klikací ukázky obrazovek** (otevři `nastenka.html` v prohlížeči):
-  nástěnka · přehled zákazníků · detail zákazníka
+Dokumentace je **jeden provázaný celek a tahle stránka je jeho jediná mapa**. Každý dokument
+má nahoře navigační lištu zpět sem i na příbuzné. Co se změní, promítni i do příslušného
+dokumentu — pravidla viz [CLAUDE.md](CLAUDE.md) („Kdy aktualizovat dokumentaci").
+
+**Než začneš — orientace a pravidla**
+- [CLAUDE.md](CLAUDE.md) — jak se na projektu pracuje: role, pravidla, konvence. **Číst první.**
+- [SUMMARY.md](SUMMARY.md) — kontext, historie spolupráce, rozhodnutí, stav a plán („co, proč, kam dál").
+- [ROADMAP.md](ROADMAP.md) — kroky vývoje (spec-first), co je hotové a co dál.
+
+**Jak to funguje uvnitř — architektura a data**
+- [ARCHITECTURE.md](ARCHITECTURE.md) — technický přehled: stack, vrstvy, request lifecycle, realtime, i18n, bezpečnost.
+- [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md) — tabulky, vazby, konvence (Person/Client/Seznamy/RBAC).
+
+**Jak to vypadá a z čeho se skládá — UI a vzory**
+- [docs/UI-ZASADY.md](docs/UI-ZASADY.md) — designový manuál (replika Capsule): layout, tokeny, skiny, chování.
+- [docs/KOMPONENTY.md](docs/KOMPONENTY.md) — katalog znovupoužitelných UI vzorů (markup + kdy co). **Hledej tu, než vymyslíš nový prvek.**
+- [mockupy/](mockupy/) — klikací ukázky obrazovek (otevři v prohlížeči):
+  [nástěnka](mockupy/nastenka.html) · [zákazníci](mockupy/zakaznici.html) · [detail zákazníka](mockupy/zakaznik-detail.html) · [komponenty](mockupy/komponenty.html).
+
+**Jazyk a specifikace**
+- [docs/SLOVNIK.md](docs/SLOVNIK.md) — jednotná terminologie (stejné slovo v UI i v kódu).
+- [docs/specs/](docs/specs/) — specifikace modulů (vznikají PŘED stavbou; šablona [_SABLONA.md](docs/specs/_SABLONA.md)):
+  [krok 2 — kostra](docs/specs/krok2-kostra.md) · [krok 3 — zákazníci](docs/specs/krok3-zakaznici.md) · [krok 4 — administrace](docs/specs/krok4-administrace.md) · [krok 5 — služby](docs/specs/krok5-sluzby-zakaznika.md) · [krok 6 — výkazy](docs/specs/krok6-vykazy-prace.md).
+
+**Kudy číst** (nový na projektu): CLAUDE.md → SUMMARY.md → ARCHITECTURE.md → podle úkolu buď UI
+([UI-ZASADY](docs/UI-ZASADY.md) + [KOMPONENTY](docs/KOMPONENTY.md)), nebo data ([DATOVY-MODEL](docs/DATOVY-MODEL.md));
+pro konkrétní modul jeho spec v [docs/specs/](docs/specs/).
 
 ## Důležité
 

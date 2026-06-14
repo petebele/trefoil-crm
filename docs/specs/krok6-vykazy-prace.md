@@ -1,5 +1,7 @@
 # Specifikace modulu: Krok 6 — Výkazy práce
 
+🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
+
 > Uzavírá peněžní smyčku Kroku 5: vykázaný čas se podle režimu služby buď odečítá
 > z paušálu hodin, účtuje zvlášť, nebo neúčtuje — a doplní chybějící část měsíčního
 > vyúčtování („dle výkazů"). Model viz `DATOVY-MODEL.md` (work_records).

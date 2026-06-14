@@ -1,5 +1,7 @@
 # Datový model — Trefoil CRM v2 (blueprint)
 
+🧭 **Znalostní báze:** [mapa](../README.md) · [slovník](SLOVNIK.md) · [architektura](../ARCHITECTURE.md) · [UI zásady](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [sumář](../SUMMARY.md) · [roadmap](../ROADMAP.md) · [pravidla](../CLAUDE.md) · [specs](specs/)
+
 > Převzatý a osvědčený flexibilní základ z v1 (tam prošel architektonickou revizí a praxí).
 > Detailní sloupce se definují ve specifikaci příslušného modulu; tady je závazná kostra.
 > Zásady: SQLite (soubor) přes **Kysely** — dotazy přenositelné na PostgreSQL; časy jako ISO text;

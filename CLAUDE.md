@@ -1,23 +1,23 @@
 # CLAUDE.md — Trefoil CRM
 
+🧭 **Znalostní báze:** [mapa](README.md) · [sumář](SUMMARY.md) · [architektura](ARCHITECTURE.md) · [roadmap](ROADMAP.md) · [UI](docs/UI-ZASADY.md) · [komponenty](docs/KOMPONENTY.md) · [slovník](docs/SLOVNIK.md) · [datový model](docs/DATOVY-MODEL.md)
+
 Pracuješ jako zkušený senior developer a softwarový architekt. Na každý úkol se díváš z nadhledu: nejdřív chápeš celek, pak teprve zasahuješ. Tvým cílem není „aby to fungovalo", ale aby výsledek byl konzistentní, udržitelný a takový, jaký by odevzdal profesionál, který za kód ručí.
 
 ---
 
 ## Znalostní báze — přečti před každým úkolem
 
-Projekt má propracovanou sadu živých dokumentů. Přečti vždy ty, které jsou relevantní pro daný úkol:
+Kompletní **mapa dokumentace je v [README.md](README.md)** (sekce „Znalostní báze") — jediný
+rozcestník přes všechny živé dokumenty; každý z nich má navíc nahoře navigační lištu na příbuzné.
 
-| Soubor | Co tam najdeš |
-|---|---|
-| `SUMMARY.md` | Kontext, history, rozhodnutí, aktuální stav a plán. **Začni tady.** |
-| `ARCHITECTURE.md` | Technický přehled: stack, vrstvy, request lifecycle, DB konvence, bezpečnost. |
-| `docs/UI-ZASADY.md` | Designový manuál: layout, tokeny, skiny, pravidla chování komponent. |
-| `docs/KOMPONENTY.md` | **Katalog UI vzorů** — přesný markup, kdy co použít, pravidla. Tady hledej, než vymyslíš nový prvek. |
-| `docs/SLOVNIK.md` | Jednotná terminologie — stejné slovo v UI i v kódu. |
-| `docs/DATOVY-MODEL.md` | Datový model, schémata tabulek, vazby. |
-| `docs/specs/` | Specifikace modulů (vznikají *před* stavbou, šablona `_SABLONA.md`). |
-| `mockupy/*.html` | Živé vizuální reference — otevři v prohlížeči, ne jen čti zdroják. |
+Pro úkol čti vždy relevantní, ale **vždy začni [SUMMARY.md](SUMMARY.md)** (kontext, historie, stav)
+**a [ARCHITECTURE.md](ARCHITECTURE.md)** (jak to funguje). Pak podle úkolu: UI →
+[docs/UI-ZASADY.md](docs/UI-ZASADY.md) + [docs/KOMPONENTY.md](docs/KOMPONENTY.md) (katalog vzorů —
+hledej tu, než vymyslíš nový prvek); data → [docs/DATOVY-MODEL.md](docs/DATOVY-MODEL.md);
+terminologie → [docs/SLOVNIK.md](docs/SLOVNIK.md); konkrétní modul → jeho spec v
+[docs/specs/](docs/specs/) (šablona `_SABLONA.md`). Vizuální reference =
+[mockupy/](mockupy/) `*.html` — otevři v prohlížeči, ne jen čti zdroják.
 
 `mockupy/styl.css` je standalone kopie CSS tokenů pro mockupy. Při změně `public/skins/*.css` nebo `public/theme.css` aktualizuj i tento soubor — jinak mockupy zestárnou.
 

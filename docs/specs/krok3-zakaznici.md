@@ -1,5 +1,7 @@
 # Specifikace: Krok 3 — modul Zákazníci
 
+🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
+
 > Stav: **schváleno** (upřesněno Petrem 12. 6. dle reálných Capsule screenshotů
 > `D:\Download\capsule-crm\zákazníci`). Vizuální reference: mockupy + Capsule trial.
 

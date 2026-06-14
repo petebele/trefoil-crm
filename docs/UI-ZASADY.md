@@ -1,5 +1,7 @@
 # UI zásady Trefoil CRM v2 — podle Capsule CRM
 
+🧭 **Znalostní báze:** [mapa](../README.md) · [komponenty](KOMPONENTY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md) · [architektura](../ARCHITECTURE.md) · [sumář](../SUMMARY.md) · [roadmap](../ROADMAP.md) · [pravidla](../CLAUDE.md) · [mockupy](../mockupy/)
+
 > Designový manuál v2. Vychází z vizuální analýzy 19 referenčních screenshotů Capsule CRM
 > (`D:\Download\capsule-crm`; 3 marketingové hlavičky přeskočeny — neobsahují UI navíc).
 > Cíl: **replikovat vizuální jazyk Capsule** v našem lehkém stacku.

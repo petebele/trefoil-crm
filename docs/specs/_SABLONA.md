@@ -1,5 +1,7 @@
 # Specifikace modulu: <Název>
 
+🧭 **Znalostní báze:** [mapa](../../README.md) · [roadmap](../../ROADMAP.md) · [datový model](../DATOVY-MODEL.md) · [komponenty](../KOMPONENTY.md) · [UI zásady](../UI-ZASADY.md) · [slovník](../SLOVNIK.md) · [ostatní specs](./)
+
 > Krátký dokument (1–2 strany), který se schvaluje PŘED stavbou modulu.
 > Píše se lidsky — Petr mu musí rozumět celý.
 
