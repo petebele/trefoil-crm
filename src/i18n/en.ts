@@ -439,4 +439,10 @@ export const EN: Record<string, string> = {
   'Akce osoby': 'Person actions',
   'Přiřazené': 'Assigned',
   'Další štítky': 'More labels',
+  'Nový kontakt': 'New contact',
+  'Upravit vše': 'Edit all',
+  'Upravit všechny kontakty': 'Edit all contacts',
+  '+ přidat kontakt': '+ add contact',
+  'Odebrat řádek': 'Remove row',
+  'Typ kontaktu': 'Contact type',
 };

@@ -11,7 +11,7 @@ import {
   softDeletePerson,
 } from '../domain/people';
 import { itemsByKey, listEntityTags, addEntityTag, removeEntityTag } from '../domain/lists';
-import { listContacts, addContact, updateContact, removeContact, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
+import { listContacts, addContact, updateContact, removeContact, clearOwnerContacts, isContactType, CONTACT_TYPE_LABELS } from '../domain/contacts';
 import { logEvent, listEvents } from '../domain/events';
 import { readForm } from '../lib/util';
 import {
@@ -27,6 +27,7 @@ import {
   Picker,
   ModalShell,
   ModalContactRows,
+  ContactsEditAll,
 } from './components';
 import { tr, relTime } from '../i18n';
 import { servicesOfPersonFirms, SERVICE_STATUS_LABELS } from '../domain/clientServices';
@@ -384,17 +385,43 @@ osobyRoutes.post('/osoby/:id/stitek/:itemId/smazat', async (c) => {
 
 // ---------- kontakty ----------
 
-async function contactsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, personId: string) {
-  const [contacts, labels, allTags, assignedTags] = await Promise.all([
-    listContacts(tenantId, 'person', personId),
-    itemsByKey(tenantId, 'contact_labels'),
-    itemsByKey(tenantId, 'client_tags'),
-    listEntityTags(tenantId, 'person', personId),
-  ]);
-  return c.html(
-    <ContactsSection base={`/osoby/${personId}`} contacts={contacts} labels={labels} allTags={allTags} assignedTags={assignedTags} />,
-  );
+async function contactsFragment(c: { html: (x: unknown) => Response | Promise<Response> }, tenantId: string, personId: string, closeModal = false) {
+  const [contacts, labels] = await Promise.all([listContacts(tenantId, 'person', personId), itemsByKey(tenantId, 'contact_labels')]);
+  const section = <ContactsSection base={`/osoby/${personId}`} contacts={contacts} labels={labels} />;
+  return c.html(closeModal ? <>{section}<div id="modal" hx-swap-oob="true"></div></> : section);
 }
+
+// velký modál „Upravit kontakty" osoby + hromadné uložení
+osobyRoutes.get('/osoby/:id/kontakty/modal', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  const p = await getCustomerPerson(t, id);
+  if (!p) return c.notFound();
+  const [contacts, labels] = await Promise.all([listContacts(t, 'person', id), itemsByKey(t, 'contact_labels')]);
+  return c.html(<ContactsEditAll base={`/osoby/${id}`} title={`${tr('Kontakty')} · ${p.name}`} contacts={contacts} labels={labels} />);
+});
+
+osobyRoutes.post('/osoby/:id/kontakty', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const id = c.req.param('id');
+  if (!(await getCustomerPerson(t, id))) return c.notFound();
+  const body = await c.req.parseBody({ all: true });
+  const arr = (v: unknown) => (Array.isArray(v) ? v.map(String) : v !== undefined ? [String(v)] : []);
+  const types = arr(body.c_type);
+  const values = arr(body.c_value);
+  const labels = arr(body.c_label);
+  await clearOwnerContacts(t, 'person', id);
+  for (let i = 0; i < values.length; i++) {
+    const value = (values[i] ?? '').trim();
+    const type = types[i] ?? 'other';
+    if (!value || !isContactType(type)) continue;
+    await addContact(t, 'person', id, { type, value, label: (labels[i] ?? '').trim() || null });
+  }
+  await logEvent(t, 'person', id, person.id, 'Kontakty upraveny');
+  return contactsFragment(c, t, id, true);
+});
 
 osobyRoutes.post('/osoby/:id/kontakt', async (c) => {
   const person = c.get('person')!;

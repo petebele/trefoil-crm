@@ -346,24 +346,36 @@ function contactTypeIcon(t: PersonContactsTable['type']) {
   return <IconPlus />;
 }
 
-function QuickAddPanel(props: { base: string; type: PersonContactsTable['type']; labels: Array<{ label: string }> }) {
-  const id = `addContact-${props.type}`;
-  const typeLabel = contactTypeLabel(props.type);
+/** Modál „Upravit kontakty" — hromadná správa (typ + hodnota + štítek, přidání/odebrání). */
+export function ContactsEditAll(props: { base: string; title: string; contacts: PersonContactsTable[]; labels: Array<{ label: string }> }) {
+  const row = (c?: PersonContactsTable) => (
+    <div class="crow">
+      <select class="input ctype" name="c_type" aria-label={tr('Typ kontaktu')}>
+        <option value="phone" selected={c?.type === 'phone'}>{tr('Telefon')}</option>
+        <option value="email" selected={c?.type === 'email'}>{tr('E-mail')}</option>
+        <option value="web" selected={c?.type === 'web'}>{tr('Web')}</option>
+        <option value="other" selected={c?.type === 'other'}>{tr('Jiné')}</option>
+      </select>
+      <input class="input cval" name="c_value" value={c?.value ?? ''} placeholder={tr('Hodnota')} autocomplete="off" aria-label={tr('Hodnota kontaktu')} />
+      <input class="input clab" name="c_label" value={c?.label ?? ''} list="contactLabelsModal" placeholder={tr('Štítek')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
+      <button type="button" class="icon-btn" data-remove-row aria-label={tr('Odebrat řádek')}>✕</button>
+    </div>
+  );
   return (
-    <Picker
-      id={id}
-      trigger={contactTypeIcon(props.type)}
-      triggerClass="icon-btn"
-      triggerLabel={tr('Přidat: {type}', { type: typeLabel })}
-    >
-      <form hx-post={`${props.base}/kontakt`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
-        <input type="hidden" name="type" value={props.type} />
-        <div class="opt-group" style="padding-left:0">{typeLabel}</div>
-        <input class="input" name="value" placeholder={tr('Hodnota')} required autocomplete="off" aria-label={tr('Hodnota kontaktu')} />
-        <input class="input" name="label" list="contactLabels" placeholder={tr('Štítek (Práce, Domů…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
-        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Přidat')}</button>
+    <ModalShell title={props.title}>
+      <form hx-post={`${props.base}/kontakty`} hx-target="#contacts" hx-swap="outerHTML">
+        <div id="contactRows">
+          {props.contacts.map((c) => row(c))}
+          <template id="contactRowTpl">{row()}</template>
+        </div>
+        <button type="button" class="btn btn-ghost" data-add-row="contactRowTpl">{tr('+ přidat kontakt')}</button>
+        <datalist id="contactLabelsModal">{props.labels.map((l) => <option value={l.label}></option>)}</datalist>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">{tr('Uložit')}</button>
+          <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
+        </div>
       </form>
-    </Picker>
+    </ModalShell>
   );
 }
 
@@ -410,13 +422,28 @@ export function ContactsSection(props: {
     const em = cs.find((c) => c.type === 'email');
     return ph?.value ?? em?.value ?? '';
   };
-  // Rychlé přidání žije v řádku nadpisu a je VŽDY viditelné (indikace, že tu akce jsou).
+  // Hlavička sekce Kontakty: jeden ＋ (výběr typu) + ✎ hromadná editace.
   const contactAdd = (
     <span class="ha" role="group" aria-label={tr('Přidat kontakt')}>
-      <QuickAddPanel base={props.base} type="phone" labels={props.labels} />
-      <QuickAddPanel base={props.base} type="email" labels={props.labels} />
-      <QuickAddPanel base={props.base} type="web" labels={props.labels} />
-      <QuickAddPanel base={props.base} type="other" labels={props.labels} />
+      <Picker id="addContact" trigger={<IconPlus />} triggerClass="icon-btn" triggerLabel={tr('Přidat kontakt')}>
+        <form hx-post={`${props.base}/kontakt`} hx-target="#contacts" hx-swap="outerHTML" class="m0">
+          <div class="opt-group" style="padding-left:0">{tr('Nový kontakt')}</div>
+          <select class="input" name="type" style="margin-bottom:.4rem" aria-label={tr('Typ kontaktu')}>
+            <option value="phone">{tr('Telefon')}</option>
+            <option value="email" selected>{tr('E-mail')}</option>
+            <option value="web">{tr('Web')}</option>
+            <option value="other">{tr('Jiné')}</option>
+          </select>
+          <input class="input" name="value" placeholder={tr('Hodnota')} required autocomplete="off" aria-label={tr('Hodnota kontaktu')} />
+          <input class="input" name="label" list="contactLabels" placeholder={tr('Štítek (Práce, Domů…)')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
+          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Přidat')}</button>
+        </form>
+      </Picker>
+      {props.contacts.length ? (
+        <button type="button" class="icon-btn" hx-get={`${props.base}/kontakty/modal`} hx-target="#modal" hx-swap="innerHTML" aria-label={tr('Upravit všechny kontakty')} title={tr('Upravit vše')}>
+          <PencilIcon />
+        </button>
+      ) : null}
     </span>
   );
 
@@ -487,7 +514,7 @@ export function ContactsSection(props: {
         ))}
         {props.contacts.length === 0 ? (
           <p class="empty-inline m0" style="padding:.25rem 0">
-            {tr('Žádné kontakty.')} <a class="emptylink" data-menu-toggle="addContact-phone" role="button" tabindex={0}>{tr('Přidat kontakt.')}</a>
+            {tr('Žádné kontakty.')} <a class="emptylink" data-menu-toggle="addContact" role="button" tabindex={0}>{tr('Přidat kontakt.')}</a>
           </p>
         ) : null}
       </div>

@@ -169,6 +169,14 @@ document.addEventListener('click', function (e) {
   if (tpl && tpl.content) tpl.parentNode.insertBefore(tpl.content.cloneNode(true), tpl);
 });
 
+// Formuláře: tlačítko [data-remove-row] odebere nejbližší řádek .crow (modál „Upravit kontakty").
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('[data-remove-row]');
+  if (!btn) return;
+  var row = btn.closest('.crow');
+  if (row) row.remove();
+});
+
 // Závislá pole: prvek s data-depends-on="jménoPole" data-depends-value="a,b" je vidět,
 // jen když má pole daného jména ve stejném formuláři jednu z uvedených hodnot.
 function updateDependentFields(scope) {

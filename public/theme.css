@@ -460,6 +460,12 @@ summary.subtle-action::marker { content: ''; }
 .prow .nm { font-weight: 600; }
 /* IČO/DIČ dvojice ve firemních údajích */
 .minirow { display: flex; gap: 1.8rem; margin-top: .45rem; }
+/* řádek kontaktu v modálu „Upravit kontakty" (bez horizontálního posuvníku) */
+.crow { display: flex; gap: .4rem; align-items: flex-start; margin-bottom: .5rem; }
+.crow .input { min-width: 0; }
+.crow .ctype { width: 92px; flex: none; }
+.crow .clab { width: 90px; flex: none; }
+.crow .cval { flex: 1 1 auto; }
 /* hodnota uvnitř textu (víc hodnot v jednom řádku): čárkované podtržení (vždy viditelné) */
 .editable-inline {
   cursor: pointer; border-bottom: 1px dashed var(--muted);

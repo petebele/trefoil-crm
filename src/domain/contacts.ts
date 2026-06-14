@@ -102,6 +102,16 @@ export async function removeContact(tenantId: string, id: string): Promise<Perso
   return row;
 }
 
+/** Smaže všechny VLASTNÍ kontakty daného vlastníka (pro hromadnou náhradu „Upravit vše"). */
+export async function clearOwnerContacts(tenantId: string, ownerKind: 'person' | 'client', ownerId: string): Promise<void> {
+  await db
+    .deleteFrom('person_contacts')
+    .where('tenant_id', '=', tenantId)
+    .where('owner_kind', '=', ownerKind)
+    .where('owner_id', '=', ownerId)
+    .execute();
+}
+
 /** Všechny kontakty pro množinu vlastníků (např. osoby firmy v sekci Kontakty). */
 export async function contactsForOwners(
   tenantId: string,
