@@ -75,12 +75,46 @@ document.addEventListener('click', function (e) {
   var insideMenu = e.target.closest('.menu');
   document.querySelectorAll('.menu.open').forEach(function (menu) {
     if (toggle ? menu.id !== toggle.getAttribute('data-menu-toggle') : menu !== insideMenu) {
-      menu.classList.remove('open');
+      menu.classList.remove('open'); menu.classList.remove('up');
     }
   });
   if (toggle) {
     var menu = document.getElementById(toggle.getAttribute('data-menu-toggle'));
-    if (menu) menu.classList.toggle('open');
+    if (menu) { if (menu.classList.toggle('open')) onPanelOpen(menu); else menu.classList.remove('up'); }
+  }
+});
+
+// Po otevření panelu (editace pole): kurzor do prvního pole (+ označit text), flip nad
+// pole, když by panel spadl pod spodní okraj okna, a dorovnání výšky rostoucích textarea.
+function onPanelOpen(menu) {
+  var panel = menu.querySelector(':scope > .menu-list');
+  if (!panel) return;
+  menu.classList.remove('up');
+  requestAnimationFrame(function () {
+    var trigger = menu.querySelector('[data-menu-toggle]') || menu;
+    var tr = trigger.getBoundingClientRect(), ph = panel.offsetHeight;
+    if (tr.bottom + 6 + ph > window.innerHeight - 8 && tr.top - 6 - ph > 8) menu.classList.add('up');
+    panel.querySelectorAll('textarea[data-autogrow]').forEach(autogrow);
+    var f = panel.querySelector('input:not([type=hidden]):not([type=checkbox]), textarea');
+    if (f) { f.focus(); if (f.select) f.select(); }
+  });
+}
+function autogrow(t) {
+  t.style.height = 'auto';
+  var cs = getComputedStyle(t), line = parseFloat(cs.lineHeight) || 20;
+  var extra = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+  var min = Math.round(line * 3 + extra), max = Math.round(line * 10 + extra);
+  t.style.height = Math.min(max, Math.max(min, t.scrollHeight)) + 'px';
+  t.style.overflowY = t.scrollHeight > max + 1 ? 'auto' : 'hidden';
+}
+document.addEventListener('input', function (e) {
+  if (e.target.matches && e.target.matches('textarea[data-autogrow]')) autogrow(e.target);
+});
+// Klávesnice: Enter/Space na ne-tlačítkové editovatelné hodnotě [data-menu-toggle] ji otevře.
+document.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches &&
+      e.target.matches('[data-menu-toggle]') && e.target.tagName !== 'BUTTON') {
+    e.preventDefault(); e.target.click();
   }
 });
 
@@ -89,7 +123,7 @@ document.body.addEventListener('htmx:afterRequest', function (e) {
   var src = e.detail && e.detail.elt;
   if (src && src.closest) {
     var menu = src.closest('.menu.open');
-    if (menu) menu.classList.remove('open');
+    if (menu) { menu.classList.remove('open'); menu.classList.remove('up'); }
   }
 });
 
@@ -113,10 +147,10 @@ document.addEventListener('click', function (e) {
   }
 });
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') {
-    var m = document.getElementById('modal');
-    if (m) m.innerHTML = '';
-  }
+  if (e.key !== 'Escape') return;
+  var m = document.getElementById('modal');
+  if (m && m.innerHTML) { m.innerHTML = ''; return; }
+  document.querySelectorAll('.menu.open').forEach(function (menu) { menu.classList.remove('open'); menu.classList.remove('up'); });
 });
 
 // Odkrytí skrytých polí: [data-reveal="idCile"] přepne .hidden (např. „Vyplnit údaje").

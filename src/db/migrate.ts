@@ -82,6 +82,14 @@ export async function migrate(): Promise<void> {
   await sql`ALTER TABLE clients ADD COLUMN hours_budget_monthly real`.execute(db).catch(() => {});
   await sql`ALTER TABLE clients ADD COLUMN retainer_price real`.execute(db).catch(() => {});
   await sql`ALTER TABLE clients ADD COLUMN hours_rollover integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
+  // Název zákazníka (zkrácený do hlavičky) + strukturovaná mezinárodní adresa (idempotentně)
+  await sql`ALTER TABLE clients ADD COLUMN display_name text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN street text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN house_no text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN address2 text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN city text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN postal_code text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN country text`.execute(db).catch(() => {});
 
   // --- modul Služby (Krok 5: služby u zákazníka) ---
   await db.schema

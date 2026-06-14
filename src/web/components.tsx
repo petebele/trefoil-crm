@@ -122,48 +122,98 @@ export function ModalContactRows(props: { labels: Array<{ label: string }> }) {
   );
 }
 
-// ---------- Úprava jednoho pole = malý panel (žádná inline editace, katalog §18) ----------
+// ---------- Editace pole = mini-panel, spouštěč = HODNOTA (katalog §18) ----------
 
-/** Velký název záznamu + ⋯ (malý panel s polem). Extra akce jako children. */
-export function TitleBox(props: { base: string; label: string; value: string; children?: Child }) {
-  const label = tr(props.label);
+/**
+ * Editovatelné pole: spouštěčem je HODNOTA (`value`); panel je `children`
+ * (formulář / výběr). `inline` = hodnota uvnitř textu (čárkované podtržení),
+ * `wide` = široký panel pro text, `block` = hodnota přes celý řádek.
+ * Otevírání, flip nad pole a kurzor do pole řeší app.js přes `.menu` mechanismus.
+ */
+/** Tužka-ikona (zakulacený čtverec, styl ladí s ikonkami hlavního menu). */
+export function PencilIcon() {
   return (
-    <div id="f-name" style="display:flex;align-items:baseline;gap:.5rem">
-      <span class="record-name" style="margin:0;flex:1">{props.value}</span>
-      <Picker id="nameEdit" trigger="⋯" triggerClass="icon-btn" triggerLabel={tr('{label} — upravit', { label })} alignRight>
-        <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
-          <div class="opt-group" style="padding-left:0">{label}</div>
-          <input class="input" name="value" value={props.value} required autofocus aria-label={label} />
-          <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
-        </form>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  );
+}
+
+export function EditField(props: {
+  id: string;
+  value: Child;
+  label?: string;
+  topLabel?: string; // popisek NAD hodnotou (řádkové pole)
+  inline?: boolean;
+  wide?: boolean; // užší panel pro jednořádkové vstupy
+  area?: boolean; // středně široký panel pro textareu
+  block?: boolean;
+  alignRight?: boolean;
+  children?: Child;
+}) {
+  const row = props.topLabel !== undefined;
+  const tip = props.label ? tr('{label} — upravit', { label: props.label }) : tr('Upravit');
+  // hodnota uvnitř textu (víc hodnot na řádku) = spouštěč, čárkované podtržení, bez tužky
+  if (props.inline) {
+    return (
+      <div class={`menu ${props.alignRight ? 'align-right' : ''}`} id={props.id} style="display:inline-block">
+        <span class="editable-inline" data-menu-toggle={props.id} role="button" tabindex={0} aria-haspopup="true" aria-label={tip}>
+          {props.value}
+        </span>
+        <div class={`menu-list panel${props.wide ? ' wide' : ''}`} role="menu">
+          {props.children}
+        </div>
+      </div>
+    );
+  }
+  // standardní pole: JEDINÝ spouštěč = tužka; hodnota je jen zobrazená (text lze označit)
+  return (
+    <div class={`menu ${row ? 'field-row ' : ''}${props.alignRight ? 'align-right' : ''}`} id={props.id} style={props.block || row ? undefined : 'display:inline-block'}>
+      <div class="editable">
+        {row ? <span class="field-label">{props.topLabel}</span> : null}
+        {props.value}
+        <span class="pen-ind" data-menu-toggle={props.id} role="button" tabindex={0} aria-haspopup="true" aria-label={tip} data-tip={tip}>
+          <PencilIcon />
+        </span>
+      </div>
+      <div class={`menu-list panel${props.area ? ' area' : props.wide ? ' wide' : ''}`} role="menu">
         {props.children}
-      </Picker>
+      </div>
     </div>
   );
 }
 
-/** Sekce Poznámka — text + ⋯ v nadpisu (malý panel s textareou). */
+/** Velký název záznamu — klik otevře panel s polem. Extra akce (Upravit/Smazat) jako children. */
+export function TitleBox(props: { base: string; label: string; value: string; children?: Child }) {
+  const label = tr(props.label);
+  return (
+    <EditField id="f-name" topLabel={label} label={label} wide value={<span class="field-strong">{props.value}</span>}>
+      <form hx-post={`${props.base}/pole/name`} hx-target="#f-name" hx-swap="outerHTML" class="m0">
+        <div class="opt-group" style="padding-left:0">{label}</div>
+        <input class="input" name="value" value={props.value} required aria-label={label} style="width:100%" />
+        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.4rem">{tr('Uložit')}</button>
+      </form>
+      {props.children}
+    </EditField>
+  );
+}
+
+/** Sekce Poznámka — klik na text (nebo „— doplnit —") otevře panel s textareou. */
 export function NoteSection(props: { base: string; value: string | null }) {
   return (
-    <div class="side-section" id="f-note">
-      <h4>
-        {tr('Poznámka')}
-        <Picker
-          id="noteEdit"
-          trigger={props.value ? '⋯' : tr('Přidat poznámku')}
-          triggerClass={props.value ? 'icon-btn' : 'subtle-action'}
-          triggerLabel={tr('Poznámka — upravit')}
-          alignRight
-        >
-          <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
-            <div class="opt-group" style="padding-left:0">{tr('Poznámka')}</div>
-            <textarea class="input" name="value" rows={4} autofocus aria-label={tr('Poznámka')}>{props.value ?? ''}</textarea>
-            <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
-          </form>
-        </Picker>
-      </h4>
-      {props.value ? <p style="white-space:pre-wrap;margin:0;font-size:.88rem">{props.value}</p> : null}
-    </div>
+    <EditField
+      id="f-note"
+      topLabel={tr('Poznámka')}
+      label={tr('Poznámka')}
+      area
+      value={props.value ? <p style="white-space:pre-wrap;margin:0;font-size:.88rem;font-weight:400">{props.value}</p> : <span class="empty-inline">{tr('Žádná poznámka.')} <a class="emptylink" data-menu-toggle="f-note" role="button" tabindex={0}>{tr('Přidat poznámku.')}</a></span>}
+    >
+      <form hx-post={`${props.base}/pole/note`} hx-target="#f-note" hx-swap="outerHTML" class="m0">
+        <div class="opt-group" style="padding-left:0">{tr('Poznámka')}</div>
+        <textarea class="input" name="value" rows={3} data-autogrow aria-label={tr('Poznámka')} style="width:100%">{props.value ?? ''}</textarea>
+        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.4rem">{tr('Uložit')}</button>
+      </form>
+    </EditField>
   );
 }
 
@@ -175,27 +225,22 @@ export function StatusBox(props: {
   items: Array<{ value: string; label: string; color: string | null }>;
 }) {
   return (
-    <div class="hover-row" id="f-status" style="display:flex;align-items:center;gap:.4rem">
-      <StatusChip value={props.value} items={props.items} />
-      <span class="row-actions">
-        <Picker id="statusPicker" trigger="⋯" triggerClass="icon-btn" triggerLabel={tr('Změnit stav')} alignRight>
-          <div class="opt-group">{tr('Stav')}</div>
-          {props.items.map((s) => (
-            <button
-              type="button"
-              class="opt"
-              hx-post={`${props.base}/pole/status`}
-              hx-vals={JSON.stringify({ value: s.value })}
-              hx-target="#f-status"
-              hx-swap="outerHTML"
-            >
-              {s.label}
-              {s.value === props.value ? <span class="tick">✓</span> : null}
-            </button>
-          ))}
-        </Picker>
-      </span>
-    </div>
+    <EditField id="f-status" topLabel={tr('Stav')} label={tr('Stav')} value={<StatusChip value={props.value} items={props.items} />}>
+      <div class="opt-group">{tr('Stav')}</div>
+      {props.items.map((s) => (
+        <button
+          type="button"
+          class="opt"
+          hx-post={`${props.base}/pole/status`}
+          hx-vals={JSON.stringify({ value: s.value })}
+          hx-target="#f-status"
+          hx-swap="outerHTML"
+        >
+          {s.label}
+          {s.value === props.value ? <span class="tick">✓</span> : null}
+        </button>
+      ))}
+    </EditField>
   );
 }
 
@@ -206,57 +251,54 @@ export function OwnerBox(props: {
   owner: { id: string; name: string } | null;
   coworkers: Array<{ id: string; name: string }>;
 }) {
-  const picker = (trigger: Child, triggerClass?: string, label?: string) => (
-    <Picker id="ownerPicker" trigger={trigger} triggerClass={triggerClass} triggerLabel={label} alignRight={triggerClass === 'icon-btn'}>
-      <input class="input" data-filter-list placeholder={tr('Hledat kolegu…')} aria-label={tr('Hledat kolegu')} />
-      <div class="opt-group">{tr('Kolegové')}</div>
-      {props.coworkers.map((u) => (
-        <button
-          type="button"
-          class="opt"
-          hx-post={`${props.base}/owner`}
-          hx-vals={JSON.stringify({ owner_id: u.id })}
-          hx-target="#owner-box"
-          hx-swap="outerHTML"
-        >
-          <span style="display:flex;align-items:center;gap:.5rem">
-            <span class={`av av-sm ${avColor(u.name)}`}>{initials(u.name)}</span>
-            {u.name}
-          </span>
-          {props.owner?.id === u.id ? <span class="tick">✓</span> : null}
-        </button>
-      ))}
-      {props.owner ? (
-        <button
-          type="button"
-          class="opt"
-          style="color:var(--muted)"
-          hx-post={`${props.base}/owner`}
-          hx-vals={JSON.stringify({ owner_id: '' })}
-          hx-target="#owner-box"
-          hx-swap="outerHTML"
-        >
-          {tr('Zrušit přiřazení')}
-        </button>
-      ) : null}
-    </Picker>
-  );
-
   return (
-    <div class="side-section" id="owner-box">
-      <h4>
-        {tr('Odpovědná osoba')}
-        {props.owner ? picker('⋯', 'icon-btn', tr('Změnit odpovědnou osobu')) : null}
-      </h4>
-      {props.owner ? (
-        <div class="person-row">
-          <span class={`av av-sm ${avColor(props.owner.name)}`}>{initials(props.owner.name)}</span>
-          <span class="nm" style="flex:1">{props.owner.name}</span>
-        </div>
-      ) : (
-        picker(tr('Přiřadit osobu'))
-      )}
-    </div>
+    <EditField
+      id="owner-box"
+      topLabel={tr('Odpovědná osoba')}
+      label={tr('Odpovědná osoba')}
+      value={
+        props.owner ? (
+          <span class="person-row" style="padding:0">
+            <span class={`av av-sm ${avColor(props.owner.name)}`}>{initials(props.owner.name)}</span>
+            <span class="nm" style="flex:1">{props.owner.name}</span>
+          </span>
+        ) : (
+          <span class="empty-inline">{tr('Žádná odpovědná osoba.')} <a class="emptylink" data-menu-toggle="owner-box" role="button" tabindex={0}>{tr('Přiřadit osobu.')}</a></span>
+        )
+      }
+    >
+        <input class="input" data-filter-list placeholder={tr('Hledat kolegu…')} aria-label={tr('Hledat kolegu')} />
+        <div class="opt-group">{tr('Kolegové')}</div>
+        {props.coworkers.map((u) => (
+          <button
+            type="button"
+            class="opt"
+            hx-post={`${props.base}/owner`}
+            hx-vals={JSON.stringify({ owner_id: u.id })}
+            hx-target="#owner-box"
+            hx-swap="outerHTML"
+          >
+            <span style="display:flex;align-items:center;gap:.5rem">
+              <span class={`av av-sm ${avColor(u.name)}`}>{initials(u.name)}</span>
+              {u.name}
+            </span>
+            {props.owner?.id === u.id ? <span class="tick">✓</span> : null}
+          </button>
+        ))}
+        {props.owner ? (
+          <button
+            type="button"
+            class="opt"
+            style="color:var(--muted)"
+            hx-post={`${props.base}/owner`}
+            hx-vals={JSON.stringify({ owner_id: '' })}
+            hx-target="#owner-box"
+            hx-swap="outerHTML"
+          >
+            {tr('Zrušit přiřazení')}
+          </button>
+        ) : null}
+    </EditField>
   );
 }
 
@@ -267,25 +309,30 @@ export function TagsSection(props: {
   tags: Array<{ id: string; label: string }>;
 }) {
   return (
-    <div id="tags">
-      <div class="chips" style="align-items:center">
-        {props.tags.map((tag) => (
-          <span class="chip hover-row">
-            {tag.label}
-            <button
-              type="button"
-              class="row-actions"
-              style="border:none;background:none;cursor:pointer;padding:0 0 0 .3rem;font-size:.8em;color:var(--muted)"
-              aria-label={tr('Odebrat štítek {label}', { label: tag.label })}
-              hx-post={`${props.base}/stitek/${tag.id}/smazat`}
-              hx-target="#tags"
-              hx-swap="outerHTML"
-            >
-              ✕
-            </button>
-          </span>
-        ))}
-      </div>
+    <div class="field-row field-plain" id="tags">
+      <span class="field-label">{tr('Štítky')}</span>
+      {props.tags.length ? (
+        <div class="chips" style="align-items:center">
+          {props.tags.map((tag) => (
+            <span class="chip hover-row">
+              {tag.label}
+              <button
+                type="button"
+                class="row-actions"
+                style="border:none;background:none;cursor:pointer;padding:0 0 0 .3rem;font-size:.8em;color:var(--muted)"
+                aria-label={tr('Odebrat štítek {label}', { label: tag.label })}
+                hx-post={`${props.base}/stitek/${tag.id}/smazat`}
+                hx-target="#tags"
+                hx-swap="outerHTML"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <span class="empty-inline">{tr('Žádné štítky.')} <a class="emptylink" data-menu-toggle="addTag" role="button" tabindex={0}>{tr('Přidat štítek.')}</a></span>
+      )}
     </div>
   );
 }
@@ -401,7 +448,7 @@ export function ContactsSection(props: {
     <div id="contacts" class={`side-section ${hasContacts ? 'hover-area' : ''}`} style="border-top:none;margin-top:.4rem;padding-top:0">
       <h4>{tr('Kontakty')} {quickAdd}</h4>
 
-      {people.length > 0 && groups.length > 0 ? groupLabel(tr('Osoby')) : null}
+      {people.length > 0 ? groupLabel(tr('Lidé')) : null}
       {people.map((p) => (
         <div style="padding:.2rem 0">
           <div class="person-row hover-row" style="padding:0">
@@ -435,7 +482,7 @@ export function ContactsSection(props: {
         </div>
       ))}
 
-      {people.length > 0 && groups.length > 0 ? groupLabel(tr('Firma')) : null}
+      {people.length > 0 && groups.length > 0 ? groupLabel(tr('Kontakty firmy')) : null}
       {groups.map((g) => (
         <div class="fact">
           <span class="lbl" style="margin-bottom:.15rem">{contactTypeLabel(g.type)}</span>
@@ -471,7 +518,11 @@ export function ContactsSection(props: {
           ))}
         </div>
       ))}
-      {!hasContacts ? <p class="sub m0" style="padding:.3rem 0">{tr('Zatím žádný kontakt.')}</p> : null}
+      {!hasContacts ? (
+        <p class="empty-inline m0" style="padding:.3rem 0">
+          {tr('Zatím žádný kontakt.')} <a class="emptylink" data-menu-toggle="addContact-phone" role="button" tabindex={0}>{tr('Přidat kontakt.')}</a>
+        </p>
+      ) : null}
       <datalist id="contactLabels">
         {props.labels.map((l) => (
           <option value={l.label}></option>

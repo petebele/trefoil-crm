@@ -5,6 +5,10 @@
    Náhled jiného skinu: <html data-skin="oled-dark"> apod.
    ============================================================ */
 
+/* Webfonty: Inter (UI/tělo), Poppins (nadpisy/brand), JetBrains Mono (kód/ID).
+   V aplikaci ideálně self-hostovat do public/fonts; tady přes CDN pro náhled. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 /* ============================================================
    Skin: Trefoil · světlý — "letní louka"
    Zelená: luční #2d6b31 (akcent/listy), světlejší #47a34b (úspěch).
@@ -350,17 +354,24 @@
   --radius: 12px;
   --radius-sm: 8px;
   font-size: 16px;
+  /* Písma — jeden zdroj pravdy (přepiš jen tady) */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-head: "Poppins", var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "Cascadia Code", Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--ink);
   font-size: 0.875rem;            /* 14px tělo */
   line-height: 1.5;
 }
+/* Nadpisy/brand = Poppins; kód/ID = JetBrains Mono */
+h1, h2, h3, .record-name, .idname { font-family: var(--font-head); }
+code, kbd, samp, pre, .mono { font-family: var(--font-mono); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 svg { display: block; }

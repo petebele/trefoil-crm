@@ -249,34 +249,50 @@ Chyba formuláře: `<div class="form-error">Neplatný e-mail nebo heslo.</div>` 
 
 Otevírání řeší `public/app.js` (klik na `[data-menu-toggle]` přepne `.open`, klik mimo zavře).
 
-## 18. Úprava jednoho pole = malý panel (inline editace ZRUŠENA)
+## 18. Editace pole = mini-panel (spouštěč = klik na hodnotu)
 
-**Kdy:** úprava jednoho údaje v panelech detailu (název, poznámka, kontakt…).
-**Inline editace na místě se nepoužívá** — není stylová a vše ostatní řeší malé/velké
-modály, tak i jedno pole. Vzor: textová akce „Upravit" (hover, v řádku nadpisu nebo
-řádku údaje) otevře **malý panel** (§19) s polem a tlačítkem Uložit; odpověď serveru
-vymění celý blok (htmx `hx-target` na obal).
+**Princip:** editaci spouští **klik na hodnotu** (celé pole / řádek je terč), ne ikonka ani
+text „Upravit". Otevře se **mini-panel** (§19) ukotvený k hodnotě s polem a Uložit/Zrušit;
+**kurzor je hned v poli, text označený**. Enter uloží, Esc zruší (textarea Ctrl+Enter).
+Odpověď serveru vymění blok (htmx `hx-target` na obal). Náhled/varianty: `mockupy/editace.html`.
+
+**Afordance (jak poznat, že pole jde upravit):**
+- **Pole s vlastním řádkem** → podbarvení řádku na hover + **tužka ✎ jako pouhý indikátor**
+  vpravo nahoře (neklikací, jen náznak — sám klik patří hodnotě).
+- **Hodnota uvnitř textu** (víc hodnot v jednom řádku) → lehké **čárkované podtržení** (vždy viditelné).
+- **Prázdná hodnota** → „— doplnit —" (šedě), klik otevře panel.
+
+**Mini-panel — chování:** kurzor v poli na otevření (focus + select); textové pole na desktopu
+**široké** (~2× běžné); **textarea roste s obsahem** (min 3, max ~10 řádků); panel **se posouvá
+se stránkou** a když by spadl pod fold, **vyskočí nad pole** (flip — řeší `app.js`).
+Výběry (stav, osoba) uloží hned klikem na položku. **Štítky = multiselect:** nahoře input pro
+novou možnost, u hodnot **zaškrtávátka**; nově zadaná možnost se rovnou zaškrtne.
 
 ```html
-<span class="row-actions">
-  <div class="menu" id="nameEdit" style="display:inline-block">
-    <button class="subtle-action" data-menu-toggle="nameEdit">Upravit</button>
-    <div class="menu-list panel">
-      <form hx-post="/firmy/ID/pole/name" hx-target="#f-name" hx-swap="outerHTML">
-        <input class="input" name="value" value="…">
-        <button class="btn btn-sm btn-primary">Uložit</button>
-      </form>
-    </div>
-  </div>
-</span>
+<!-- hodnota = spouštěč; tužka jen indikuje; panel je server-rendered fragment (§19) -->
+<div class="editable" data-edit hx-get="/firmy/ID/pole/name/panel" hx-target="#editpanel" hx-swap="innerHTML"
+     role="button" tabindex="0">
+  <span class="lbl">Název firmy</span>
+  <span class="val">Severka s.r.o.</span>
+  <span class="pen-ind" aria-hidden="true">✎</span>
+</div>
 ```
 
-**Akce = text, ne ikonka.** Akční odkazy („Upravit", „Smazat", „Změnit", „Odebrat")
-jsou textové `.subtle-action`; ikonky zůstávají jen v řádku rychlého přidání
-(telefon/e-mail/web/štítek/osoba) a pro zavření modálu (✕).
+**Malá vs. velká akce — rozhoduje povaha pole, ne jeho název:**
 
-Hover ukáže ✎; prázdná hodnota se zobrazuje jako „— doplnit —" (šedě, kurzívou).
-Pro výběrové hodnoty (stav, osoba) NEpoužívej select v editaci — použij dropdown panel (§19).
+| Mini-panel (malá akce) | Velký modál §21 (velká akce) |
+|---|---|
+| dílčí parametr záznamu: sazba, odpovědná osoba, stav, štítky, termín, číslo | identita/struktura: název služby (= katalog), režim účtování |
+| jednoduchý atribut: web, IČO, telefon, poznámka | založení nového záznamu; úprava více polí najednou; akce s navazujícími přepočty |
+
+(Příklad: název firmy v kartě = mini-panel; název služby v řádku = velký panel. Seznam doplňujeme.)
+
+**Více akcí u záznamu** (řádek služby ap.): viditelně **✎ = úprava celého záznamu** (velký panel);
+ostatní akce v **⋯** menu textem, destruktivní dole červeně (viz §20). Dílčí hodnoty v řádku
+(sazba, osoba) jdou upravit i jednotlivě mini-panelem (čárkované podtržení).
+
+**Badge:** stav, štítky i další badge = jedna velikost (`.chip`, stejný padding i font).
+*(Editovatelná barva textu/pozadí štítků a stavů — plánováno, zatím ne.)*
 
 ## 19. Dropdown panel `.menu-list.panel` (Capsule styl)
 

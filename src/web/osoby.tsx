@@ -229,18 +229,22 @@ osobyRoutes.get('/osoby/:id', async (c) => {
       <div class="detail-grid">
         {/* A) Levý panel */}
         <aside class="card">
-          <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
-          <div style="margin-top:.45rem">
-            <TitleBox base={base} label="Jméno a příjmení" value={p.name} />
+          <div style="text-align:center;margin-bottom:.5rem">
+            <span class={`av av-lg ${avColor(p.name)}`}>{initials(p.name)}</span>
           </div>
-          <div style="margin:.4rem 0 .6rem">
-            <TagsSection base={base} tags={tags} />
-          </div>
+          <TitleBox base={base} label="Jméno a příjmení" value={p.name}>
+            <div style="border-top:1px solid var(--line);margin:.3rem 0 .1rem" />
+            <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
+              {tr('Upravit osobu')}
+            </button>
+            <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto osobu?')}')`}>
+              <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat osobu')}</button>
+            </form>
+          </TitleBox>
+          <TagsSection base={base} tags={tags} />
 
-          <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
-
-          <div class="side-section">
-            <h4>{tr('Firmy')}</h4>
+          <div class="field-row field-plain">
+            <span class="field-label">{tr('Firmy')}</span>
             {firms.map((f) => (
               <div class="person-row">
                 <span class={`av av-sm ${avColor(f.name)}`}>{initials(f.name)}</span>
@@ -250,21 +254,12 @@ osobyRoutes.get('/osoby/:id', async (c) => {
                 </span>
               </div>
             ))}
-            {firms.length === 0 ? (
-              <p class="sub m0" style="padding:.2rem 0">{tr('Zatím není u žádné firmy. Přiřadíš ji na detailu firmy.')}</p>
-            ) : null}
+            {firms.length === 0 ? <span class="placeholder">{tr('— žádná —')}</span> : null}
           </div>
+
+          <ContactsSection base={base} contacts={contacts} labels={labels} allTags={allTags} assignedTags={tags} />
 
           <NoteSection base={base} value={p.note} />
-
-          <div class="side-section" style="border-top-style:dashed;display:flex;gap:1rem;align-items:center">
-            <button class="subtle-action" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
-              {tr('Upravit osobu')}
-            </button>
-            <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto osobu?')}')`}>
-              <button class="btn btn-sm btn-danger" type="submit">{tr('Smazat osobu')}</button>
-            </form>
-          </div>
         </aside>
 
         {/* B) Střední panel — živá zóna (realtime) */}

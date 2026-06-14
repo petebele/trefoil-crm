@@ -5,21 +5,32 @@
    Viz src/web/skins.ts.
    ============================================================ */
 
+/* Webfonty: Inter (UI/tělo), Poppins (nadpisy/brand), JetBrains Mono (kód/ID).
+   Pozn.: pro plně offline provoz lze self-hostovat do public/fonts a nahradit @import @font-face. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
   --radius: 12px;
   --radius-sm: 8px;
   font-size: 16px;
+  /* Písma — jeden zdroj pravdy (přepiš jen tady) */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-head: "Poppins", var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "Cascadia Code", Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--ink);
   font-size: 0.875rem;            /* 14px tělo */
   line-height: 1.5;
 }
+/* Nadpisy/brand = Poppins; kód/ID = JetBrains Mono */
+h1, h2, h3, .record-name, .field-strong { font-family: var(--font-head); }
+code, kbd, samp, pre, .mono { font-family: var(--font-mono); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 svg { display: block; }
@@ -122,8 +133,8 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .chip {
   display: inline-flex; align-items: center;
   background: var(--chip-bg); color: var(--ink);
-  border-radius: 999px; padding: .1rem .6rem;
-  font-size: .75rem; font-weight: 500; white-space: nowrap;
+  border-radius: 999px; padding: .16rem .66rem;
+  font-size: .76rem; font-weight: 500; white-space: nowrap;
 }
 .chip-soft-teal { background: var(--teal-soft); color: var(--teal-ink); }
 .chip-soft-gray { background: var(--chip-bg); color: var(--muted); }
@@ -386,28 +397,64 @@ summary.subtle-action::marker { content: ''; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .modal-head h3 { margin: 0; }
 
-/* ---------- Inline editace ---------- */
+/* ---------- Editace pole = klik na TUŽKU (KOMPONENTY §18) ---------- */
+/* Spouštěč editace je VÝHRADNĚ tužka ✎ (zakulacený čtverec, styl jako ikonky menu).
+   Hodnota/řádek se na hover jen jemně podbarví (indikace kontextu); text zůstává
+   volně označitelný (žádná nechtěná editace při výběru/kopírování). */
 .editable {
-  cursor: pointer;
-  border-radius: 6px;
-  padding: .12rem .35rem;
-  margin: -.12rem -.35rem;
+  position: relative; border-radius: 6px;
+  padding: .15rem 1.9rem .15rem .4rem; margin: 0 -.4rem;
   transition: background-color .12s ease;
 }
-.editable:hover { background: var(--surface-2); }
-.editable:hover::after {
-  content: '✎';
-  opacity: .45;
-  margin-left: .4rem;
-  font-size: .8em;
+.editable:hover { background: rgba(var(--shadow-color), .05); }
+/* tužka = JEDINÝ spouštěč; navazuje na ikonky hlavního menu (.nico): zakulacený čtverec,
+   objeví se na hover řádku, po najetí na ni se podbarví akcentem */
+.pen-ind {
+  position: absolute; top: .18rem; right: .22rem; display: grid; place-items: center;
+  width: 24px; height: 24px; border-radius: 8px; color: var(--muted); cursor: pointer;
+  border: none; background: none; padding: 0; font: inherit;
+  opacity: 0; transition: opacity .12s, background-color .12s, color .12s;
 }
-.editable:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  background: var(--surface-2);
+.pen-ind svg { width: 14px; height: 14px; }
+.editable:hover .pen-ind, .pen-ind:focus-visible { opacity: 1; }
+.pen-ind:hover { background: var(--accent-soft); color: var(--accent); }
+.pen-ind:focus-visible { opacity: 1; background: var(--accent-soft); color: var(--accent); outline: 2px solid var(--accent); }
+@media (hover: none) { .pen-ind { opacity: 1; } }
+/* okamžitý tooltip JEN na tužce (ne na celém řádku) */
+.pen-ind[data-tip]:hover::after, .pen-ind[data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); right: 0;
+  background: var(--ink); color: var(--bg); font-size: .72rem; font-weight: 500;
+  padding: .2rem .5rem; border-radius: 6px; white-space: nowrap; z-index: 250; pointer-events: none;
 }
-.inline-form { display: flex; gap: .45rem; align-items: flex-start; }
-.inline-form .input { min-width: 0; flex: 1; }
+/* prázdná hodnota = výzva k doplnění */
+.editable .placeholder { color: var(--muted); font-style: italic; }
+/* prázdný stav v panelu (vlevo, default odsazení): „Žádná poznámka. Přidat poznámku."
+   (POZOR: globální .empty je vycentrovaný s paddingem pro dashboardy — zde nepoužívat) */
+.empty-inline { color: var(--muted); font-weight: 400; font-style: normal; }
+.emptylink { color: var(--accent); cursor: pointer; }
+.emptylink:hover { text-decoration: underline; }
+/* hodnota uvnitř textu (víc hodnot v jednom řádku): čárkované podtržení (vždy viditelné) */
+.editable-inline {
+  cursor: pointer; border-bottom: 1px dashed var(--muted);
+  border-radius: 4px 4px 0 0; padding: 0 .12rem 1px; margin: 0 -.12rem;
+}
+.editable-inline:hover { background: var(--surface-2); border-bottom-color: var(--accent); }
+
+/* pole jako ŘÁDEK: popisek NAD hodnotou */
+.field-row { border-top: 1px solid var(--line); }
+.field-row:first-child { border-top: none; }
+.menu.field-row { display: block; }
+.menu.field-row > .editable { display: block; padding-top: .42rem; padding-bottom: .42rem; }
+.field-label { display: block; color: var(--muted); font-size: .72rem; margin-bottom: .04rem; }
+.field-strong { font-weight: 700; font-size: 1.05rem; }
+.field-plain { padding: .42rem 0; }
+
+/* mini-panel editace: flip nad pole (app.js); užší pro jednořádkové vstupy, středně pro textareu */
+.menu.up > .menu-list { top: auto; bottom: calc(100% + 6px); }
+.menu-list.panel.wide { width: 300px; max-width: calc(100vw - 24px); }
+.menu-list.panel.area { width: 380px; max-width: calc(100vw - 24px); }
+.menu-list.panel.wide .input, .menu-list.panel.area .input { width: 100%; }
+textarea.input[data-autogrow] { resize: none; overflow-y: hidden; min-height: 0; }
 
 /* ---------- Utility ---------- */
 .m0 { margin: 0; }

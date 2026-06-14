@@ -13,6 +13,8 @@ import {
   peopleOfClient,
   linkPersonToClient,
   unlinkPersonFromClient,
+  clientDisplayName,
+  composeAddress,
 } from '../domain/clients';
 import { listCustomerPersons, createCustomerPerson, listCoworkers } from '../domain/people';
 import { itemsByKey, listEntityTags, addEntityTag, removeEntityTag } from '../domain/lists';
@@ -22,8 +24,9 @@ import { readForm } from '../lib/util';
 import {
   initials,
   avColor,
+  EditField,
   EmptyState,
-  TitleBox,
+  PencilIcon,
   NoteSection,
   StatusBox,
   OwnerBox,
@@ -32,6 +35,7 @@ import {
   DetailTabs,
   EventRow,
   Picker,
+  KebabMenu,
   ModalShell,
   ModalContactRows,
 } from './components';
@@ -79,6 +83,10 @@ firmyRoutes.get('/firmy/modal/nova', async (c) => {
   return c.html(
     <ModalShell title={tr('Nová firma')}>
       <form method="post" action="/firmy">
+        <div class="field">
+          <label>{tr('Název zákazníka')}</label>
+          <input class="input" name="display_name" placeholder={tr('zkrácený název do hlavičky (nepovinné)')} />
+        </div>
         <div class="field">
           <label>{tr('Název firmy')} <span class="req">*</span></label>
           <input class="input" name="name" required autofocus />
@@ -129,13 +137,23 @@ firmyRoutes.get('/firmy/:id/modal/upravit', async (c) => {
     <ModalShell title={`${tr('Upravit firmu')} · ${client.name}`}>
       <form method="post" action={`/firmy/${client.id}/upravit`}>
         <div class="field">
+          <label>{tr('Název zákazníka')} <span class="help" style="display:inline;margin-left:.4rem">{tr('do hlavičky; prázdné = Název firmy')}</span></label>
+          <input class="input" name="display_name" value={client.display_name ?? ''} placeholder={client.name} autofocus />
+        </div>
+        <div class="field">
           <label>{tr('Název firmy')} <span class="req">*</span></label>
-          <input class="input" name="name" value={client.name} required autofocus />
+          <input class="input" name="name" value={client.name} required />
         </div>
         <div class="field"><label>{tr('Web')}</label><input class="input" name="website" value={client.website ?? ''} placeholder="https://…" /></div>
         <div class="field"><label>{tr('IČO')}</label><input class="input" name="ico" value={client.ico ?? ''} /></div>
         <div class="field"><label>{tr('DIČ')}</label><input class="input" name="dic" value={client.dic ?? ''} /></div>
-        <div class="field"><label>{tr('Adresa')}</label><textarea class="input" name="address" rows={2}>{client.address ?? ''}</textarea></div>
+        <div class="opt-group" style="padding-left:0">{tr('Adresa')}</div>
+        <div class="field"><label>{tr('Ulice')}</label><input class="input" name="street" value={client.street ?? ''} /></div>
+        <div class="field"><label>{tr('Č.p./č.o.')}</label><input class="input" name="house_no" value={client.house_no ?? ''} /></div>
+        <div class="field"><label>{tr('Adresa, 2. řádek')}</label><input class="input" name="address2" value={client.address2 ?? ''} /></div>
+        <div class="field"><label>{tr('Město')}</label><input class="input" name="city" value={client.city ?? ''} /></div>
+        <div class="field"><label>{tr('PSČ')}</label><input class="input" name="postal_code" value={client.postal_code ?? ''} /></div>
+        <div class="field"><label>{tr('Stát')}</label><input class="input" name="country" value={client.country ?? ''} /></div>
         <div class="field">
           <label>{tr('Stav')}</label>
           <select class="input" name="status">
@@ -173,22 +191,33 @@ firmyRoutes.post('/firmy/:id/upravit', async (c) => {
   const name = f.str('name');
   if (!name) return c.redirect(`/firmy/${client.id}`);
 
+  const addr = {
+    street: f.strOrNull('street'),
+    house_no: f.strOrNull('house_no'),
+    address2: f.strOrNull('address2'),
+    city: f.strOrNull('city'),
+    postal_code: f.strOrNull('postal_code'),
+    country: f.strOrNull('country'),
+  };
   const data = {
     name,
+    displayName: f.strOrNull('display_name'),
     website: f.strOrNull('website'),
     ico: f.strOrNull('ico'),
     dic: f.strOrNull('dic'),
-    address: f.strOrNull('address'),
+    address: addr,
     status: f.str('status') || client.status,
     ownerId: f.raw('owner_id') || null,
     note: f.strOrNull('note'),
   };
+  const newAddr = composeAddress(addr).join('\n') || null;
   const changes: string[] = [];
-  if (client.name !== data.name) changes.push('název');
+  if (client.name !== data.name) changes.push('název firmy');
+  if ((client.display_name ?? null) !== data.displayName) changes.push('název zákazníka');
   if ((client.website ?? null) !== data.website) changes.push('web');
   if ((client.ico ?? null) !== data.ico) changes.push('IČO');
   if ((client.dic ?? null) !== data.dic) changes.push('DIČ');
-  if ((client.address ?? null) !== data.address) changes.push('adresa');
+  if ((client.address ?? null) !== newAddr) changes.push('adresa');
   if (client.status !== data.status) changes.push('stav');
   if ((client.owner_id ?? null) !== data.ownerId) changes.push('odpovědná osoba');
   if ((client.note ?? null) !== data.note) changes.push('poznámka');
@@ -257,6 +286,7 @@ firmyRoutes.post('/firmy', async (c) => {
 
   const id = await createClient(t, {
     name,
+    displayName: f.strOrNull('display_name'),
     website: f.strOrNull('website'),
     ico: f.strOrNull('ico'),
     dic: f.strOrNull('dic'),
@@ -272,46 +302,73 @@ firmyRoutes.post('/firmy', async (c) => {
   return c.redirect(`/firmy/${id}`);
 });
 
-/** Firemní údaje: hodnoty jako text; zadání/úprava přes typizovaný malý modál. */
-function FirmFieldsSection(props: { base: string; client: { website: string | null; ico: string | null; dic: string | null; address: string | null } }) {
-  const c = props.client;
-  const defs = [
-    ['Web', c.website],
-    ['IČO', c.ico],
-    ['DIČ', c.dic],
-    ['Adresa', c.address],
-  ] as const;
-  const filled = defs.filter(([, v]) => v);
-  // Akce v řádku nadpisu — ⋯ vždy viditelné (indikace), prázdná sekce má textovou akci.
+type FirmField = 'website' | 'ico' | 'dic' | 'address';
+
+/** Jeden firemní údaj — klik na hodnotu (nebo „— doplnit —") otevře mini-panel. */
+export function ClientField(props: { base: string; field: FirmField; label: string; value: string | null; textarea?: boolean }) {
+  const id = `f-${props.field}`;
   return (
-    <div class="side-section" id="firm-udaje">
-      <h4>
-        {tr('Firemní údaje')}
-        <span>
-          <Picker
-            id="firmUdaje"
-            trigger={filled.length ? '⋯' : tr('Zadat údaje')}
-            triggerClass={filled.length ? 'icon-btn' : 'subtle-action'}
-            triggerLabel={tr('Firemní údaje — zadat nebo upravit')}
-            alignRight={filled.length > 0}
-          >
-            <form hx-post={`${props.base}/udaje`} hx-target="#firm-udaje" hx-swap="outerHTML" class="m0">
-              <div class="opt-group" style="padding-left:0">{tr('Firemní údaje')}</div>
-              <input class="input" name="website" value={c.website ?? ''} placeholder={tr('Web')} aria-label={tr('Web')} />
-              <input class="input" name="ico" value={c.ico ?? ''} placeholder={tr('IČO')} aria-label={tr('IČO')} />
-              <input class="input" name="dic" value={c.dic ?? ''} placeholder={tr('DIČ')} aria-label={tr('DIČ')} />
-              <textarea class="input" name="address" placeholder={tr('Adresa')} aria-label={tr('Adresa')} rows={2}>{c.address ?? ''}</textarea>
-              <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Uložit')}</button>
-            </form>
-          </Picker>
-        </span>
-      </h4>
-      {filled.map(([label, v]) => (
-        <div class="fact">
-          <span class="val" style="white-space:pre-wrap">{v}</span>
-          <span class="lbl">{tr(label)}</span>
+    <EditField
+      id={id}
+      topLabel={props.label}
+      label={props.label}
+      wide
+      value={props.value ? <span style="white-space:pre-wrap">{props.value}</span> : <span class="placeholder">{tr('— doplnit —')}</span>}
+    >
+      <form hx-post={`${props.base}/pole/${props.field}`} hx-target={`#${id}`} hx-swap="outerHTML" class="m0">
+        <div class="opt-group" style="padding-left:0">{props.label}</div>
+        {props.textarea ? (
+          <textarea class="input" name="value" rows={2} data-autogrow aria-label={props.label} style="width:100%">{props.value ?? ''}</textarea>
+        ) : (
+          <input class="input" name="value" value={props.value ?? ''} aria-label={props.label} style="width:100%" />
+        )}
+        <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.4rem">{tr('Uložit')}</button>
+      </form>
+    </EditField>
+  );
+}
+
+/** Firemní údaje (fakturační) — celý blok otevírá velký modál; spouštěč = tužka. */
+function FirmInfoBlock(props: {
+  base: string;
+  client: {
+    name: string; website: string | null; ico: string | null; dic: string | null;
+    street: string | null; house_no: string | null; address2: string | null;
+    city: string | null; postal_code: string | null; country: string | null; address: string | null;
+  };
+}) {
+  const c = props.client;
+  const addr = composeAddress(c);
+  const web = c.website ? (c.website.startsWith('http') ? c.website : `https://${c.website}`) : null;
+  return (
+    <div class="field-row" id="f-firma-info">
+      <div class="editable" style="display:block;padding-top:.42rem;padding-bottom:.42rem">
+        <span class="field-label">{tr('Firemní údaje')}</span>
+        <div style="font-weight:500">{c.name}</div>
+        {addr.length ? (
+          <div style="margin-top:.1rem">{addr.map((l) => <div>{l}</div>)}</div>
+        ) : (
+          <div style="margin-top:.1rem">
+            <span class="empty-inline">
+              {tr('Žádná uvedená adresa.')}{' '}
+              <a class="emptylink" hx-get={`${props.base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Vyplnit adresu.')}</a>
+            </span>
+          </div>
+        )}
+        <div style="display:flex;gap:1.6rem;margin-top:.4rem">
+          <div><span class="field-label">{tr('IČO')}</span>{c.ico ?? '—'}</div>
+          <div><span class="field-label">{tr('DIČ')}</span>{c.dic ?? '—'}</div>
         </div>
-      ))}
+        {web ? (
+          <div style="margin-top:.3rem">
+            <span class="field-label">{tr('Web')}</span>
+            <a href={web} target="_blank" rel="noreferrer">{c.website}</a>
+          </div>
+        ) : null}
+        <button type="button" class="pen-ind" data-tip={tr('Upravit firemní údaje')} aria-label={tr('Upravit firemní údaje')} hx-get={`${props.base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
+          <PencilIcon />
+        </button>
+      </div>
     </div>
   );
 }
@@ -370,6 +427,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
     listCatalog(t),
   ]);
   const base = `/firmy/${client.id}`;
+  const dn = clientDisplayName(client);
   const linkedIds = new Set(people.map((p) => p.id));
   const peopleContacts = await contactsForOwners(t, 'person', people.map((p) => p.id));
   const peopleWith = people.map((p) => ({ ...p, contacts: peopleContacts.filter((x) => x.owner_id === p.id) }));
@@ -383,29 +441,30 @@ firmyRoutes.get('/firmy/:id', async (c) => {
       : undefined;
 
   return c.html(
-    <Layout title={client.name} person={person} modules={c.get('modules')} active="zakaznici">
+    <Layout title={dn} person={person} modules={c.get('modules')} active="zakaznici">
       <div class="detail-grid">
         {/* A) Levý panel */}
         <aside class="card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem">
-            <span class={`av av-lg ${avColor(client.name)}`}>{initials(client.name)}</span>
-            <StatusBox base={base} value={client.status} items={statusItems} />
-          </div>
-          <div style="margin-top:.45rem">
-            <TitleBox base={base} label="Název firmy" value={client.name}>
-              <div style="border-top:1px solid var(--line);margin:.3rem 0 .1rem" />
-              <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
-                {tr('Upravit firmu')}
-              </button>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.3rem">
+            <span class={`av av-lg ${avColor(dn)}`}>{initials(dn)}</span>
+            <KebabMenu id="firmActions" label={tr('Akce firmy')}>
+              <button class="opt" type="button" hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit firemní údaje')}</button>
               <form method="post" action={`${base}/smazat`} class="m0" onsubmit={`return confirm('${tr('Opravdu smazat tuto firmu? Osoby zůstanou zachované.')}')`}>
                 <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat firmu')}</button>
               </form>
-            </TitleBox>
+            </KebabMenu>
           </div>
-          <div style="margin:.4rem 0 .6rem">
-            <TagsSection base={base} tags={tags} />
+          <div class="editable" style="display:block;margin-bottom:.2rem">
+            <span class="field-strong">{dn}</span>
+            <button type="button" class="pen-ind" data-tip={tr('Upravit firemní údaje')} aria-label={tr('Upravit firemní údaje')} hx-get={`${base}/modal/upravit`} hx-target="#modal" hx-swap="innerHTML">
+              <PencilIcon />
+            </button>
           </div>
+          {/* Hlavička: stav + štítky u identity */}
+          <StatusBox base={base} value={client.status} items={statusItems} />
+          <TagsSection base={base} tags={tags} />
 
+          {/* Lidé + Kontakty */}
           <ContactsSection
             base={base}
             contacts={contacts}
@@ -417,8 +476,10 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             unlinkBase={base}
           />
 
-          <FirmFieldsSection base={base} client={client} />
+          {/* Firemní údaje (fakturační) */}
+          <FirmInfoBlock base={base} client={client} />
 
+          {/* Odpovědná osoba */}
           <OwnerBox
             base={base}
             owner={coworkers.find((u) => u.id === client.owner_id) ?? null}
@@ -426,7 +487,6 @@ firmyRoutes.get('/firmy/:id', async (c) => {
           />
 
           <NoteSection base={base} value={client.note} />
-
         </aside>
 
         {/* B) Střední panel — živá zóna (realtime) */}
@@ -518,8 +578,8 @@ firmyRoutes.post('/firmy/:id/pole/:field', async (c) => {
     await logEvent(t, 'client', id, person.id, `${meta.label}: ${value ?? '—'}`);
   }
   if (field === 'note') return c.html(<NoteSection base={`/firmy/${id}`} value={value} />);
-  if (field === 'name') return c.html(<TitleBox base={`/firmy/${id}`} label="Název firmy" value={value ?? client.name} />);
-  return c.html(<span>{value ?? '—'}</span>);
+  // název / web / IČO / DIČ / adresa se editují přes velký modál „Firemní údaje" → sem už UI nechodí
+  return c.redirect(`/firmy/${id}`);
 });
 
 // ---------- odpovědná osoba ----------
@@ -654,33 +714,6 @@ firmyRoutes.post('/firmy/:id/kontakt/:cid/smazat', async (c) => {
 });
 
 // ---------- lidé (vazby) ----------
-
-// ---------- firemní údaje (malý modál) ----------
-
-firmyRoutes.post('/firmy/:id/udaje', async (c) => {
-  const person = c.get('person')!;
-  const t = person.tenant_id;
-  const id = c.req.param('id');
-  const client = await getClient(t, id);
-  if (!client) return c.notFound();
-  const f = readForm(await c.req.parseBody());
-
-  const fields = [
-    ['website', 'Web', client.website],
-    ['ico', 'IČO', client.ico],
-    ['dic', 'DIČ', client.dic],
-    ['address', 'Adresa', client.address],
-  ] as const;
-  for (const [field, label, old] of fields) {
-    const value = f.strOrNull(field);
-    if (value !== old) {
-      await updateClientField(t, id, field, value);
-      await logEvent(t, 'client', id, person.id, `${label}: ${value ?? '—'}`);
-    }
-  }
-  const updated = await getClient(t, id);
-  return c.html(<FirmFieldsSection base={`/firmy/${id}`} client={updated!} />);
-});
 
 // ---------- velký modál: kompletní nová osoba ----------
 

@@ -52,11 +52,19 @@ export interface ClientsTable {
   id: string;
   tenant_id: string;
   kind: 'company' | 'person';
-  name: string;
+  name: string; // Název firmy (právní/fakturační název)
+  display_name: string | null; // Název zákazníka (zkrácený, do hlavičky); prázdné → fallback na name
   ico: string | null;
   dic: string | null;
   website: string | null;
-  address: string | null;
+  address: string | null; // legacy volný text — fallback, když nejsou strukturovaná pole
+  // strukturovaná (mezinárodní) adresa
+  street: string | null;
+  house_no: string | null; // č.p./č.o.
+  address2: string | null; // 2. řádek adresy
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
   status: string; // hodnota ze Seznamu client_statuses
   owner_id: string | null; // odpovědná osoba (kolega)
   note: string | null;

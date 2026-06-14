@@ -5,6 +5,34 @@ import type { ClientsTable } from '../db/schema';
 
 /** Firmy (zákazníci typu společnost) a vazby na osoby. */
 
+export type ClientAddressInput = {
+  street: string | null;
+  house_no: string | null;
+  address2: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+};
+
+/** Zobrazované jméno firmy: Název zákazníka (zkrácený) s fallbackem na Název firmy. */
+export function clientDisplayName(c: { display_name?: string | null; name: string }): string {
+  return c.display_name?.trim() || c.name;
+}
+
+/** Adresa pro zobrazení: poskládá strukturovaná pole; fallback na legacy volný text. */
+export function composeAddress(c: {
+  street?: string | null; house_no?: string | null; address2?: string | null;
+  city?: string | null; postal_code?: string | null; country?: string | null; address?: string | null;
+}): string[] {
+  const clean = (x: string | null | undefined) => (x ?? '').trim();
+  const l1 = [clean(c.street), clean(c.house_no)].filter(Boolean).join(' ');
+  const l3 = [clean(c.postal_code), clean(c.city)].filter(Boolean).join(' ');
+  const lines = [l1, clean(c.address2), l3, clean(c.country)].filter(Boolean);
+  if (lines.length) return lines;
+  const legacy = clean(c.address);
+  return legacy ? legacy.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
+}
+
 export async function listClients(tenantId: string, q?: string) {
   let query = db
     .selectFrom('clients')
@@ -28,10 +56,21 @@ export async function getClient(tenantId: string, id: string) {
 
 export async function createClient(
   tenantId: string,
-  data: { name: string; website?: string | null; ico?: string | null; dic?: string | null; status?: string; ownerId?: string | null; note?: string | null },
+  data: {
+    name: string;
+    displayName?: string | null;
+    website?: string | null;
+    ico?: string | null;
+    dic?: string | null;
+    status?: string;
+    ownerId?: string | null;
+    note?: string | null;
+    address?: Partial<ClientAddressInput> | null;
+  },
 ): Promise<string> {
   const id = newId();
   const ts = now();
+  const a = data.address ?? {};
   await db
     .insertInto('clients')
     .values({
@@ -39,10 +78,17 @@ export async function createClient(
       tenant_id: tenantId,
       kind: 'company',
       name: data.name,
+      display_name: data.displayName ?? null,
       ico: data.ico ?? null,
       dic: data.dic ?? null,
       website: data.website ?? null,
       address: null,
+      street: a.street ?? null,
+      house_no: a.house_no ?? null,
+      address2: a.address2 ?? null,
+      city: a.city ?? null,
+      postal_code: a.postal_code ?? null,
+      country: a.country ?? null,
       status: data.status ?? 'lead',
       owner_id: data.ownerId ?? null,
       note: data.note ?? null,
@@ -64,23 +110,34 @@ export async function updateClientMain(
   id: string,
   data: {
     name: string;
+    displayName: string | null;
     website: string | null;
     ico: string | null;
     dic: string | null;
-    address: string | null;
+    address: ClientAddressInput;
     status: string;
     ownerId: string | null;
     note: string | null;
   },
 ): Promise<void> {
+  const a = data.address;
+  // legacy `address` držíme synchronní s poskládanou strukturou (kvůli starším výpisům)
+  const legacy = composeAddress(a).join('\n') || null;
   await db
     .updateTable('clients')
     .set({
       name: data.name,
+      display_name: data.displayName,
       website: data.website,
       ico: data.ico,
       dic: data.dic,
-      address: data.address,
+      street: a.street,
+      house_no: a.house_no,
+      address2: a.address2,
+      city: a.city,
+      postal_code: a.postal_code,
+      country: a.country,
+      address: legacy,
       status: data.status,
       owner_id: data.ownerId,
       note: data.note,
