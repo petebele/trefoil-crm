@@ -12,12 +12,19 @@
 > průvodcem (žádný hardcoded „conviu" login). Slovo „Conviu" zůstává už jen ve **firemním**
 > kontextu (agentura, doména `conviu.cz`) a v historických pasážích níže.
 
-## 0) Rychlý stav k 2026-06-14 (aktualizováno průběžně)
+## 0) Rychlý stav k 2026-06-15 (aktualizováno průběžně)
+
+> **Kde jsme naposledy v chatu skončili (2026-06-15):** dostavěn a **pushnut Kanban úkolů**
+> (commit `0a29a7b`). Probrali jsme **dvoustupňovou uzávěrku měsíce** a **napojení výkazů
+> na úkoly** — zatím jen návrh/brainstorm, sepsáno v [AUTOMATION.md](AUTOMATION.md)
+> + [VIZE](VIZE-ukoly-projekty-poznamky.md). **Stavba napojení výkazů ↔ úkolů je DALŠÍ na řadě**
+> (příští sezení). Detaily dohody níže v bodu „Poslední domluva".
 
 - Aplikace běží lokálně (port 3000, launcher na ploše). Stack: TS + Hono + SQLite + htmx.
 - Funguje: Zákazníci (firmy/osoby/kontakty/detail/Historie), Administrace
   (Moduly, Tým, katalog Služeb), Služby u zákazníka (+ „Měsíčně celkem" / billing),
-  Výkazy práce (`/vykazy`: Můj výkaz, Schvalování, Přehled), systém SKINŮ (7 motivů).
+  Výkazy práce (`/vykazy`: Můj výkaz, Schvalování, Přehled), **Úkoly** (Agenda + **Kanban**),
+  systém SKINŮ (7 motivů).
 - Projekt byl 2026-06-14 PŘESUNUT do `D:\Internet\Trefoil CRM`;
   git repo je `petebele/trefoil-crm`.
 - Přidáno po 2026-06-14:
@@ -34,8 +41,25 @@
   - Tým (kolegové): **Pozice** (text) + vlastní **Kontakty** (modál v Administraci · Tým).
   - Rebrand Conviu → Trefoil dokončen i v kódu (package.json, skiny `trefoil-*`, titulky);
     revizní Tier-1 nálezy (fmtMinutes, tenant-scope kontaktů, SSE smyčka, try-catch migrace) hotové.
-- Další na řadě: ÚKOLY + plnohodnotná NÁSTĚNKA (vč. auto-úkolu „schval výkazy").
-  Pak Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
+- Přidáno 2026-06-15 — **Kanban úkolů** (commit `0a29a7b`):
+  - Úkoly mají dva pohledy: **Agenda** (seznam dle termínu; „Vše" nově ukazuje i hotové)
+    a **Kanban** (sloupce per uživatel, `task_statuses`).
+  - Sloupce mají barvu a příznaky `is_done` (stav „vyřízeno", výlučně jeden) a
+    `is_default` (povinný **Inbox** — nezařazené + nové úkoly, napříč měsíci, nelze smazat).
+  - **Měsíční loop**: board je vázaný na měsíc; uzávěrka přesune nehotové do dalšího
+    měsíce a archivuje hotové. Archiv = příznak, lze obnovit.
+  - Drag & drop karet i sloupců přímo na boardu, správa sloupců přes ⋯ (název/barva/stav/smazat).
+
+- **Poslední domluva (2026-06-15) — zatím NÁVRH, nestavěno** (detail v [AUTOMATION.md](AUTOMATION.md)):
+  - **Dvoustupňová uzávěrka:** (1) **provozní** (specialista, per board) — nezamyká,
+    jen přesun nehotových + archivace hotových + report „za svoji práci" + notifikace manažerovi;
+    (2) **finanční** (jen manažer, per klient, až uzavřou všichni specialisté) — převod
+    nevyčerpaného paušálu + podklady pro fakturaci + (do budoucna) zámek období.
+  - **Výkazy ↔ úkoly:** „Vykázat práci" z karty úkolu i z ⋯ → nový výkaz s předvyplněným
+    úkolem a klientem. Výkaz může (ale nemusí) odkazovat na úkol, **vždy** musí na klienta.
+    Většina úkolů čas/výkaz nemá; čas i výkaz jde zadat i bez úkolu. **Timer zatím neřešíme.**
+- Další na řadě: **napojení výkazů na úkoly** (viz Poslední domluva výše), pak plnohodnotná
+  NÁSTĚNKA / Inbox, Poznámky u klienta, Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
 
 ## 1) Kontext — kdo, co, proč
 
