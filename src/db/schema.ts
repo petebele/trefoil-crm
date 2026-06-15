@@ -18,6 +18,7 @@ export interface Database {
   services: ServicesTable;
   work_records: WorkRecordsTable;
   tasks: TasksTable;
+  task_statuses: TaskStatusesTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -191,10 +192,29 @@ export interface TasksTable {
   client_id: string | null; // vazba na zákazníka (volitelná)
   assignee_id: string | null; // kdo má úkol splnit
   due_at: string | null; // termín (YYYY-MM-DD)
-  done: number; // 0/1
+  done: number; // 0/1 — „vyřízeno"; drží se v synchronu se stavem is_done
   done_at: string | null;
+  // Kanban (Úkoly v2)
+  status_id: string | null; // sloupec/stav (task_statuses řešitele); null = odvodí se z done
+  prev_status_id: string | null; // stav před přesunem do „Hotovo" (pro odškrtnutí)
+  archived: number; // 0/1 — skryto z boardu, zůstává v historii
+  board_month: string | null; // YYYY-MM; null = trvalý/osobní board
+  sort_order: number; // pořadí karty ve sloupci
   source_kind: string | null; // u auto‑úkolů původ záznamu, např. 'work_record'
   source_id: string | null;
   created_by_id: string | null;
+  created_at: string;
+}
+
+/** Stavy úkolů = sloupce Kanbanu, konfigurovatelné PER UŽIVATEL (Úkoly v2). */
+export interface TaskStatusesTable {
+  id: string;
+  tenant_id: string;
+  owner_id: string; // čí board (persons.id)
+  label: string;
+  color: string | null;
+  sort_order: number;
+  is_done: number; // 0/1 — „stav vyřízeného úkolu" (default u „Hotovo")
+  is_default: number; // 0/1 — povinný „Inbox/Zásobník": nové + nezařazené úkoly, nelze smazat
   created_at: string;
 }

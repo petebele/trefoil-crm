@@ -51,7 +51,8 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 | `milestones` | Milníky zakázky: název, termín, hotovo, pořadí. |
 | `deals` | Příležitost: klient (volitelně), titulek, fáze (ze Seznamu — pipeline), hodnota, odpovědný, očekávaná uzávěrka, zdroj. |
 | `activities` | Timeline: klient, volitelně osoba, `type` note/email/call/meeting, text, kdy, autor. |
-| `tasks` | Úkol: titulek, kategorie (ze Seznamu), volitelně klient/zakázka/deal, termín `due_at`, odklad `remind_at`, hotovo, přiřazený. |
+| `tasks` | Úkol: titulek, kategorie (ze Seznamu), volitelně klient/zakázka/deal, termín `due_at`, hotovo, přiřazený. **Kanban (v2):** `status_id`→`task_statuses` (sloupec; null = odvodí se z `done`), `prev_status_id` (návrat po odškrtnutí), `archived` 0/1, `board_month` (`YYYY-MM`; null = trvalý/osobní board), `sort_order`. „Vyřízeno" (`done`) ⇄ stav s `is_done` se drží v synchronu. |
+| `task_statuses` | **Stavy = sloupce Kanbanu, PER UŽIVATEL** (`owner_id`→persons): `label`, `color`, `sort_order`, `is_done` (stav vyřízeného úkolu), **`is_default`** (povinný **Inbox/Zásobník** — nové + nezařazené úkoly; nelze smazat, lze přejmenovat). Výchozí sada (lazy): **Nový** (`is_default`) · Vyřizuji · Kontrola · Hotovo (`is_done`). Inbox je na boardu **cross‑month** (vždy viditelný), ostatní sloupce ukazují vybraný měsíc. Správa sloupců (název/barva/pořadí/přidat/smazat) je **přímo na boardu**. |
 | `tenants` | Organizace (nositel multi-tenant připravenosti). |
 
 **Fakturační model (hybrid — finální podoba 12. 6. 2026, vzor Accelo/Productive,

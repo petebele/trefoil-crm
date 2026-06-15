@@ -44,16 +44,29 @@
 - **Custom pole** — architektura s nimi **počítá**, ale **zatím NEstavět**.
 - **Šablony** — spíš na úrovni projektů (viz §5).
 
-## 4. Stavy + akceptace (workflow úkolu)
+## 4. Stavy (= sloupce Kanbanu) a „vyřízeno"
 
-Přiřazený úkol prochází konfigurovatelným workflowem, výchozí návrh:
-
-**Čeká na přijetí → Akceptováno / Dělám → (Pozastaveno do …) → K ověření → Hotovo / Vyřízeno.**
-
-- **Akceptace** = přiřazený kolega **vědomě potvrdí převzetí** úkolu (přijme odpovědnost).
-- Po dokončení kolegou se úkol nepřepne rovnou na hotovo, ale na **„k ověření"** — manažer
-  ho **ověří** (tahle dvojkroková kontrola je častý agenturní vzor a váže se na automatizace §7).
-- **Stavy se mapují na sloupce Kanbanu.** Sada stavů je číselník (jako kategorie/štítky).
+- **Stavy = sloupce Kanbanu**, číselník **konfigurovatelný per uživatel** (přejmenovat, přebarvit,
+  **přeřadit drag‑drop přímo na boardu**, přidat/odebrat) — do budoucna možnost **vynutit sdílené
+  stavy per Organizaci**. Úkol má **právě jeden stav** (≠ štítky, kterých může mít víc). Výchozí sada:
+  **Nový · Vyřizuji · Kontrola · Hotovo**.
+- **První stav = povinný „Inbox/Zásobník" (`is_default`)** — sem padají **nové i nezařazené** úkoly
+  („k roztřídění a naplánování"). **Nelze smazat**, lze přejmenovat. Na měsíčním boardu je
+  **cross‑month** (vždy viditelný), ostatní sloupce ukazují vybraný měsíc; přetažení z Inboxu do
+  sloupce = naplánování do měsíce. Když je jediný sloupec, slouží i jako sklad hotových.
+- **„Vyřízeno" = stav „Hotovo" (jeden fakt, drží se v synchronu).** Stav s příznakem **`is_done`**
+  (default „Hotovo") znamená vyřízeno; **zaškrtnutí checkboxu** úkol do „Hotovo" přesune (a `done=1`),
+  **odškrtnutí** vrátí zpět. Checkbox a sloupec „Hotovo" jsou tak **dvě páčky na tutéž věc** →
+  konzistence napříč pohledy (agenda × kanban); vyřízený úkol nikdy „nezůstane mezi nehotovými".
+- **Archiv = příznak (`archived`), ne sloupec** (vzor Trello/Linear): hotové se jedním klikem
+  („Archivovat hotové") nebo při uzávěrce měsíce **skryjí z boardu, ale zůstanou v historii** (lze
+  obnovit). Detaily v `docs/specs/ukoly-v2-kanban.md`.
+- **„Šablony stavů"** (à la ClickUp) — předdefinované sady stavů / podoby kanbanu (např. jiná sada
+  pro projekty, jiná pro osobní agendu). **Budoucnost**, teď jen jedna výchozí sada.
+- **Akceptace / delegace je SAMOSTATNÁ od stavů** — „čeká na přijetí / přijato" je **delegační
+  příznak** úkolu (vědomé převzetí odpovědnosti přiřazeným), **ne sloupec boardu**. Stejně tak
+  případné „k ověření" manažerem řešíme jako krok schválení, ne nutně jako extra sloupec. (Řeší se
+  později, váže se na notifikace §8 a automatizace §7.)
 
 ## 5. Projektová vrstva (plánování)
 

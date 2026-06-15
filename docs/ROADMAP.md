@@ -1,6 +1,6 @@
 # Roadmapa — Trefoil CRM v2
 
-🧭 **Znalostní báze:** [mapa](../README.md) · [sumář](SUMMARY.md) · [architektura](ARCHITECTURE.md) · [pravidla](../CLAUDE.md) · [UI](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md) · [vize práce](VIZE-ukoly-projekty-poznamky.md) · [specs](specs/)
+🧭 **Znalostní báze:** [mapa](../README.md) · [sumář](SUMMARY.md) · [architektura](ARCHITECTURE.md) · [pravidla](../CLAUDE.md) · [UI](UI-ZASADY.md) · [komponenty](KOMPONENTY.md) · [slovník](SLOVNIK.md) · [datový model](DATOVY-MODEL.md) · [vize práce](VIZE-ukoly-projekty-poznamky.md) · [automatizace](AUTOMATION.md) · [specs](specs/)
 
 Proces: **spec → schválení → stavba → ověření → commit**, modul po modulu.
 Vizuální reference: `UI-ZASADY.md` + `/mockupy`. Datový základ: `DATOVY-MODEL.md`.

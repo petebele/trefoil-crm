@@ -227,6 +227,29 @@ export async function migrate(): Promise<void> {
   await db.schema.createIndex('tasks_assignee').ifNotExists().on('tasks').columns(['tenant_id', 'assignee_id', 'done']).execute();
   await db.schema.createIndex('tasks_client').ifNotExists().on('tasks').columns(['client_id']).execute();
   await db.schema.createIndex('tasks_source').ifNotExists().on('tasks').columns(['source_kind', 'source_id']).execute();
+  // Kanban (Úkoly v2) — sloupce idempotentně do stávající DB
+  await sql`ALTER TABLE tasks ADD COLUMN status_id text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE tasks ADD COLUMN prev_status_id text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE tasks ADD COLUMN archived integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
+  await sql`ALTER TABLE tasks ADD COLUMN board_month text`.execute(db).catch(() => {});
+  await sql`ALTER TABLE tasks ADD COLUMN sort_order real NOT NULL DEFAULT 0`.execute(db).catch(() => {});
+
+  // stavy úkolů = sloupce kanbanu, per uživatel
+  await db.schema
+    .createTable('task_statuses')
+    .ifNotExists()
+    .addColumn('id', 'text', (c) => c.primaryKey())
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('owner_id', 'text', (c) => c.notNull().references('persons.id'))
+    .addColumn('label', 'text', (c) => c.notNull())
+    .addColumn('color', 'text')
+    .addColumn('sort_order', 'integer', (c) => c.notNull().defaultTo(0))
+    .addColumn('is_done', 'integer', (c) => c.notNull().defaultTo(0))
+    .addColumn('is_default', 'integer', (c) => c.notNull().defaultTo(0))
+    .addColumn('created_at', 'text', (c) => c.notNull())
+    .execute();
+  await db.schema.createIndex('task_statuses_owner').ifNotExists().on('task_statuses').columns(['tenant_id', 'owner_id', 'sort_order']).execute();
+  await sql`ALTER TABLE task_statuses ADD COLUMN is_default integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('events')

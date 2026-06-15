@@ -208,6 +208,37 @@ Ikony typů: 📝 poznámka · ✉️ e-mail · 📞 hovor · 👥 schůzka.
 </div>
 ```
 
+## 11b. Kanban (Úkoly v2)
+
+Druhý pohled na úkoly (vedle Agendy). **Sloupce = stavy** (`task_statuses`, konfigurovatelné
+per uživatel), **karty se přetahují** (HTML5 drag‑drop v `app.js` → POST `…/presun` → překreslí `#board`).
+
+```html
+<section id="board" class="kanban" hx-get="/ukoly/board?mesic=2026-06"
+         hx-trigger="live-update from:body" hx-target="this" hx-swap="outerHTML">
+  <div class="kcol">
+    <div class="kcol-head">
+      <span class="kcol-dot" style="background:var(--teal)"></span>
+      <span class="kcol-name">Vyřizuji</span> <span class="kcol-count">3</span>
+      <button class="icon-btn" hx-get="…modal/novy?status=ID&mesic=…">＋</button>
+    </div>
+    <div class="kcol-body" data-status-id="ID">
+      <div class="kcard" draggable="true" data-task-id="…">
+        <div class="kcard-top"><input type="checkbox"> <span class="kcard-title">Úkol</span> …⋯</div>
+        <div class="kcard-meta"><!-- chip kategorie · zákazník · termín --></div>
+      </div>
+    </div>
+    <!-- u sloupce s is_done: --> <a class="kcol-archive" href="…&archiv=1">Archivované úkoly (2)</a>
+  </div>
+</section>
+```
+
+**Zásady:** sloupec = jeden stav (≠ štítky); „vyřízeno" = stav s `is_done` (synchron přes checkbox).
+**První sloupec = povinný Inbox** (`is_default`, nesmazatelný, cross‑month — nové/nezařazené úkoly).
+**Archiv = příznak** (`archived`) — patička „Archivované úkoly" ve sloupci „Hotovo". **Správa sloupců
+přímo na boardu** (přejmenovat inline, drag řazení za úchyt ⠿, ⋯ barva/`is_done`/smazat, „+ Sloupec").
+Lišta `.kbar`: měsíc ◀▶, board kolegy (admin), „Uzavřít měsíc". Detaily `docs/specs/ukoly-v2-kanban.md`.
+
 ## 12. „Naposledy zobrazené" chip
 
 ```html

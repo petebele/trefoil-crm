@@ -112,8 +112,13 @@ function onPanelOpen(menu) {
     if (up) menu.classList.add('up');
     if (clippingAncestor(menu)) {
       panel.style.position = 'fixed';
-      if (menu.classList.contains('align-right')) { panel.style.right = (window.innerWidth - tr.right) + 'px'; panel.style.left = 'auto'; }
-      else { panel.style.left = tr.left + 'px'; panel.style.right = 'auto'; }
+      var pw = panel.offsetWidth, vw = window.innerWidth;
+      // vodorovně: align-right otevírá doleva; u levého okraje by panel vyjel z obrazovky → přepni doprava. Vždy ořízni do okna.
+      var left;
+      if (menu.classList.contains('align-right')) left = (tr.right - pw < 8) ? tr.left : tr.right - pw;
+      else left = tr.left;
+      left = Math.max(8, Math.min(left, vw - 8 - pw));
+      panel.style.left = left + 'px'; panel.style.right = 'auto';
       if (up) { panel.style.bottom = (window.innerHeight - tr.top + 6) + 'px'; panel.style.top = 'auto'; }
       else { panel.style.top = (tr.bottom + 6) + 'px'; panel.style.bottom = 'auto'; }
     }
@@ -246,3 +251,77 @@ document.addEventListener('change', function (e) {
   });
   updateDependentFields(form);
 });
+
+// Kanban drag-drop: karty .kcard mezi/uvnitř sloupců (.kcol-body), a sloupce za úchyt .kcol-grip.
+// Po dropu se pošle nové uspořádání na server a #board se překreslí (htmx swap).
+(function () {
+  var cardId = null, colId = null;
+  function boardQuery() {
+    var board = document.getElementById('board');
+    try { return new URL(board.getAttribute('hx-get'), location.href).search; } catch (_) { return ''; }
+  }
+  function afterCard(body, y) {
+    var cards = Array.prototype.slice.call(body.querySelectorAll('.kcard:not(.dragging)'));
+    var closest = null, off0 = -Infinity;
+    cards.forEach(function (c) { var b = c.getBoundingClientRect(); var off = y - b.top - b.height / 2; if (off < 0 && off > off0) { off0 = off; closest = c; } });
+    return closest;
+  }
+  function afterCol(kanban, x) {
+    var cols = Array.prototype.slice.call(kanban.querySelectorAll('.kcol:not(.col-dragging):not(.kcol-add)'));
+    var closest = null, off0 = -Infinity;
+    cols.forEach(function (c) { var b = c.getBoundingClientRect(); var off = x - b.left - b.width / 2; if (off < 0 && off > off0) { off0 = off; closest = c; } });
+    return closest;
+  }
+  document.addEventListener('dragstart', function (e) {
+    var nameEl = e.target.closest && e.target.closest('.kcol-name[data-col-id]');
+    if (nameEl) { colId = nameEl.getAttribute('data-col-id'); var col = nameEl.closest('.kcol'); if (col) col.classList.add('col-dragging'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', colId); } catch (_) {} return; }
+    var card = e.target.closest && e.target.closest('.kcard');
+    if (!card) return;
+    cardId = card.getAttribute('data-task-id');
+    card.classList.add('dragging');
+    try { e.dataTransfer.setData('text/plain', cardId); e.dataTransfer.effectAllowed = 'move'; } catch (_) {}
+  });
+  document.addEventListener('dragend', function () {
+    var d = document.querySelector('.kcard.dragging'); if (d) d.classList.remove('dragging');
+    var c = document.querySelector('.kcol.col-dragging'); if (c) c.classList.remove('col-dragging');
+    cardId = null; colId = null;
+  });
+  document.addEventListener('dragover', function (e) {
+    if (colId) {
+      var kanban = e.target.closest && e.target.closest('.kanban'); if (!kanban) return;
+      e.preventDefault();
+      var dragging = kanban.querySelector('.kcol.col-dragging'); if (!dragging) return;
+      var after = afterCol(kanban, e.clientX);
+      var addCol = kanban.querySelector('.kcol-add');
+      if (after == null) kanban.insertBefore(dragging, addCol || null); else kanban.insertBefore(dragging, after);
+      return;
+    }
+    if (cardId) {
+      var body = e.target.closest && e.target.closest('.kcol-body'); if (!body) return;
+      e.preventDefault();
+      var card = document.querySelector('.kcard.dragging'); if (!card) return;
+      var a = afterCard(body, e.clientY);
+      if (a == null) body.appendChild(card); else body.insertBefore(card, a);
+    }
+  });
+  document.addEventListener('drop', function (e) {
+    if (!window.htmx) { cardId = null; colId = null; return; }
+    if (colId) {
+      var kanban = e.target.closest && e.target.closest('.kanban'); if (!kanban) { colId = null; return; }
+      e.preventDefault();
+      var order = Array.prototype.map.call(kanban.querySelectorAll('.kcol-name[data-col-id]'), function (g) { return g.getAttribute('data-col-id'); }).join(',');
+      window.htmx.ajax('POST', '/ukoly/kanban/sloupce/poradi' + boardQuery(), { target: '#board', swap: 'outerHTML', values: { order: order } });
+      colId = null;
+      return;
+    }
+    if (cardId) {
+      var body = e.target.closest && e.target.closest('.kcol-body'); if (!body) { cardId = null; return; }
+      e.preventDefault();
+      var statusId = body.getAttribute('data-status-id');
+      var inbox = body.getAttribute('data-inbox') === '1' ? '1' : '';
+      var order = Array.prototype.map.call(body.querySelectorAll('.kcard'), function (c) { return c.getAttribute('data-task-id'); }).join(',');
+      window.htmx.ajax('POST', '/ukoly/' + cardId + '/presun' + boardQuery(), { target: '#board', swap: 'outerHTML', values: { status_id: statusId, inbox: inbox, order: order } });
+      cardId = null;
+    }
+  });
+})();
