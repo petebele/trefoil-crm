@@ -65,8 +65,14 @@ Před jakoukoli UI prací přečti `docs/UI-ZASADY.md` a `docs/KOMPONENTY.md`. P
 
 Aktualizace je součástí dokončení úkolu — zastaralá dokumentace je horší než žádná.
 
+**Při každém `git push` automaticky zapiš i stav do `docs/SUMMARY.md`** (bod 0 „Rychlý stav" —
+co je nově hotové + „kde jsme v chatu skončili" + co je další na řadě). Slouží to k tomu, abychom
+po znovuotevření věděli, kde jsme přestali. SUMMARY commitni spolu se změnou (nebo hned za ní)
+a teprve pak pushuj.
+
 | Změnilo se… | Aktualizuj… |
 |---|---|
+| Cokoli před `git push` (stav, kde jsme skončili, co dál) | `docs/SUMMARY.md` (bod 0) — **vždy** |
 | Architektura, nový modul, DB schéma, byznys rozhodnutí | `ARCHITECTURE.md` nebo `SUMMARY.md` |
 | Nová UI komponenta nebo změna vzoru | `docs/KOMPONENTY.md` + `mockupy/komponenty.html` |
 | Designové pravidlo nebo token | `docs/UI-ZASADY.md` |
