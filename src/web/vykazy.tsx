@@ -4,7 +4,7 @@ import type { AppEnv } from '../types';
 import { Layout } from './layout';
 import { ModalShell, EmptyState, KebabMenu } from './components';
 import { logEvent } from '../domain/events';
-import { createApprovalTask, closeSourceTasks } from '../domain/tasks';
+import { createApprovalTask, closeSourceTasks, getTask } from '../domain/tasks';
 import { getClient, listClients } from '../domain/clients';
 import { listClientServices, type ClientService } from '../domain/clientServices';
 import {
@@ -62,11 +62,14 @@ export function WorkRecordModal(props: {
   services: ClientService[]; // běžící služby zvoleného zákazníka
   back: string;
   preselectServiceId?: string; // „Vykázat" přímo ze služby
+  task?: { id: string; title: string } | null; // „Vykázat práci" z úkolu (vazba + předvyplnění)
 }) {
   const r = props.record;
   const today = new Date().toISOString().slice(0, 10);
   const running = props.services.filter((s) => s.status !== 'ended');
-  const preselected = running.find((s) => s.id === props.preselectServiceId);
+  // z úkolu a zákazník má jedinou běžící službu → předvyplň ji
+  const autoServiceId = props.preselectServiceId ?? (props.task && running.length === 1 ? running[0]!.id : undefined);
+  const preselected = running.find((s) => s.id === autoServiceId);
   const billingDefault = r?.billing ?? (preselected ? defaultBilling(preselected.mode) : 'retainer_hours');
   return (
     <ModalShell title={r ? `${tr('Upravit výkaz')} · ${r.client_name}` : tr('Vykázat práci')}>
@@ -75,8 +78,15 @@ export function WorkRecordModal(props: {
         {r ? null : props.client ? (
           <input type="hidden" name="client_id" value={props.client.id} />
         ) : null}
+        {!r && props.task ? <input type="hidden" name="task_id" value={props.task.id} /> : null}
+        {!r && props.task ? (
+          <p class="sub" style="margin:0 0 .4rem">{tr('Úkol')}: <b>{props.task.title}</b></p>
+        ) : null}
         {r ? (
-          <p class="sub" style="margin:0 0 .8rem">{tr('Zákazník')}: <b>{r.client_name}</b> · {tr('pracoval(a) {name}', { name: r.worker_name })}</p>
+          <p class="sub" style="margin:0 0 .8rem">
+            {tr('Zákazník')}: <b>{r.client_name}</b> · {tr('pracoval(a) {name}', { name: r.worker_name })}
+            {r.task_title ? <> · {tr('úkol')}: {r.task_title}</> : null}
+          </p>
         ) : props.client ? (
           <p class="sub" style="margin:0 0 .8rem">{tr('Zákazník')}: <b>{props.client.name}</b></p>
         ) : (
@@ -91,7 +101,7 @@ export function WorkRecordModal(props: {
               hx-trigger="change"
               hx-target="#modal"
               hx-swap="innerHTML"
-              hx-vals={JSON.stringify({ back: props.back })}
+              hx-vals={JSON.stringify(props.task ? { back: props.back, ukol: props.task.id } : { back: props.back })}
               hx-include="this"
               autofocus
             >
@@ -112,7 +122,7 @@ export function WorkRecordModal(props: {
                 {running.map((s) => (
                   <option
                     value={s.id}
-                    selected={(r ? r.service_id : props.preselectServiceId) === s.id}
+                    selected={(r ? r.service_id : autoServiceId) === s.id}
                     data-set-billing={defaultBilling(s.mode)}
                   >
                     {s.label}
@@ -135,7 +145,7 @@ export function WorkRecordModal(props: {
               <div style="display:flex;gap:.5rem;align-items:center">
                 <input class="input" type="number" name="hours" min="0" max="24" step="1" value={r ? Math.floor(r.minutes / 60) : ''} style="max-width:6rem" aria-label={tr('Hodiny')} />
                 <span class="sub">{tr('h')}</span>
-                <input class="input" type="number" name="mins" min="0" max="59" step="5" value={r ? r.minutes % 60 : ''} style="max-width:6rem" aria-label={tr('Minuty')} />
+                <input class="input" type="number" name="mins" min="0" max="59" step="1" value={r ? r.minutes % 60 : ''} style="max-width:6rem" aria-label={tr('Minuty')} />
                 <span class="sub">{tr('min')}</span>
               </div>
             </div>
@@ -175,11 +185,27 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
     <div class="hover-row" style="display:flex;gap:.7rem;align-items:flex-start;padding:.5rem 0;border-top:1px solid var(--line);font-size:.86rem">
       <span class="sub" style="white-space:nowrap">{fmtDay(r.performed_at)}</span>
       <span style="flex:1">
-        <span style="font-weight:600">{r.description}</span>
+        {canEditRecord(person, r) ? (
+          <span
+            role="button"
+            tabindex={0}
+            data-activate
+            style="font-weight:600;cursor:pointer"
+            hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`}
+            hx-target="#modal"
+            hx-swap="innerHTML"
+            title={tr('Upravit výkaz')}
+          >
+            {r.description}
+          </span>
+        ) : (
+          <span style="font-weight:600">{r.description}</span>
+        )}
         <span class="sub" style="display:block">
           {props.showClient ? <>{r.client_name} · </> : null}
           {r.service_label}
           {r.service_detail ? ` · ${r.service_detail}` : ''} · {r.worker_name}
+          {r.task_title ? <> · {tr('úkol')}: {r.task_title}</> : null}
           {r.note ? <span style="display:block;font-size:.78rem">{r.note}</span> : null}
         </span>
       </span>
@@ -345,6 +371,11 @@ vykazyRoutes.get('/vykazy/modal/novy', async (c) => {
   let back = c.req.query('back') || '';
   let clientId = c.req.query('klient') || c.req.query('client_pick') || '';
 
+  // kontext: „Vykázat práci" z úkolu → vazba na úkol + zákazník z úkolu
+  const taskId = c.req.query('ukol') || '';
+  const task = taskId ? await getTask(t, taskId) : null;
+  if (task?.client_id) clientId = task.client_id;
+
   // kontext: otevřeno z detailu zákazníka (htmx posílá aktuální URL) → předvybrat ho
   const currentUrl = c.req.header('HX-Current-URL') ?? '';
   if (!clientId) {
@@ -373,6 +404,7 @@ vykazyRoutes.get('/vykazy/modal/novy', async (c) => {
       services={services}
       back={back || '/vykazy'}
       preselectServiceId={c.req.query('sluzba')}
+      task={task ? { id: task.id, title: task.title } : null}
     />,
   );
 });
@@ -390,7 +422,7 @@ vykazyRoutes.get('/vykazy/:id/modal', async (c) => {
 
 // ---------- mutace ----------
 
-function parseInput(body: Record<string, unknown>): Omit<WorkRecordInput, 'clientId' | 'serviceId'> & { serviceId: string } | null {
+function parseInput(body: Record<string, unknown>): Omit<WorkRecordInput, 'clientId' | 'serviceId' | 'taskId'> & { serviceId: string } | null {
   const serviceId = String(body.service_id ?? '');
   const description = String(body.description ?? '').trim();
   const hours = Number(String(body.hours ?? '0').trim() || 0);
@@ -430,7 +462,11 @@ vykazyRoutes.post('/vykazy', async (c) => {
   const svc = services.find((s) => s.id === input.serviceId && s.status !== 'ended');
   if (!svc) return c.redirect(back);
 
-  const id = await createWorkRecord(t, person.id, { ...input, clientId: client.id });
+  // volitelná vazba na úkol (jen existující úkol tohoto tenanta)
+  const rawTaskId = String(body.task_id ?? '');
+  const taskId = rawTaskId && (await getTask(t, rawTaskId)) ? rawTaskId : null;
+
+  const id = await createWorkRecord(t, person.id, { ...input, clientId: client.id, taskId });
   // kdo by výkaz stejně schvaloval (odpovědná osoba / admin), má ho rovnou schválený
   const autoApprove = canApproveFor(person, client.owner_id ?? null);
   if (autoApprove) {

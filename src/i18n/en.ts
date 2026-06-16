@@ -432,6 +432,12 @@ export const EN: Record<string, string> = {
   'Celkem čas': 'Total time',
   'V tomto měsíci zatím nikdo nevykázal žádnou práci.': 'No one has logged any work this month yet.',
 
+  // --- výkazy ↔ úkoly (propojení) ---
+  'úkol': 'task',
+  'Vykázaná práce': 'Logged work',
+  'Zatím nevykázána žádná práce.': 'No work logged yet.',
+  'Zatím nevykázána žádná práce. Zapni modul Výkazy.': 'No work logged yet. Enable the Work records module.',
+
   // --- administrace ---
   'Tým': 'Team',
   'Přihlašovací e-mail': 'Login email',

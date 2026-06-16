@@ -37,6 +37,7 @@ export interface WorkRecord extends WorkRecordsTable {
   service_rate: number | null;
   worker_name: string;
   approved_by_name: string | null;
+  task_title: string | null; // název navázaného úkolu (je-li jaký)
 }
 
 const baseSelect = () =>
@@ -47,6 +48,7 @@ const baseSelect = () =>
     .innerJoin('list_items', 'list_items.id', 'services.catalog_item_id')
     .innerJoin('persons as worker', 'worker.id', 'work_records.worker_id')
     .leftJoin('persons as approver', 'approver.id', 'work_records.approved_by_id')
+    .leftJoin('tasks', 'tasks.id', 'work_records.task_id')
     .selectAll('work_records')
     .select([
       'clients.name as client_name',
@@ -55,6 +57,7 @@ const baseSelect = () =>
       'services.rate as service_rate',
       'worker.name as worker_name',
       'approver.name as approved_by_name',
+      'tasks.title as task_title',
     ]);
 
 export async function getWorkRecord(tenantId: string, id: string): Promise<WorkRecord | null> {
@@ -68,6 +71,17 @@ export async function listForClientMonth(tenantId: string, clientId: string, mon
     .where('work_records.tenant_id', '=', tenantId)
     .where('work_records.client_id', '=', clientId)
     .where('work_records.performed_at', 'like', `${month}%`)
+    .orderBy('work_records.performed_at', 'desc')
+    .orderBy('work_records.created_at', 'desc')
+    .execute();
+  return rows as WorkRecord[];
+}
+
+/** Výkazy navázané na úkol (blok „Vykázaná práce" v modálu úkolu), nejnovější nahoře. */
+export async function listForTask(tenantId: string, taskId: string): Promise<WorkRecord[]> {
+  const rows = await baseSelect()
+    .where('work_records.tenant_id', '=', tenantId)
+    .where('work_records.task_id', '=', taskId)
     .orderBy('work_records.performed_at', 'desc')
     .orderBy('work_records.created_at', 'desc')
     .execute();
@@ -116,6 +130,7 @@ export async function overviewByWorker(tenantId: string, month: string) {
 export interface WorkRecordInput {
   clientId: string;
   serviceId: string;
+  taskId: string | null; // volitelná vazba na úkol
   description: string;
   note: string | null;
   minutes: number;
@@ -132,6 +147,7 @@ export async function createWorkRecord(tenantId: string, workerId: string, data:
       tenant_id: tenantId,
       client_id: data.clientId,
       service_id: data.serviceId,
+      task_id: data.taskId,
       worker_id: workerId,
       description: data.description,
       note: data.note,
@@ -147,7 +163,7 @@ export async function createWorkRecord(tenantId: string, workerId: string, data:
   return id;
 }
 
-export async function updateWorkRecord(tenantId: string, id: string, data: Omit<WorkRecordInput, 'clientId'>): Promise<void> {
+export async function updateWorkRecord(tenantId: string, id: string, data: Omit<WorkRecordInput, 'clientId' | 'taskId'>): Promise<void> {
   await db
     .updateTable('work_records')
     .set({

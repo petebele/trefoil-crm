@@ -65,6 +65,7 @@ dashboardRoutes.get('/', async (c) => {
               showClient
               buckets={['overdue', 'today', 'week']}
               emptyText={tr('Na dnešek ani na tento týden nic nemáš. 🎉')}
+              canVykaz={modules.has('vykazy')}
             />
           </div>
           <p class="sub" style="margin:.7rem 0 0">

@@ -270,6 +270,8 @@ export async function closeMonth(
 }
 
 export async function removeTask(tenantId: string, id: string): Promise<void> {
+  // odpoj navázané výkazy (zůstanou zachované, jen bez vazby na úkol)
+  await db.updateTable('work_records').set({ task_id: null }).where('tenant_id', '=', tenantId).where('task_id', '=', id).execute();
   await db.deleteFrom('tasks').where('tenant_id', '=', tenantId).where('id', '=', id).execute();
 }
 

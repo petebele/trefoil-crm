@@ -37,6 +37,9 @@ import {
   doneStatusId,
   defaultStatusId,
 } from '../domain/taskStatuses';
+import { listForTask, fmtMinutes, type WorkRecord } from '../domain/workRecords';
+import { canEditRecord } from './vykazy';
+import { getPref, setPref } from '../domain/prefs';
 import type { PersonsTable, TaskStatusesTable } from '../db/schema';
 import { tr, fmtDate } from '../i18n';
 
@@ -91,7 +94,7 @@ export function CatChip(props: { label: string; color: string | null }) {
 }
 
 /** Jeden řádek úkolu: zaškrtnutí (hotovo) · kategorie · text · zákazník · termín · ⋯. */
-export function TaskItemRow(props: { t: TaskRow; person: PersonsTable; back: string; target: string; showClient?: boolean }) {
+export function TaskItemRow(props: { t: TaskRow; person: PersonsTable; back: string; target: string; showClient?: boolean; canVykaz?: boolean }) {
   const { t, person, back, target } = props;
   const canEdit = person.is_admin === 1 || t.assignee_id === person.id || t.created_by_id === person.id;
   const overdue = !!t.due_at && t.done !== 1 && t.due_at < todayStr();
@@ -114,7 +117,22 @@ export function TaskItemRow(props: { t: TaskRow; person: PersonsTable; back: str
       />
       <div class="task-txt" style="flex:1">
         {t.category_label ? <CatChip label={t.category_label} color={t.category_color} /> : null}
-        <span style={t.done === 1 ? 'text-decoration:line-through;color:var(--muted)' : ''}>{t.title}</span>
+        {canEdit ? (
+          <span
+            role="button"
+            tabindex={0}
+            data-activate
+            style={`cursor:pointer${t.done === 1 ? ';text-decoration:line-through;color:var(--muted)' : ''}`}
+            hx-get={`/ukoly/${t.id}/modal?back=${encodeURIComponent(back)}`}
+            hx-target="#modal"
+            hx-swap="innerHTML"
+            title={tr('Upravit úkol')}
+          >
+            {t.title}
+          </span>
+        ) : (
+          <span style={t.done === 1 ? 'text-decoration:line-through;color:var(--muted)' : ''}>{t.title}</span>
+        )}
         {metaParts.length ? (
           <span class="when">
             {metaParts.map((m, i) => (
@@ -132,6 +150,11 @@ export function TaskItemRow(props: { t: TaskRow; person: PersonsTable; back: str
             <button class="opt" type="button" hx-get={`/ukoly/${t.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
               {tr('Upravit')}
             </button>
+            {props.canVykaz ? (
+              <button class="opt" type="button" hx-get={`/vykazy/modal/novy?ukol=${t.id}&back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
+                {tr('Vykázat práci')}
+              </button>
+            ) : null}
             <button
               class="opt"
               type="button"
@@ -161,6 +184,7 @@ export function TaskGroups(props: {
   showClient?: boolean;
   buckets?: Bucket[];
   emptyText: string;
+  canVykaz?: boolean;
 }) {
   const order = props.buckets ?? (['overdue', 'today', 'week', 'later', 'none', 'done'] as Bucket[]);
   const today = todayStr();
@@ -177,7 +201,7 @@ export function TaskGroups(props: {
             {tr(BUCKET_LABEL[g.b])}
           </div>
           {g.rows.map((t) => (
-            <TaskItemRow t={t} person={props.person} back={props.back} target={props.target} showClient={props.showClient} />
+            <TaskItemRow t={t} person={props.person} back={props.back} target={props.target} showClient={props.showClient} canVykaz={props.canVykaz} />
           ))}
         </>
       ))}
@@ -192,15 +216,19 @@ function TaskModal(props: {
   clients: Array<{ id: string; name: string }>;
   coworkers: Array<{ id: string; name: string }>;
   categories: Array<{ id: string; label: string }>;
-  meId: string;
+  person: PersonsTable;
   back: string;
   presetClientId?: string;
   presetStatusId?: string;
   presetMonth?: string;
+  canVykaz?: boolean;
+  workRecords?: WorkRecord[];
 }) {
   const t = props.task;
   const selClient = t?.client_id ?? props.presetClientId ?? '';
-  const selAssignee = t?.assignee_id ?? props.meId;
+  const selAssignee = t?.assignee_id ?? props.person.id;
+  const wr = props.workRecords ?? [];
+  const wrTotal = wr.reduce((s, w) => s + w.minutes, 0);
   return (
     <ModalShell title={t ? tr('Upravit úkol') : tr('Nový úkol')}>
       <form method="post" action={t ? `/ukoly/${t.id}` : '/ukoly'}>
@@ -251,6 +279,52 @@ function TaskModal(props: {
           <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
         </div>
       </form>
+      {t ? (
+        <div style="margin-top:1rem;border-top:1px solid var(--line);padding-top:.8rem">
+          <div class="card-head" style="margin-bottom:.3rem">
+            <h4 style="margin:0">{tr('Vykázaná práce')}{wr.length ? <> · <b>{fmtMinutes(wrTotal)}</b></> : null}</h4>
+            {props.canVykaz ? (
+              <button class="btn btn-sm" type="button" hx-get={`/vykazy/modal/novy?ukol=${t.id}&back=${encodeURIComponent(props.back)}`} hx-target="#modal" hx-swap="innerHTML">
+                {tr('Vykázat práci')}
+              </button>
+            ) : null}
+          </div>
+          {wr.length === 0 ? (
+            <p class="sub" style="margin:.2rem 0 0">{props.canVykaz ? tr('Zatím nevykázána žádná práce.') : tr('Zatím nevykázána žádná práce. Zapni modul Výkazy.')}</p>
+          ) : (
+            <div>
+              {wr.map((w) => {
+                const base = 'display:flex;gap:.5rem;align-items:baseline;padding:.3rem 0;border-top:1px solid var(--line);font-size:.84rem';
+                const cells = (
+                  <>
+                    <span class="sub" style="white-space:nowrap">{fmtDate(w.performed_at)}</span>
+                    <span style="flex:1">{w.description}</span>
+                    <span class="sub" style="white-space:nowrap">{w.worker_name}</span>
+                    <b style="white-space:nowrap">{fmtMinutes(w.minutes)}</b>
+                  </>
+                );
+                return canEditRecord(props.person, w) ? (
+                  <div
+                    class="hover-row"
+                    role="button"
+                    tabindex={0}
+                    data-activate
+                    style={`${base};cursor:pointer`}
+                    hx-get={`/vykazy/${w.id}/modal?back=${encodeURIComponent(props.back)}`}
+                    hx-target="#modal"
+                    hx-swap="innerHTML"
+                    title={tr('Upravit výkaz')}
+                  >
+                    {cells}
+                  </div>
+                ) : (
+                  <div style={base}>{cells}</div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : null}
     </ModalShell>
   );
 }
@@ -306,7 +380,7 @@ function effColumn(t: TaskRow, statuses: TaskStatusesTable[]): string | null {
 
 interface KUrls { board: string; boardArch: string; page: string; pageArch: string; q: string; mesic: string }
 
-function KanbanCard(props: { t: TaskRow; person: PersonsTable; urls: KUrls; color?: string | null }) {
+function KanbanCard(props: { t: TaskRow; person: PersonsTable; urls: KUrls; color?: string | null; canVykaz?: boolean }) {
   const { t, person, urls } = props;
   const canEdit = person.is_admin === 1 || t.assignee_id === person.id || t.created_by_id === person.id;
   const overdue = !!t.due_at && t.done !== 1 && t.due_at < todayStr();
@@ -325,11 +399,30 @@ function KanbanCard(props: { t: TaskRow; person: PersonsTable; urls: KUrls; colo
           hx-target="#board"
           hx-swap="outerHTML"
         />
-        <span class="kcard-title" style={t.done === 1 ? 'text-decoration:line-through;color:var(--muted)' : ''}>{t.title}</span>
+        {canEdit ? (
+          <span
+            class="kcard-title"
+            role="button"
+            tabindex={0}
+            data-activate
+            style={`cursor:pointer${t.done === 1 ? ';text-decoration:line-through;color:var(--muted)' : ''}`}
+            hx-get={`/ukoly/${t.id}/modal?back=${encodeURIComponent(urls.page)}`}
+            hx-target="#modal"
+            hx-swap="innerHTML"
+            title={tr('Upravit úkol')}
+          >
+            {t.title}
+          </span>
+        ) : (
+          <span class="kcard-title" style={t.done === 1 ? 'text-decoration:line-through;color:var(--muted)' : ''}>{t.title}</span>
+        )}
         {canEdit ? (
           <span class="row-actions" style="opacity:1">
             <KebabMenu id={`kc-${t.id}`} label={tr('Možnosti úkolu')}>
               <button class="opt" type="button" hx-get={`/ukoly/${t.id}/modal?back=${encodeURIComponent(urls.page)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
+              {props.canVykaz ? (
+                <button class="opt" type="button" hx-get={`/vykazy/modal/novy?ukol=${t.id}&back=${encodeURIComponent(urls.page)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
+              ) : null}
               <button class="opt" type="button" hx-post={`/ukoly/${t.id}/archiv`} hx-vals={JSON.stringify({ archived: t.archived === 1 ? 0 : 1, back: urls.board })} hx-target="#board" hx-swap="outerHTML">{t.archived === 1 ? tr('Obnovit') : tr('Archivovat')}</button>
               <button class="opt" type="button" style="color:var(--red)" hx-post={`/ukoly/${t.id}/smazat`} hx-vals={JSON.stringify({ back: urls.board })} hx-confirm={tr('Smazat tento úkol?')} hx-target="#board" hx-swap="outerHTML">{tr('Smazat')}</button>
             </KebabMenu>
@@ -361,6 +454,7 @@ export function KanbanBoard(props: {
   urls: KUrls;
   showArchived: boolean;
   owner: string;
+  canVykaz?: boolean;
 }) {
   const { statuses, active, archived, month, inboxId, person, urls } = props;
   if (props.showArchived) {
@@ -436,7 +530,7 @@ export function KanbanBoard(props: {
               <button class="icon-btn" type="button" hx-get={addUrl} hx-target="#modal" hx-swap="innerHTML" aria-label={tr('Přidat úkol')} title={tr('Přidat úkol')}>＋</button>
             </div>
             <div class="kcol-body" data-status-id={s.id} data-inbox={isInbox ? '1' : undefined}>
-              {cards.map((t) => <KanbanCard t={t} person={person} urls={urls} color={s.color} />)}
+              {cards.map((t) => <KanbanCard t={t} person={person} urls={urls} color={s.color} canVykaz={props.canVykaz} />)}
             </div>
             {s.is_done === 1 && archived.length > 0 ? (
               <a class="kcol-archive" href={urls.pageArch}>{tr('Archivované úkoly')} ({archived.length})</a>
@@ -459,7 +553,7 @@ export function KanbanBoard(props: {
 function ViewSwitch(props: { view: 'agenda' | 'kanban' }) {
   return (
     <nav class="tabs" aria-label={tr('Pohled')} style="margin-bottom:.2rem">
-      <a class={`tab ${props.view === 'agenda' ? 'active' : ''}`} href="/ukoly">{tr('Agenda')}</a>
+      <a class={`tab ${props.view === 'agenda' ? 'active' : ''}`} href="/ukoly?view=agenda">{tr('Agenda')}</a>
       <a class={`tab ${props.view === 'kanban' ? 'active' : ''}`} href="/ukoly?view=kanban">{tr('Kanban')}</a>
     </nav>
   );
@@ -482,11 +576,16 @@ async function buildBoard(tenantId: string, person: PersonsTable, bp: BoardParam
   };
   return { statuses, active, archived, month: bp.month ?? monthKey(), inboxId: defaultStatusId(statuses), urls };
 }
-async function boardFragment(c: { get: (k: 'person') => PersonsTable | null; req: { query: (k: string) => string | undefined }; html: (x: unknown) => Response | Promise<Response> }) {
+async function boardFragment(c: {
+  get: { (k: 'person'): PersonsTable | null; (k: 'modules'): Set<string> };
+  req: { query: (k: string) => string | undefined };
+  html: (x: unknown) => Response | Promise<Response>;
+}) {
   const person = c.get('person')!;
   const bp = readBoardParams(c, person);
   const b = await buildBoard(person.tenant_id, person, bp);
-  return c.html(<KanbanBoard statuses={b.statuses} active={b.active} archived={b.archived} month={b.month} inboxId={b.inboxId} person={person} urls={b.urls} showArchived={bp.showArchived} owner={bp.ownerId} />);
+  const canVykaz = c.get('modules').has('vykazy');
+  return c.html(<KanbanBoard statuses={b.statuses} active={b.active} archived={b.archived} month={b.month} inboxId={b.inboxId} person={person} urls={b.urls} showArchived={bp.showArchived} owner={bp.ownerId} canVykaz={canVykaz} />);
 }
 
 /** Modál „Uzavřít měsíc" — přesun nehotových dál + volitelně archivace hotových. */
@@ -513,6 +612,9 @@ function CloseMonthModal(props: { bp: BoardParams; back: string }) {
 
 // ---------- stránka /ukoly ----------
 
+/** Klíč per‑uživatelské předvolby zvoleného zobrazení modulu Úkoly. */
+const UKOLY_VIEW_KEY = 'ukoly.view';
+
 const FILTERS = [
   { key: 'vse', label: 'Vše' },
   { key: 'po_terminu', label: 'Po termínu' },
@@ -527,8 +629,17 @@ ukolyRoutes.get('/ukoly', async (c) => {
   const t = person.tenant_id;
   const isAdmin = person.is_admin === 1;
 
+  // Zvolené zobrazení (Agenda/Kanban) si pamatujeme per uživatel (klíč 'ukoly.view').
+  // Bez ?view (např. z horní navigace) přistaneme tam, kde uživatel naposledy byl.
+  const storedView = await getPref(t, person.id, UKOLY_VIEW_KEY);
+  const rawView = c.req.query('view');
+  const view: 'agenda' | 'kanban' = rawView === 'kanban' || rawView === 'agenda' ? rawView : storedView === 'kanban' ? 'kanban' : 'agenda';
+  if ((rawView === 'kanban' || rawView === 'agenda') && rawView !== storedView) {
+    await setPref(t, person.id, UKOLY_VIEW_KEY, view); // ulož jen při skutečné změně
+  }
+
   // === KANBAN pohled ===
-  if (c.req.query('view') === 'kanban') {
+  if (view === 'kanban') {
     const bp = readBoardParams(c, person);
     const b = await buildBoard(t, person, bp);
     const coworkers = isAdmin ? await listCoworkers(t) : [];
@@ -562,7 +673,7 @@ ukolyRoutes.get('/ukoly', async (c) => {
             <button class="btn btn-sm" type="button" hx-get={`/ukoly/kanban/uzavrit/modal?mesic=${mq}&owner=${bp.ownerId}&back=${encodeURIComponent(b.urls.page)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Uzavřít měsíc')}</button>
           </span>
         </div>
-        <KanbanBoard statuses={b.statuses} active={b.active} archived={b.archived} month={b.month} inboxId={b.inboxId} person={person} urls={b.urls} showArchived={bp.showArchived} owner={bp.ownerId} />
+        <KanbanBoard statuses={b.statuses} active={b.active} archived={b.archived} month={b.month} inboxId={b.inboxId} person={person} urls={b.urls} showArchived={bp.showArchived} owner={bp.ownerId} canVykaz={c.get('modules').has('vykazy')} />
       </Layout>,
     );
   }
@@ -570,6 +681,7 @@ ukolyRoutes.get('/ukoly', async (c) => {
   const rawFilter = c.req.query('filtr') ?? 'vse';
   const filter: FilterKey = FILTERS.some((f) => f.key === rawFilter) ? (rawFilter as FilterKey) : 'vse';
   const scope = isAdmin && c.req.query('tym') === '1' ? 'team' : 'mine';
+  const canVykaz = c.get('modules').has('vykazy');
 
   const tasks = await listTasks(t, {
     assigneeId: scope === 'mine' ? person.id : undefined,
@@ -623,7 +735,7 @@ ukolyRoutes.get('/ukoly', async (c) => {
               return done.length === 0 ? (
                 <EmptyState text={tr('Žádné hotové úkoly.')} />
               ) : (
-                <div>{done.map((tk) => <TaskItemRow t={tk} person={person} back={back} target="#stred" showClient />)}</div>
+                <div>{done.map((tk) => <TaskItemRow t={tk} person={person} back={back} target="#stred" showClient canVykaz={canVykaz} />)}</div>
               );
             })()
           ) : (
@@ -635,6 +747,7 @@ ukolyRoutes.get('/ukoly', async (c) => {
               showClient
               buckets={buckets}
               emptyText={scope === 'team' ? tr('Tým nemá žádné otevřené úkoly. 🎉') : tr('Nemáš žádné otevřené úkoly. 🎉')}
+              canVykaz={canVykaz}
             />
           )}
         </div>
@@ -657,7 +770,7 @@ ukolyRoutes.get('/ukoly/modal/novy', async (c) => {
   }
   const [clients, coworkers, categories] = await Promise.all([listClients(t), listCoworkers(t), itemsByKey(t, 'task_categories')]);
   return c.html(
-    <TaskModal task={null} clients={clients} coworkers={coworkers} categories={categories} meId={person.id} back={safeBack(c.req.query('back'))} presetClientId={presetClientId} presetStatusId={c.req.query('status') || undefined} presetMonth={c.req.query('mesic') || undefined} />,
+    <TaskModal task={null} clients={clients} coworkers={coworkers} categories={categories} person={person} back={safeBack(c.req.query('back'))} presetClientId={presetClientId} presetStatusId={c.req.query('status') || undefined} presetMonth={c.req.query('mesic') || undefined} />,
   );
 });
 
@@ -666,8 +779,14 @@ ukolyRoutes.get('/ukoly/:id/modal', async (c) => {
   const t = person.tenant_id;
   const task = await getTask(t, c.req.param('id'));
   if (!task) return c.notFound();
-  const [clients, coworkers, categories] = await Promise.all([listClients(t), listCoworkers(t), itemsByKey(t, 'task_categories')]);
-  return c.html(<TaskModal task={task} clients={clients} coworkers={coworkers} categories={categories} meId={person.id} back={safeBack(c.req.query('back'))} />);
+  const canVykaz = c.get('modules').has('vykazy');
+  const [clients, coworkers, categories, workRecords] = await Promise.all([
+    listClients(t),
+    listCoworkers(t),
+    itemsByKey(t, 'task_categories'),
+    canVykaz ? listForTask(t, task.id) : Promise.resolve([]),
+  ]);
+  return c.html(<TaskModal task={task} clients={clients} coworkers={coworkers} categories={categories} person={person} back={safeBack(c.req.query('back'))} canVykaz={canVykaz} workRecords={workRecords} />);
 });
 
 // ---------- mutace ----------

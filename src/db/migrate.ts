@@ -136,6 +136,9 @@ export async function migrate(): Promise<void> {
     .execute();
   await db.schema.createIndex('work_records_client').ifNotExists().on('work_records').columns(['client_id', 'performed_at']).execute();
   await db.schema.createIndex('work_records_worker').ifNotExists().on('work_records').columns(['worker_id', 'performed_at']).execute();
+  // volitelná vazba výkazu na úkol (Propojení Výkazů a Úkolů) — starší DB idempotentně
+  await sql`ALTER TABLE work_records ADD COLUMN task_id text`.execute(db).catch(() => {});
+  await db.schema.createIndex('work_records_task').ifNotExists().on('work_records').columns(['task_id']).execute();
 
   await db.schema
     .createTable('person_clients')
@@ -250,6 +253,17 @@ export async function migrate(): Promise<void> {
     .execute();
   await db.schema.createIndex('task_statuses_owner').ifNotExists().on('task_statuses').columns(['tenant_id', 'owner_id', 'sort_order']).execute();
   await sql`ALTER TABLE task_statuses ADD COLUMN is_default integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
+
+  // per‑uživatelské předvolby (klíč → hodnota): zvolené zobrazení modulu apod.
+  await db.schema
+    .createTable('person_prefs')
+    .ifNotExists()
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('person_id', 'text', (c) => c.notNull().references('persons.id'))
+    .addColumn('key', 'text', (c) => c.notNull())
+    .addColumn('value', 'text', (c) => c.notNull())
+    .addPrimaryKeyConstraint('person_prefs_pk', ['person_id', 'key'])
+    .execute();
 
   await db.schema
     .createTable('events')

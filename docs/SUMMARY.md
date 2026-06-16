@@ -12,13 +12,19 @@
 > průvodcem (žádný hardcoded „conviu" login). Slovo „Conviu" zůstává už jen ve **firemním**
 > kontextu (agentura, doména `conviu.cz`) a v historických pasážích níže.
 
-## 0) Rychlý stav k 2026-06-15 (aktualizováno průběžně)
+## 0) Rychlý stav k 2026-06-16 (aktualizováno průběžně)
 
-> **Kde jsme naposledy v chatu skončili (2026-06-15):** dostavěn a **pushnut Kanban úkolů**
-> (commit `0a29a7b`). Probrali jsme **dvoustupňovou uzávěrku měsíce** a **napojení výkazů
-> na úkoly** — zatím jen návrh/brainstorm, sepsáno v [AUTOMATION.md](AUTOMATION.md)
-> + [VIZE](VIZE-ukoly-projekty-poznamky.md). **Stavba napojení výkazů ↔ úkolů je DALŠÍ na řadě**
-> (příští sezení). Detaily dohody níže v bodu „Poslední domluva".
+> **Kde jsme naposledy v chatu skončili (2026-06-16):** postaveno a pushnuto **propojení
+> Výkazů ↔ Úkolů** (spec [vykazy-ukoly-propojeni.md](specs/vykazy-ukoly-propojeni.md)):
+> „Vykázat práci" z úkolu (⋯ menu i z modálu úkolu), u úkolu blok **„Vykázaná práce"** se
+> součtem a **klikací editací** jednotlivých výkazů, výkaz naopak ukazuje svůj úkol. K tomu:
+> **klik na název úkolu** (agenda i Kanban) a **na popis výkazu** otevře editaci — s pojistkou,
+> aby se modál neotevřel při přetahování v Kanbanu; **minuty se zadávají po jedné** (ne po 5);
+> a přibyly **per‑uživatelské předvolby** (`person_prefs`) — pamatuje se zvolené zobrazení
+> **Agenda/Kanban** (obecný mechanismus pro budoucí přepínače zobrazení).
+> **Další na řadě:** **Poznámky u klienta**, pak plnohodnotná **Nástěnka / Inbox
+> „Vyžaduje moji pozornost"**. Dvoustupňová uzávěrka měsíce zůstává jako návrh
+> (viz „Poslední domluva" + [AUTOMATION.md](AUTOMATION.md)).
 
 - Aplikace běží lokálně (port 3000, launcher na ploše). Stack: TS + Hono + SQLite + htmx.
 - Funguje: Zákazníci (firmy/osoby/kontakty/detail/Historie), Administrace
@@ -49,8 +55,17 @@
   - **Měsíční loop**: board je vázaný na měsíc; uzávěrka přesune nehotové do dalšího
     měsíce a archivuje hotové. Archiv = příznak, lze obnovit.
   - Drag & drop karet i sloupců přímo na boardu, správa sloupců přes ⋯ (název/barva/stav/smazat).
+- Přidáno 2026-06-16 — **Propojení Výkazů ↔ Úkolů + UX úpravy** (spec `specs/vykazy-ukoly-propojeni.md`):
+  - Výkaz má volitelný `task_id`. „Vykázat práci" z úkolu (⋯ v agendě/Kanbanu i tlačítko
+    v modálu úkolu) → modál výkazu s předvyplněným úkolem, zákazníkem a (je-li jediná) službou.
+  - U úkolu blok **„Vykázaná práce"** (součet + klikací řádky → editace výkazu); výkaz ukazuje úkol.
+  - **Klik na název úkolu** (agenda i Kanban) a **na popis výkazu** otevře editaci; pojistka
+    proti otevření při drag‑dropu (app.js), klávesová aktivace `[data-activate]`.
+  - **Minuty po jedné** (`step` 5→1). `ASSET_V` 33→34.
+  - **`person_prefs`** (klíč→hodnota, doména `prefs.ts`) — obecné per‑uživatelské předvolby;
+    první použití: zapamatování zvoleného zobrazení Úkolů (`ukoly.view`).
 
-- **Poslední domluva (2026-06-15) — zatím NÁVRH, nestavěno** (detail v [AUTOMATION.md](AUTOMATION.md)):
+- **Poslední domluva (2026-06-15) — uzávěrka zatím NÁVRH; výkazy↔úkoly UŽ POSTAVENO** (detail v [AUTOMATION.md](AUTOMATION.md)):
   - **Dvoustupňová uzávěrka:** (1) **provozní** (specialista, per board) — nezamyká,
     jen přesun nehotových + archivace hotových + report „za svoji práci" + notifikace manažerovi;
     (2) **finanční** (jen manažer, per klient, až uzavřou všichni specialisté) — převod
@@ -58,8 +73,9 @@
   - **Výkazy ↔ úkoly:** „Vykázat práci" z karty úkolu i z ⋯ → nový výkaz s předvyplněným
     úkolem a klientem. Výkaz může (ale nemusí) odkazovat na úkol, **vždy** musí na klienta.
     Většina úkolů čas/výkaz nemá; čas i výkaz jde zadat i bez úkolu. **Timer zatím neřešíme.**
-- Další na řadě: **napojení výkazů na úkoly** (viz Poslední domluva výše), pak plnohodnotná
-  NÁSTĚNKA / Inbox, Poznámky u klienta, Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
+- Další na řadě: **Poznámky u klienta**, pak plnohodnotná **NÁSTĚNKA / Inbox**
+  „Vyžaduje moji pozornost", Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
+  (Propojení výkazů↔úkolů hotové — viz výše.)
 
 ## 1) Kontext — kdo, co, proč
 

@@ -546,7 +546,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             {modules.has('ukoly') ? (
               <div id="client-tasks">
                 {tasks.length ? (
-                  tasks.map((tk) => <TaskItemRow t={tk} person={person} back={base} target="#client-tasks" />)
+                  tasks.map((tk) => <TaskItemRow t={tk} person={person} back={base} target="#client-tasks" canVykaz={modules.has('vykazy')} />)
                 ) : (
                   <EmptyState text={tr('K tomuto zákazníkovi není žádný úkol.')} />
                 )}

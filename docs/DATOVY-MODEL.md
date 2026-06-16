@@ -46,7 +46,7 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 |---|---|
 | `sessions` | Cookie session (httpOnly token, expirace). Hesla scrypt (Node crypto). |
 | `services` | Aktivní služba u klienta: `catalog_item_id` (položka Seznamu), stav active/paused/ended, od/do, **`monthly_spend` (orientační měsíční spend Kč)**, `owner_id`. Součet spendů = celkový orientační spend zákazníka. |
-| `work_records` | **Výkaz práce**: `client_id`, volitelně `service_id`, `worker_id` (kdo pracoval), `description` (úkon), `note` (detail, volitelně), `minutes`, `performed_at`, **`status` pending/approved**, `approved_by_id`, `approved_at`. Každý záznam má dohledatelné ID. Při založení se automaticky vytvoří úkol pro odpovědnou osobu zákazníka (schválení). |
+| `work_records` | **Výkaz práce**: `client_id`, volitelně `service_id`, **volitelně `task_id`** (úkol, z něhož se vykazovalo — vazba viz `tasks`), `worker_id` (kdo pracoval), `description` (úkon), `note` (detail, volitelně), `minutes`, `performed_at`, **`status` pending/approved**, `approved_by_id`, `approved_at`. Každý záznam má dohledatelné ID. Při založení se automaticky vytvoří úkol pro odpovědnou osobu zákazníka (schválení). |
 | `engagements` | Zakázka: klient, název, cíl, stav (ze Seznamu — kanban), odpovědný, termíny. |
 | `milestones` | Milníky zakázky: název, termín, hotovo, pořadí. |
 | `deals` | Příležitost: klient (volitelně), titulek, fáze (ze Seznamu — pipeline), hodnota, odpovědný, očekávaná uzávěrka, zdroj. |
@@ -54,6 +54,7 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 | `tasks` | Úkol: titulek, kategorie (ze Seznamu), volitelně klient/zakázka/deal, termín `due_at`, hotovo, přiřazený. **Kanban (v2):** `status_id`→`task_statuses` (sloupec; null = odvodí se z `done`), `prev_status_id` (návrat po odškrtnutí), `archived` 0/1, `board_month` (`YYYY-MM`; null = trvalý/osobní board), `sort_order`. „Vyřízeno" (`done`) ⇄ stav s `is_done` se drží v synchronu. |
 | `task_statuses` | **Stavy = sloupce Kanbanu, PER UŽIVATEL** (`owner_id`→persons): `label`, `color`, `sort_order`, `is_done` (stav vyřízeného úkolu), **`is_default`** (povinný **Inbox/Zásobník** — nové + nezařazené úkoly; nelze smazat, lze přejmenovat). Výchozí sada (lazy): **Nový** (`is_default`) · Vyřizuji · Kontrola · Hotovo (`is_done`). Inbox je na boardu **cross‑month** (vždy viditelný), ostatní sloupce ukazují vybraný měsíc. Správa sloupců (název/barva/pořadí/přidat/smazat) je **přímo na boardu**. |
 | `tenants` | Organizace (nositel multi-tenant připravenosti). |
+| `person_prefs` | **Per‑uživatelské předvolby** (klíč→hodnota): obecný, znovupoužitelný úložný bod pro drobné volby uživatele. PK `(person_id, key)`. Dnes `ukoly.view` = `agenda`/`kanban` (zvolené zobrazení modulu Úkoly se pamatuje per uživatel; bez `?view` se přistane tam, kde uživatel naposledy byl). Doména `src/domain/prefs.ts` (`getPref`/`setPref` s upsertem). |
 
 **Fakturační model (hybrid — finální podoba 12. 6. 2026, vzor Accelo/Productive,
 podklad `Komunikace\Strategie\Retainer management a fakturace - PSOHUB 20260612.md`):**

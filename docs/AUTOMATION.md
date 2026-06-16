@@ -52,6 +52,10 @@ Dělá ji **jen manažer**, a to **až když uzavřou všichni specialisté** da
 
 ## Úkoly ↔ výkazy ↔ čas ↔ fakturace (návrh napojení)
 
+> **Stav: ZÁKLAD POSTAVEN (2026-06-16)** — „Vykázat práci" z úkolu, vazba `work_records.task_id`,
+> blok „Vykázaná práce" u úkolu. Spec: [vykazy-ukoly-propojeni.md](specs/vykazy-ukoly-propojeni.md).
+> Níže původní dohoda pravidel; čas/timer a hlubší automatizace zůstávají do budoucna.
+
 Detailní zadání ke stavbě — viz [VIZE-ukoly-projekty-poznamky.md](VIZE-ukoly-projekty-poznamky.md).
 Shrnutí pravidel, na kterých jsme se shodli:
 

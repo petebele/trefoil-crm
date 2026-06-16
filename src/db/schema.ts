@@ -19,6 +19,7 @@ export interface Database {
   work_records: WorkRecordsTable;
   tasks: TasksTable;
   task_statuses: TaskStatusesTable;
+  person_prefs: PersonPrefsTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -153,6 +154,7 @@ export interface WorkRecordsTable {
   tenant_id: string;
   client_id: string;
   service_id: string; // služba zákazníka (services)
+  task_id: string | null; // volitelná vazba na úkol, z něhož se vykazovalo
   worker_id: string; // kdo pracoval
   description: string; // úkon
   note: string | null;
@@ -204,6 +206,17 @@ export interface TasksTable {
   source_id: string | null;
   created_by_id: string | null;
   created_at: string;
+}
+
+/**
+ * Per‑uživatelské předvolby (klíč → hodnota). Obecný úložný bod pro drobné volby
+ * uživatele, např. zvolené zobrazení modulu (`ukoly.view` = 'agenda' | 'kanban').
+ */
+export interface PersonPrefsTable {
+  tenant_id: string;
+  person_id: string;
+  key: string;
+  value: string;
 }
 
 /** Stavy úkolů = sloupce Kanbanu, konfigurovatelné PER UŽIVATEL (Úkoly v2). */

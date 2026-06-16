@@ -145,6 +145,12 @@ document.addEventListener('keydown', function (e) {
     e.preventDefault(); e.target.click();
   }
 });
+// Klikací názvy/popisy ([data-activate], role=button): Enter/mezerník otevře (editaci).
+document.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.matches && e.target.matches('[data-activate]')) {
+    e.preventDefault(); e.target.click();
+  }
+});
 
 // Po úspěšné akci spuštěné zevnitř panelu panel zavři.
 document.body.addEventListener('htmx:afterRequest', function (e) {
@@ -255,7 +261,7 @@ document.addEventListener('change', function (e) {
 // Kanban drag-drop: karty .kcard mezi/uvnitř sloupců (.kcol-body), a sloupce za úchyt .kcol-grip.
 // Po dropu se pošle nové uspořádání na server a #board se překreslí (htmx swap).
 (function () {
-  var cardId = null, colId = null;
+  var cardId = null, colId = null, lastDragEnd = 0;
   function boardQuery() {
     var board = document.getElementById('board');
     try { return new URL(board.getAttribute('hx-get'), location.href).search; } catch (_) { return ''; }
@@ -284,8 +290,16 @@ document.addEventListener('change', function (e) {
   document.addEventListener('dragend', function () {
     var d = document.querySelector('.kcard.dragging'); if (d) d.classList.remove('dragging');
     var c = document.querySelector('.kcol.col-dragging'); if (c) c.classList.remove('col-dragging');
-    cardId = null; colId = null;
+    cardId = null; colId = null; lastDragEnd = Date.now();
   });
+  // Pojistka: nativní drag&drop sice po tažení klik negeneruje, ale kdyby ho někdy
+  // některý prohlížeč „dotáhl" do kliknutí, spolkni klik na kartě/řádku těsně po tažení
+  // (jinak by se po přetažení omylem otevřel modál editace).
+  document.addEventListener('click', function (e) {
+    if (Date.now() - lastDragEnd < 300 && e.target.closest && e.target.closest('.kcard, .task-item')) {
+      e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
   document.addEventListener('dragover', function (e) {
     if (colId) {
       var kanban = e.target.closest && e.target.closest('.kanban'); if (!kanban) return;
