@@ -14,6 +14,19 @@
 
 ## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-17, dávka C — jen analýza + rozhodnutí, žádný kód):**
+> dvě hloubkové rešerše konkurence (deep-research harness) → nový dokument
+> [VIZE — Feed · Příležitosti · Log komunikace](VIZE-feed-a-prilezitosti.md). **Klíčová rozhodnutí
+> Petra:** (1) **Služba u klienta = základní stavební kámen** („mini-projekt": úkoly, výkazy, poznámky,
+> feed, vlastní rozpočet, vlastní detail/dashboard). (2) **Projekt = budoucí aktivovatelný modul**
+> „Projektové řízení" (zastřešuje víc služeb, fáze/milníky) — **nestaví se teď**, jen se na něj
+> připravíme; vědomě se odchylujeme od PSA vzoru „vše je projekt". (3) **Rozpočet** na **klientovi**
+> (paušál = strop) **+ volitelně per služba**; **tvrdý** s checkboxem „povolit přečerpání" (čerpá ze
+> sourozenců), **prahové upozornění** default **80 %**; tři cesty přečerpání (realokace / borrow-forward
+> / navýšení = vícepráce). (4) **Feed** dvouúrovňový (projektový/službový stream + klientská agregace),
+> **finance se s feedem nemíchají**. **Další na řadě: spec „Feed v1"** (povýšení dnešní Historie:
+> ruční zápis + typy + ikony) → schválení → stavba.
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-17, dávka B):** doladění **Vyúčtování + Výkazů**
 > (pushnuto): (a) ve Vyúčtování se **každá činnost uvádí zvlášť** — žádné sčítání po službách;
 > (b) **dvouřádkový vzhled** řádků **i ve Vyúčtování i ve Výkazech** (1. řádek: popis + služba ·

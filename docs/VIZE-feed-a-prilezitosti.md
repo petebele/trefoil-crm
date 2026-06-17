@@ -41,6 +41,66 @@
 
 ---
 
+## ✅ Rozhodnutí (2026-06-17): Služby = stavební kámen, Projekt = budoucí modul
+
+> Petrovo rozhodnutí po analýze — **vědomě se odchylujeme od PSA vzoru „vše je projekt".** Trefoil je
+> primárně **CRM**, ne nástroj projektového řízení.
+
+- **Služba u klienta = základní stavební kámen** (funguje jako „mini-projekt"): nese úkoly, výkazy,
+  poznámky, **feed** a **vlastní dílčí rozpočet**. Dostane **vlastní detail/dashboard** — vše, co se
+  u služby dělo, kdo zasáhl, poznámky. *(Většina uživatelů vystačí jen se službami — projekty vytvářet nemusí.)*
+- **Projekt = budoucí aktivovatelný modul „Projektové řízení".** Samostatná „nafukovací" entita, která
+  **zastřešuje víc služeb**, prací/zakázek, řešitelů, úkolů, nástěnek a může mít **fáze / milníky /
+  dílčí cíle**. **Nestaví se teď** — jen se na něj datově/architektonicky **připravíme** (zapnutelný
+  modul). Sem patří i PSA vzor „vyhraná příležitost → projekt" (§7.6) — až bude modul.
+- **Nevolat všechno „projekt".** Projekt = něco vyššího/mimořádného; běžný provoz = služby.
+- **Rozpočet (POTVRZENO 2026-06-17):** na **klientovi** (paušál = celkový strop / smlouva) **+ volitelně
+  per služba** (alokace). Stávající klientský paušál se neruší, jen přibude volitelný rozpočet na službu.
+  - **Tvrdý rozpočet** je default. Per služba **checkbox „povolit přečerpání"** → smí čerpat
+    **z nevyčerpaného rozpočtu ostatních služeb** (tj. do výše klientského stropu).
+  - **Dvě úrovně přečerpání:** (1) služba nad svou alokaci, ale klient v rámci stropu → „půjčí si" od
+    ostatních služeb (jen když je zapnutý checkbox); (2) klient **nad** strop → **vícepráce** (už máme
+    `overage_rate`).
+  - **Prahové upozornění** „upozornit na vyčerpání **X %** nebo **X Kč**" (na službě i na klientovi),
+    **default 80 %** — ať o blížícím se limitu víme **předem**, ne až po překročení. Napojí se na
+    realtime + plánovaný **Inbox „Vyžaduje moji pozornost"**.
+  - Souvisí s **Vyúčtováním v2** (schvalování víceprací) — viz [AUTOMATION.md](AUTOMATION.md).
+- **Pojem „Služba"** zatím ponecháváme (mapuje se na katalog i vyúčtování); přejmenování na výstižnější
+  (oblast / agenda / péče…) je otevřené, ne blokující.
+
+→ Důsledek pro stavbu: místo „modulu Projekty" je teď na řadě **(a) feed, (b) detail/dashboard služby,
+(c) dílčí rozpočet na službě**. Projekty zůstávají jako připravený, zatím **vypnutý** směr.
+
+### Přečerpání rozpočtu — tři cesty řešení (a jak se nezavřít do kouta)
+
+Když se služba blíží limitu (default **80 %**), je to **moment k rozhodnutí / domluvě s klientem**.
+Jsou **tři cesty**, odkud vzít chybějící část:
+
+1. **Realokace v rámci období** — vzít z **nevyčerpaného rozpočtu jiné služby** (kterou tím omezíme).
+   Klientský strop beze změny. *(= „povolit přečerpání" / půjčit si od sourozenců.)*
+2. **Z dalších období (borrow forward)** — vzít z budoucích měsíců (negativní rollover). ⚠️ **Riziko:**
+   opakuje se → 4měsíční rozpočet vyčerpán za 3 → nutné **přenastavit služby** nebo **jednat s klientem**.
+   Doporučit **strop na borrow-forward**, ať se to nevymkne.
+3. **Navýšení klientského rozpočtu** — klient schválí víc → **vícepráce** (`overage_rate`). Jednorázově
+   v daném měsíci, nebo trvale zvednout paušál.
+
+**Aby nás model nezavedl do slepé uličky** (i když stavíme později), stačí ho navrhnout takto:
+- **Rozpočty drž po obdobích**, ne jako jedno statické číslo (umožní rollover i borrow-forward).
+  *(Měsíční model + rollover už máme.)*
+- **Klientský strop a alokace služeb = oddělené hodnoty**; jejich vztah (součet vs strop) **počítej**,
+  neukládej natvrdo.
+- **Změny rozpočtu a rozhodnutí o přečerpání zapisuj jako události** (do feedu/historie) s **typem**
+  (realokace / borrow-forward / navýšení / odpis) — ne jen ano/ne. *(= scénáře Vyúčtování v2, viz
+  [AUTOMATION.md](AUTOMATION.md).)*
+- **Nikdy neblokuj zápis práce** — tvrdý limit řeší jen **zařazení do účtování**, ne možnost vykázat realitu.
+
+**Nice to have (později):** systém z **tempa čerpání + alokace predikuje** („při tomto tempu vyčerpáš PPC
+do 22. dne") a **doporučí úpravu** k probrání s klientem (realokovat ze SEO / navýšit / borrow-forward).
+Je to **čistě nadstavba** — když držíme rozpočty po obdobích a máme časované výkazy (`performed_at`),
+predikce je kdykoli dopočitatelná, takže **žádné riziko pro datové schéma**.
+
+---
+
 ## 1. Feed na detailu zákazníka (activity timeline)
 
 ### Jak to řeší špička
