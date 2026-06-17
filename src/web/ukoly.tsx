@@ -221,6 +221,9 @@ function TaskModal(props: {
   presetClientId?: string;
   presetStatusId?: string;
   presetMonth?: string;
+  presetTitle?: string;
+  sourceKind?: string;
+  sourceId?: string;
   canVykaz?: boolean;
   workRecords?: WorkRecord[];
 }) {
@@ -235,9 +238,11 @@ function TaskModal(props: {
         <input type="hidden" name="back" value={props.back} />
         {!t && props.presetStatusId ? <input type="hidden" name="status_id" value={props.presetStatusId} /> : null}
         {!t && props.presetMonth ? <input type="hidden" name="board_month" value={props.presetMonth} /> : null}
+        {!t && props.sourceKind ? <input type="hidden" name="source_kind" value={props.sourceKind} /> : null}
+        {!t && props.sourceId ? <input type="hidden" name="source_id" value={props.sourceId} /> : null}
         <div class="field">
           <label>{tr('Co je potřeba udělat')} <span class="req">*</span></label>
-          <input class="input" name="title" value={t?.title ?? ''} required autofocus />
+          <input class="input" name="title" value={t?.title ?? props.presetTitle ?? ''} required autofocus />
         </div>
         <div class="field-row2" style="grid-template-columns:1fr 1fr">
           <div class="field">
@@ -770,7 +775,7 @@ ukolyRoutes.get('/ukoly/modal/novy', async (c) => {
   }
   const [clients, coworkers, categories] = await Promise.all([listClients(t), listCoworkers(t), itemsByKey(t, 'task_categories')]);
   return c.html(
-    <TaskModal task={null} clients={clients} coworkers={coworkers} categories={categories} person={person} back={safeBack(c.req.query('back'))} presetClientId={presetClientId} presetStatusId={c.req.query('status') || undefined} presetMonth={c.req.query('mesic') || undefined} />,
+    <TaskModal task={null} clients={clients} coworkers={coworkers} categories={categories} person={person} back={safeBack(c.req.query('back'))} presetClientId={presetClientId} presetStatusId={c.req.query('status') || undefined} presetMonth={c.req.query('mesic') || undefined} presetTitle={c.req.query('nazev') || undefined} sourceKind={c.req.query('source_kind') || undefined} sourceId={c.req.query('source_id') || undefined} />,
   );
 });
 
@@ -804,6 +809,8 @@ function parseTaskInput(body: Record<string, unknown>) {
     dueAt: /^\d{4}-\d{2}-\d{2}$/.test(due) ? due : null,
     boardMonth: bm === 'none' ? null : /^\d{4}-(0[1-9]|1[0-2])$/.test(bm) ? bm : undefined,
     statusId: String(body.status_id ?? '').trim() || null,
+    sourceKind: String(body.source_kind ?? '').trim() || null,
+    sourceId: String(body.source_id ?? '').trim() || null,
   };
 }
 

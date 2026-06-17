@@ -4,7 +4,6 @@ import type { AppEnv } from '../types';
 import { ModalShell, EmptyState, KebabMenu, initials, avColor } from './components';
 import { logEvent } from '../domain/events';
 import { clientsOfPerson } from '../domain/clients';
-import { createTask } from '../domain/tasks';
 import {
   getNote,
   createNote,
@@ -135,13 +134,17 @@ function NoteEditorModal(props: {
 }
 
 /** Karta poznámky — rozložení `list` (řádky pod sebou) nebo `grid` (mozaika karet). */
-function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedKind: 'client' | 'person'; canTask: boolean; layout: 'list' | 'grid' }) {
+function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedKind: 'client' | 'person'; subjectId: string; canTask: boolean; layout: 'list' | 'grid' }) {
   const { n, person } = props;
   const back = `${props.base}?tab=poznamky`;
   const canEdit = canEditNote(person, n);
   const upravitUrl = `/poznamky/${n.id}/upravit?back=${encodeURIComponent(back)}`;
   // ve feedu firmy ukaž navázané osoby („u osoby X"), ve feedu osoby navázané firmy (štítek firmy)
   const origins = props.feedKind === 'client' ? n.person_origins.map((o) => tr('u osoby {name}', { name: o.name })) : n.client_origins.map((c) => c.name);
+  // klient pro úkol z poznámky: u firmy = ona, u osoby = první navázaná firma (je-li)
+  const taskClientId = props.feedKind === 'client' ? props.subjectId : n.client_origins[0]?.id ?? '';
+  // úkol z poznámky se NEzakládá rovnou — otevře modál nového úkolu předvyplněný (název + klient + vazba)
+  const novyUkolUrl = `/ukoly/modal/novy?nazev=${encodeURIComponent(n.title || noteExcerpt(n.body_html, 90))}&source_kind=note&source_id=${n.id}${taskClientId ? `&klient=${taskClientId}` : ''}&back=${encodeURIComponent(back)}`;
   const menu =
     canEdit || props.canTask ? (
       <span class="row-actions" style="margin-left:auto">
@@ -150,10 +153,7 @@ function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedK
             <button class="opt" type="button" hx-get={upravitUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
           ) : null}
           {props.canTask ? (
-            <form method="post" action={`/poznamky/${n.id}/ukol`} class="m0">
-              <input type="hidden" name="back" value={back} />
-              <button class="opt" type="submit">{tr('Vytvořit úkol')}</button>
-            </form>
+            <button class="opt" type="button" hx-get={novyUkolUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Vytvořit úkol')}</button>
           ) : null}
           {canEdit ? (
             <form method="post" action={`/poznamky/${n.id}/viditelnost`} class="m0">
@@ -236,10 +236,10 @@ export function NotesTab(props: {
         </EmptyState>
       ) : isGrid ? (
         <div class="notes-grid">
-          {props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} canTask={props.canTask} layout="grid" />)}
+          {props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="grid" />)}
         </div>
       ) : (
-        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} canTask={props.canTask} layout="list" />)}</div>
+        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="list" />)}</div>
       )}
     </div>
   );
@@ -342,28 +342,5 @@ poznamkyRoutes.post('/poznamky/:id/smazat', async (c) => {
   await deleteNote(t, note.id);
   const first = note.links[0];
   if (first) await logEvent(t, first.kind, first.id, person.id, `Smazána poznámka`);
-  return c.redirect(back);
-});
-
-poznamkyRoutes.post('/poznamky/:id/ukol', async (c) => {
-  const person = c.get('person')!;
-  const t = person.tenant_id;
-  const body = await c.req.parseBody();
-  const back = safeBack(body.back);
-  if (!c.get('modules').has('ukoly')) return c.redirect(back);
-  const note = await getNote(t, c.req.param('id'));
-  if (!note) return c.notFound();
-  const clientLink = note.links.find((l) => l.kind === 'client');
-  const title = noteExcerpt(note.body_html, 90) || tr('Úkol z poznámky');
-  await createTask(t, person.id, {
-    title,
-    categoryItemId: null,
-    clientId: clientLink?.id ?? null,
-    assigneeId: person.id,
-    dueAt: null,
-    sourceKind: 'note',
-    sourceId: note.id,
-  });
-  if (clientLink) await logEvent(t, 'client', clientLink.id, person.id, `Úkol z poznámky: ${title}`);
   return c.redirect(back);
 });

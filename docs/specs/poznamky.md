@@ -88,8 +88,10 @@
 
 - **„Nová poznámka"** — v záhlaví záložky Poznámky (vždy viditelné; prázdný stav má vlastní akci).
 - Na kartě poznámky **⋯** (`row-actions`, odkryje se najetím): **Upravit**, **Soukromá/Sdílená**,
-  **Vytvořit úkol** (založí úkol s názvem z poznámky a **zkopíruje její vazby** na entity —
-  napojení na modul Úkoly), **Smazat**.
+  **Vytvořit úkol**, **Smazat**.
+- **Vytvořit úkol** se **NEzakládá rovnou** — otevře **modál nového úkolu** předvyplněný z poznámky
+  (název = nadpis/výřez, klient z vazby, skrytá **vazba na poznámku** `source_kind='note'`/`source_id`),
+  kde uživatel dopíše řešitele, termín a detaily a teprve pak uloží. (Úkol si tak drží odkaz na původ.)
 - Klik na obsah/kartu → editace (vzor jako u výkazů/úkolů), komu je povolena.
 
 ## 6. Prázdné stavy

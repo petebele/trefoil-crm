@@ -20,7 +20,9 @@
 > `.notes-grid` CSS columns, na mobilu 1); volba **per uživatel** (`person_prefs` klíč `poznamky.view`,
 > drží i po realtime překreslení). `NoteCard` má `layout` list/grid; CSS `.note-title`/`.notes-grid` v
 > theme.css + styl.css, `ASSET_V`=42; KOMPONENTY §26, mockup §17, DATOVÝ-MODEL. Poznámky **zůstávají
-> samostatně** (knowledge base, mimo feed Aktivity). **Další na řadě:** ověřit v prohlížeči; pak globální
+> samostatně** (knowledge base, mimo feed Aktivity). Navíc: **„Vytvořit úkol" z poznámky už není
+> automatické** — otevře **modál nového úkolu** předvyplněný (název + klient + skrytá **vazba na
+> poznámku** `source_kind='note'`), kde se dopíše řešitel/termín/detaily; auto-create routa zrušena. **Další na řadě:** ověřit v prohlížeči; pak globální
 > Nástěnka/Inbox nebo detail-dashboard služby dle [VIZE feedu](VIZE-feed-a-prilezitosti.md).
 >
 > **Kde jsme naposledy v chatu skončili (2026-06-17, dávka D — NASAZENO):** **Feed „Aktivity" v1**
