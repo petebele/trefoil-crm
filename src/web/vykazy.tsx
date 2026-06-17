@@ -27,7 +27,7 @@ import {
   type WorkRecordInput,
 } from '../domain/workRecords';
 import type { PersonsTable } from '../db/schema';
-import { tr, fmtDate } from '../i18n';
+import { tr, fmtDate, fmtNum, currency } from '../i18n';
 
 export const vykazyRoutes = new Hono<AppEnv>();
 
@@ -179,64 +179,77 @@ export function WorkRecordModal(props: {
 
 // ---------- sdílený řádek a blok výkazů (používá i detail zákazníka) ----------
 
-export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; ownerId: string | null; back: string; showClient?: boolean }) {
+export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; ownerId: string | null; back: string; showClient?: boolean; showAmount?: boolean }) {
   const { r, person, back } = props;
+  const amount = r.billing === 'free' ? null : Math.round((r.minutes / 60) * (r.service_rate ?? 0));
   return (
-    <div class="hover-row" style="display:flex;gap:.7rem;align-items:flex-start;padding:.5rem 0;border-top:1px solid var(--line);font-size:.86rem">
-      <span class="sub" style="white-space:nowrap">{fmtDay(r.performed_at)}</span>
-      <span style="flex:1">
-        {canEditRecord(person, r) ? (
-          <span
-            role="button"
-            tabindex={0}
-            data-activate
-            style="font-weight:600;cursor:pointer"
-            hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`}
-            hx-target="#modal"
-            hx-swap="innerHTML"
-            title={tr('Upravit výkaz')}
-          >
-            {r.description}
+    <div class="hover-row" style="padding:.5rem 0;border-top:1px solid var(--line);font-size:.86rem">
+      {/* ř. 1: datum · popis (co jsem dělal) + služba/pracovník · čas + částka + ⋯ */}
+      <div style="display:flex;gap:.7rem;align-items:flex-start">
+        <span class="sub" style="white-space:nowrap">{fmtDay(r.performed_at)}</span>
+        <span style="flex:1;min-width:0">
+          {canEditRecord(person, r) ? (
+            <span
+              role="button"
+              tabindex={0}
+              data-activate
+              style="font-weight:600;cursor:pointer"
+              hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`}
+              hx-target="#modal"
+              hx-swap="innerHTML"
+              title={tr('Upravit výkaz')}
+            >
+              {r.description}
+            </span>
+          ) : (
+            <span style="font-weight:600">{r.description}</span>
+          )}
+          <span class="sub" style="display:block">
+            {props.showClient ? <>{r.client_name} · </> : null}
+            {r.service_label}
+            {r.service_detail ? ` · ${r.service_detail}` : ''} · {r.worker_name}
+            {r.note ? <span style="display:block;font-size:.78rem">{r.note}</span> : null}
           </span>
-        ) : (
-          <span style="font-weight:600">{r.description}</span>
-        )}
-        <span class="sub" style="display:block">
-          {props.showClient ? <>{r.client_name} · </> : null}
-          {r.service_label}
-          {r.service_detail ? ` · ${r.service_detail}` : ''} · {r.worker_name}
-          {r.task_title ? <> · {tr('úkol')}: {r.task_title}</> : null}
-          {r.note ? <span style="display:block;font-size:.78rem">{r.note}</span> : null}
         </span>
-      </span>
-      <span class={`chip ${r.billing === 'retainer_hours' ? 'chip-soft-teal' : r.billing === 'billed' ? 'chip-soft-orange' : 'chip-soft-gray'}`}>
-        {tr(BILLING_LABELS[r.billing])}
-      </span>
-      <span style="font-weight:600;white-space:nowrap">{fmtMinutes(r.minutes)}</span>
-      {r.status === 'pending' ? <span class="chip chip-soft-gray">{tr('Čeká')}</span> : <span class="chip chip-soft-teal" title={r.approved_by_name ? tr('Schválil(a) {name}', { name: r.approved_by_name }) : ''}>{tr('Schváleno')}</span>}
-      {(r.status === 'pending' && canApproveFor(person, props.ownerId)) || canEditRecord(person, r) ? (
-        <span class="row-actions">
-          <KebabMenu id={`wkRow-${r.id}`} label={tr('Možnosti výkazu')}>
-            {r.status === 'pending' && canApproveFor(person, props.ownerId) ? (
-              <form method="post" action={`/vykazy/${r.id}/schvalit`} class="m0">
-                <input type="hidden" name="back" value={back} />
-                <button class="opt" type="submit">{tr('Schválit')}</button>
-              </form>
-            ) : null}
-            {canEditRecord(person, r) ? (
-              <>
-                <button class="opt" type="button" hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
-                  {tr('Upravit')}
-                </button>
-                <form method="post" action={`/vykazy/${r.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tento výkaz?')}')`}>
+        {props.showAmount && amount !== null ? (
+          <span style="font-weight:600;white-space:nowrap">{fmtNum(amount)} {currency()}</span>
+        ) : props.showAmount ? (
+          <span class="sub" style="white-space:nowrap">{tr('neúčtováno')}</span>
+        ) : null}
+        <span style="font-weight:600;white-space:nowrap">{fmtMinutes(r.minutes)}</span>
+        {(r.status === 'pending' && canApproveFor(person, props.ownerId)) || canEditRecord(person, r) ? (
+          <span class="row-actions">
+            <KebabMenu id={`wkRow-${r.id}`} label={tr('Možnosti výkazu')}>
+              {r.status === 'pending' && canApproveFor(person, props.ownerId) ? (
+                <form method="post" action={`/vykazy/${r.id}/schvalit`} class="m0">
                   <input type="hidden" name="back" value={back} />
-                  <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
+                  <button class="opt" type="submit">{tr('Schválit')}</button>
                 </form>
-              </>
-            ) : null}
-          </KebabMenu>
+              ) : null}
+              {canEditRecord(person, r) ? (
+                <>
+                  <button class="opt" type="button" hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
+                    {tr('Upravit')}
+                  </button>
+                  <form method="post" action={`/vykazy/${r.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tento výkaz?')}')`}>
+                    <input type="hidden" name="back" value={back} />
+                    <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
+                  </form>
+                </>
+              ) : null}
+            </KebabMenu>
+          </span>
+        ) : null}
+      </div>
+      {/* ř. 2: badges — způsob účtování, stav, projekt (placeholder do modulu Projekty) */}
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center;margin-top:.3rem">
+        <span class={`chip ${r.billing === 'retainer_hours' ? 'chip-soft-teal' : r.billing === 'billed' ? 'chip-soft-orange' : 'chip-soft-gray'}`}>
+          {tr(BILLING_LABELS[r.billing])}
         </span>
-      ) : null}
+        {r.status === 'pending' ? <span class="chip chip-soft-gray">{tr('Čeká')}</span> : <span class="chip chip-soft-teal" title={r.approved_by_name ? tr('Schválil(a) {name}', { name: r.approved_by_name }) : ''}>{tr('Schváleno')}</span>}
+        {r.task_title ? <span class="chip chip-soft-gray">{tr('úkol')}: {r.task_title}</span> : null}
+        <span class="chip chip-soft-gray">{tr('bez projektu')}</span>
+      </div>
     </div>
   );
 }

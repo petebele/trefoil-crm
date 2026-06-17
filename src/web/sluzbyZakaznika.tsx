@@ -125,14 +125,14 @@ function RetainerModal(props: { base: string; client: ClientsTable }) {
         </div>
         <div class="field-row2" style="grid-template-columns:1fr 1fr">
           <div class="field">
-            <label>{tr('Sazba za paušální hodinu')} ({tr('Kč/h')})</label>
-            <input class="input" type="number" name="rate" min="0" step="1" value={c.retainer_hourly_rate ?? ''} />
-            <span class="help">{tr('Měsíční cena = hodiny × sazba.')}</span>
+            <label>{tr('Standardní hodinová sazba / za vícepráce')} ({tr('Kč/h')})</label>
+            <input class="input" type="number" name="overage_rate" min="0" step="1" value={c.overage_rate ?? ''} />
+            <span class="help">{tr('Běžná sazba; účtuje se jí práce nad paušál. Prázdné = sazba služby.')}</span>
           </div>
           <div class="field">
-            <label>{tr('Sazba za vícepráce')} ({tr('Kč/h')})</label>
-            <input class="input" type="number" name="overage_rate" min="0" step="1" value={c.overage_rate ?? ''} />
-            <span class="help">{tr('Práce nad paušál. Prázdné = sazba služby.')}</span>
+            <label>{tr('Zvýhodněná sazba za paušální hodinu')} ({tr('Kč/h')})</label>
+            <input class="input" type="number" name="rate" min="0" step="1" value={c.retainer_hourly_rate ?? ''} />
+            <span class="help">{tr('Měsíční cena paušálu = hodiny × tato sazba.')}</span>
           </div>
         </div>
         <div class="field">
@@ -234,6 +234,8 @@ export function SluzbyZakaznikaTab(props: {
   const running = services.filter((s) => s.status !== 'ended');
   const archived = services.filter((s) => s.status === 'ended');
   const hasRetainer = client.hours_budget_monthly !== null;
+  // aktivní paušál = nastavený A nenulový; nulový/nedefinovaný = vše se účtuje sazbou
+  const hasActivePausal = (client.hours_budget_monthly ?? 0) > 0;
 
   // ── Vyúčtování: paušál (dohodnutá cena) + čerpání/nevyčerpáno/přečerpáno + nepaušální služby ──
   const active = services.filter((s) => s.status === 'active');
@@ -248,17 +250,18 @@ export function SluzbyZakaznikaTab(props: {
   const overMin = money?.overageMinutes ?? 0;
   const unusedMin = Math.max(0, allowanceMin - usedMin);
 
-  // rozpad SCHVÁLENÉ práce po službách: hodiny z paušálu (bez částky) a nepaušální (čas × sazba)
-  const svcKey = (r: WorkRecord) => (r.service_detail ? `${r.service_label} · ${r.service_detail}` : r.service_label);
-  const retainerSvc = new Map<string, number>();
-  const paygSvc = new Map<string, { minutes: number; amount: number; rate: number | null }>();
+  // KAŽDÁ ČINNOST ZVLÁŠŤ (žádné sčítání po službách): hrazené z paušálu (bez částky, jen při
+  // aktivním paušálu) a účtované (čas × sazba). Bez aktivního paušálu se i „z paušálu" účtuje sazbou.
+  const svcLabel = (r: WorkRecord) => (r.service_detail ? `${r.service_label} · ${r.service_detail}` : r.service_label);
+  const retainerLines: WorkRecord[] = [];
+  const billableLines: Array<{ r: WorkRecord; amount: number; rate: number | null }> = [];
   for (const r of approved) {
-    if (r.billing === 'retainer_hours') retainerSvc.set(svcKey(r), (retainerSvc.get(svcKey(r)) ?? 0) + r.minutes);
-    else if (r.billing === 'billed') {
-      const cur = paygSvc.get(svcKey(r)) ?? { minutes: 0, amount: 0, rate: r.service_rate };
-      cur.minutes += r.minutes;
-      cur.amount += (r.minutes / 60) * (r.service_rate ?? 0);
-      paygSvc.set(svcKey(r), cur);
+    if (r.billing === 'free') continue; // neúčtovat
+    if (hasActivePausal && r.billing === 'retainer_hours') {
+      retainerLines.push(r);
+    } else {
+      const effRate = !hasActivePausal && r.billing === 'retainer_hours' ? client.overage_rate ?? r.service_rate : r.service_rate;
+      billableLines.push({ r, amount: (r.minutes / 60) * (effRate ?? 0), rate: effRate });
     }
   }
   const subscriptions = active.filter((s) => s.mode === 'subscription');
@@ -274,7 +277,7 @@ export function SluzbyZakaznikaTab(props: {
     money,
     subscriptionAmounts: subscriptions.map((s) => s.monthly_amount ?? 0),
   });
-  const showVyuctovani = hasRetainer || subscriptions.length > 0 || paygSvc.size > 0;
+  const showVyuctovani = hasActivePausal || subscriptions.length > 0 || billableLines.length > 0;
 
   return (
     <>
@@ -301,18 +304,25 @@ export function SluzbyZakaznikaTab(props: {
             )
           ) : null}
         </div>
-        {hasRetainer ? (
+        {hasActivePausal ? (
           <div>
             <b>{kc(client.hours_budget_monthly!)} {tr('h')}</b> {tr('měsíčně')}
-            {client.retainer_price !== null ? <> {tr('za')} <b>{kc(client.retainer_price)} {tr('Kč/měs')}</b></> : null}
+            {client.retainer_hourly_rate !== null ? <> × <b>{kc(client.retainer_hourly_rate)} {tr('Kč/h')}</b></> : null}
+            {client.retainer_price !== null ? <> = <b>{kc(client.retainer_price)} {tr('Kč/měs')}</b></> : null}
             <span class="sub" style="display:block">
               {client.hours_rollover === 1 ? tr('Nevyčerpané hodiny se převádějí do dalšího měsíce.') : tr('Nevyčerpané hodiny se nepřevádějí (propadají).')}
               {' '}
               {tr('Kryje služby v režimu „{mode}".', { mode: tr(SERVICE_MODE_LABELS.retainer) })}
+              {client.overage_rate !== null ? <> {tr('Vícepráce {rate} Kč/h.', { rate: kc(client.overage_rate) })}</> : null}
             </span>
           </div>
         ) : (
-          <p class="sub" style="margin:0">{tr('Bez paušálu hodin.')}</p>
+          <p class="sub" style="margin:0">
+            <b>{tr('Paušál hodin není definovaný.')}</b>{' '}
+            {client.overage_rate !== null
+              ? tr('Práci účtujeme {rate} Kč/h.', { rate: kc(client.overage_rate) })
+              : tr('Práci účtujeme sazbou u jednotlivých služeb.')}
+          </p>
         )}
       </div>
 
@@ -402,7 +412,7 @@ export function SluzbyZakaznikaTab(props: {
           ) : (
             <div>
               {v.records.map((r) => (
-                <WorkRecordRow r={r} person={v.person} ownerId={client.owner_id} back={`${base}?tab=sluzby&mesic=${v.month}`} />
+                <WorkRecordRow r={r} person={v.person} ownerId={client.owner_id} back={`${base}?tab=sluzby&mesic=${v.month}`} showAmount={!hasActivePausal} />
               ))}
             </div>
           )}
@@ -413,7 +423,7 @@ export function SluzbyZakaznikaTab(props: {
         <div class="card" style="margin-top:1rem">
           <div class="card-head"><h3>{tr('Vyúčtování')}{v ? <span class="sub" style="font-weight:400;text-transform:capitalize"> · {monthLabel(v.month)}</span> : ''}</h3></div>
 
-          {hasRetainer ? (
+          {hasActivePausal ? (
             <>
               <div style="display:flex;justify-content:space-between;gap:1rem;padding:.45rem 0;border-top:1px solid var(--line);font-size:.88rem">
                 <span>
@@ -425,10 +435,10 @@ export function SluzbyZakaznikaTab(props: {
                 </span>
                 <span style="white-space:nowrap;font-weight:600">{client.retainer_price !== null ? <>{kc(P)} {tr('Kč')}</> : <span class="sub">{tr('cena nenastavena')}</span>}</span>
               </div>
-              {[...retainerSvc.entries()].map(([label, mins]) => (
+              {retainerLines.map((r) => (
                 <div style="display:flex;justify-content:space-between;gap:1rem;padding:.12rem 0 .12rem 1.1rem;font-size:.8rem;color:var(--muted)">
-                  <span>• {label}</span>
-                  <span style="white-space:nowrap">{fmtMinutes(mins)}</span>
+                  <span>• {r.description} <span class="sub">· {svcLabel(r)}</span></span>
+                  <span style="white-space:nowrap">{fmtMinutes(r.minutes)}</span>
                 </div>
               ))}
               {v && overMin > 0 ? (
@@ -452,10 +462,20 @@ export function SluzbyZakaznikaTab(props: {
             </>
           ) : null}
 
-          {[...paygSvc.entries()].map(([label, b]) => (
-            <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--line);font-size:.88rem">
-              <span>{label} · {fmtMinutes(b.minutes)}{b.rate !== null ? ` × ${kc(b.rate)} ${tr('Kč/h')}` : ''}</span>
-              <span style="white-space:nowrap;font-weight:600">{kc(Math.round(b.amount))} {tr('Kč')}</span>
+          {billableLines.map(({ r, amount, rate }) => (
+            <div style="padding:.4rem 0;border-top:1px solid var(--line);font-size:.88rem">
+              {/* ř. 1: popis (co jsem dělal) + služba · hodiny × sazba (pod tím) + částka vpravo */}
+              <div style="display:flex;gap:.7rem;align-items:flex-start">
+                <span style="flex:1;min-width:0">
+                  <span style="font-weight:600">{r.description}</span>
+                  <span class="sub" style="display:block">{svcLabel(r)} · {fmtMinutes(r.minutes)}{rate !== null ? ` × ${kc(rate)} ${tr('Kč/h')}` : ''}</span>
+                </span>
+                <span style="white-space:nowrap;font-weight:600">{kc(Math.round(amount))} {tr('Kč')}</span>
+              </div>
+              {/* ř. 2: badge projektu (zatím bez odkazu) → budoucí přechod na vyúčtování projektu (viz docs/AUTOMATION.md) */}
+              <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem">
+                <span class="chip chip-soft-gray">{tr('bez projektu')}</span>
+              </div>
             </div>
           ))}
 

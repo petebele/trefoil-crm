@@ -14,7 +14,17 @@
 
 ## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
 
-> **Kde jsme naposledy v chatu skončili (2026-06-17):** velká dávka **nasazena a pushnuta**:
+> **Kde jsme naposledy v chatu skončili (2026-06-17, dávka B):** doladění **Vyúčtování + Výkazů**
+> (pushnuto): (a) ve Vyúčtování se **každá činnost uvádí zvlášť** — žádné sčítání po službách;
+> (b) **dvouřádkový vzhled** řádků **i ve Vyúčtování i ve Výkazech** (1. řádek: popis + služba ·
+> čas × sazba + částka; 2. řádek: badges včetně **badge projektu „bez projektu"** — placeholder
+> než vznikne modul Projekty); (c) **bez aktivního paušálu** se nahoře u paušálu píše, že není
+> definovaný a za hodinu účtujeme X Kč/h (nebo sazbou u služeb), a ve Výkazech/Vyúčtování se
+> ukazují **částky v Kč**; (d) **přejmenované/prohozené sazby** v nastavení paušálu (1. „Standardní
+> hodinová sazba / za vícepráce", 2. „Zvýhodněná sazba za paušální hodinu"). Užší obrazovka: popis
+> se už nesmršťuje, badges jsou na druhém řádku.
+>
+> **Kde jsme naposledy v chatu skončili (2026-06-17, dávka A):** velká dávka **nasazena a pushnuta**:
 > (1) **Modul Poznámky (v1)** — záložka u firmy i osoby, **vlastní editor bez knihoven** (kompaktní
 > lišta, Enter=`<p>`/Shift+Enter=`<br>`, styly se nemíchají, robustní „vymazat formátování"),
 > server **očistí HTML na allowlist** (test proti XSS); propis **osoba→firma** přes „Týká se i firmy"

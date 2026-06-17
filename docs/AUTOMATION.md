@@ -99,6 +99,13 @@ hodinu** (Kč/h) → měsíční cena = hodiny × sazba (odvozená). Volitelně 
 - **Defaultní hodnoty pro schvalování víceprací** per klient (předvyplní volbu z v2).
 - Strop rolloveru (best practice ~25 %, okno 1 měsíc).
 
+**Vyúčtování projektu (návrh, nestavěno):** každý řádek činnosti ve Vyúčtování má dostat
+**badge s názvem projektu** (druhý řádek řádku). Badge bude **klikací → přechod na vyúčtování
+projektu** (souhrn za projekt napříč klienty/činnostmi). Vyžaduje **modul Projekty/Zakázky**
+a vazbu výkazu na projekt (`work_records` → projekt, příp. přes úkol). V kartě Vyúčtování už je
+připravená struktura řádku (placeholder pro badge). Mezikrok: badge by mohl prozatím ukázat
+**navázaný úkol** (výkaz už `task_id` má) — k rozhodnutí.
+
 ---
 
 ## Další nápady (zatím nezařazené)
