@@ -14,6 +14,16 @@
 
 ## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-17, dávka D — NASAZENO):** **Feed „Aktivity" v1**
+> (read-only). Záložka **„Aktivity"** na firmě i osobě (přejmenovaná „Historie"; **Poznámky zůstávají
+> samostatně** jako knowledge base). Je to **lupa nad událostmi** (tabulka `events`) — žádné nové
+> úložiště ani zápis: každá událost se podle textu **zařadí do typu** (poznámka/úkol/výkaz/kontakt/
+> systém) a dostane **ikonu**; **filtr po typu** (`?atyp=`). Realtime, bez změny schématu. Komponenta
+> `ActivityFeed` (components.tsx), `.feed-ico` v theme.css + styl.css, `ASSET_V`=41, mockup §16,
+> KOMPONENTY §25, spec `feed-v1.md`. **Ruční záznam komunikace (hovor/schůzka) = budoucí modul
+> „Komunikace"**, ne ve v1. **Další na řadě:** ověřit „Aktivity" v prohlížeči; pak modul Komunikace /
+> detail-dashboard služby / příležitosti dle [VIZE feedu](VIZE-feed-a-prilezitosti.md).
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-17, dávka C — jen analýza + rozhodnutí, žádný kód):**
 > dvě hloubkové rešerše konkurence (deep-research harness) → nový dokument
 > [VIZE — Feed · Příležitosti · Log komunikace](VIZE-feed-a-prilezitosti.md). **Klíčová rozhodnutí

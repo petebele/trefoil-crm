@@ -556,7 +556,7 @@ export function DetailTabs(props: { base: string; active: string }) {
       {tab('poznamky', tr('Poznámky'))}
       {tab('sluzby', tr('Služby'))}
       {tab('projekty', tr('Projekty'))}
-      {tab('historie', tr('Historie'))}
+      {tab('aktivity', tr('Aktivity'))}
     </nav>
   );
 }
@@ -569,6 +569,88 @@ export function EventRow(props: { e: { id: string; action: string; created_at: s
       <span style="font-weight:600;white-space:nowrap">{e.person_name ?? '—'}</span>
       <span style="flex:1">{e.action}</span>
       <span class="sub" title={tr('ID záznamu: {id}', { id: e.id })} style="font-size:.7rem">#{e.id.slice(0, 8)}</span>
+    </div>
+  );
+}
+
+// ---------- Feed „Aktivity" (read-only přehled nad událostmi) ----------
+// Záznam dění se klasifikuje podle textu akce do typu (poznámka/úkol/výkaz/kontakt/systém)
+// a dostane ikonu — uživatel má rozhled „co se dělo napříč typy". Bez vlastního úložiště:
+// jen lepší prezentace tabulky `events`. Spec: docs/specs/feed-v1.md.
+
+type ActEvent = { id: string; action: string; created_at: string; person_name: string | null };
+type ActKind = 'note' | 'task' | 'work' | 'contact' | 'system';
+
+function activityKind(action: string): ActKind {
+  if (/^(Přidána|Upravena|Smazána) poznámka/.test(action)) return 'note';
+  if (/^Úkol /.test(action)) return 'task';
+  if (/^Výkaz /.test(action)) return 'work';
+  if (/kontakt/i.test(action)) return 'contact';
+  return 'system';
+}
+
+const ACT_FILTERS: Array<{ key: string; label: string; kinds: ActKind[] }> = [
+  { key: '', label: 'Vše', kinds: [] },
+  { key: 'note', label: 'Poznámky', kinds: ['note'] },
+  { key: 'task', label: 'Úkoly', kinds: ['task'] },
+  { key: 'work', label: 'Výkazy', kinds: ['work'] },
+  { key: 'other', label: 'Ostatní', kinds: ['contact', 'system'] },
+];
+
+function ActIcon(props: { kind: ActKind }) {
+  const s = { width: '15', height: '15', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } as const;
+  switch (props.kind) {
+    case 'note':
+      return <svg {...s}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="13" y2="17" /></svg>;
+    case 'task':
+      return <svg {...s}><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
+    case 'work':
+      return <svg {...s}><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 16 14" /></svg>;
+    case 'contact':
+      return <svg {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>;
+    default:
+      return <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="5" /></svg>;
+  }
+}
+
+function ActivityRow(props: { e: ActEvent }) {
+  const { e } = props;
+  const k = activityKind(e.action);
+  const muted = k === 'contact' || k === 'system';
+  return (
+    <div style={`display:flex;gap:.7rem;padding:.55rem 0;border-top:1px solid var(--line)${muted ? ';opacity:.62' : ''}`}>
+      <span class={`feed-ico feed-ico--${k}`} aria-hidden="true"><ActIcon kind={k} /></span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;font-size:.82rem">
+          <b>{e.person_name ?? tr('Systém')}</b>
+          <span class="sub">· {fmtDateTime(e.created_at)}</span>
+        </div>
+        <div style="font-size:.86rem">{e.action}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Read-only feed „Aktivity": filtr typů + událostní řádky s ikonami. */
+export function ActivityFeed(props: { events: ActEvent[]; base: string; active: string }) {
+  const active = props.active || '';
+  const sel = ACT_FILTERS.find((f) => f.key === active) ?? ACT_FILTERS[0]!;
+  const shown = sel.kinds.length ? props.events.filter((e) => sel.kinds.includes(activityKind(e.action))) : props.events;
+  return (
+    <div class="card">
+      <div class="card-head"><h3>{tr('Aktivity')}</h3></div>
+      <nav class="tabs" style="margin:.1rem 0 .5rem" aria-label={tr('Filtr aktivit')}>
+        {ACT_FILTERS.map((f) => (
+          <a class={`tab ${f.key === active ? 'active' : ''}`} href={`${props.base}?tab=aktivity${f.key ? `&atyp=${f.key}` : ''}`}>
+            {tr(f.label)}
+          </a>
+        ))}
+      </nav>
+      {shown.length ? (
+        <div>{shown.map((e) => <ActivityRow e={e} />)}</div>
+      ) : (
+        <EmptyState text={active ? tr('V tomto filtru zatím nic není.') : tr('Zatím se tu nic nedělo.')} />
+      )}
     </div>
   );
 }

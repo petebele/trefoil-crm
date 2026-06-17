@@ -423,6 +423,74 @@
     </div>
   </section>
 
+  <section class="ks">
+    <style>
+      .feed-ico{flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);color:var(--muted);background:transparent}
+      .feed-ico--note,.feed-ico--call,.feed-ico--meet,.feed-ico--mail{color:var(--accent)}
+      .feed-ico--sys{color:var(--muted)}
+      .tl-item--sys{opacity:.62}
+      .feed-acts{margin-left:auto;display:inline-flex;gap:.2rem}
+    </style>
+    <h2>16 · Feed „Aktivity" (přehled dění)</h2>
+    <p class="kd"><b>Nasazeno (v1): read-only přehled.</b> Sjednocuje a lépe prezentuje dění u zákazníka <b>napříč typy</b> (poznámka, úkol, výkaz, kontakt, systém) jako <b>lupu nad událostmi</b> (tabulka <code>events</code>); filtr po typu, <b>bez vlastního zápisu</b>. Poznámky zůstávají <b>samostatně</b> (knowledge base). <b>Ukázka níže</b> navíc ilustruje <b>budoucí</b> ruční záznamy (hovor/schůzka přes editor §15) a skupinu „Nadcházející" — to přijde až s modulem <b>Komunikace</b>. Spec: <code>docs/specs/feed-v1.md</code>, katalog §25.</p>
+
+    <div class="kbox" style="max-width:640px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.4rem">
+        <button class="btn btn-primary btn-sm" type="button">+ Zaznamenat <span class="chev">▾</span></button>
+        <nav class="tabs" style="margin:0" aria-label="Filtr typu aktivity">
+          <a class="tab active" href="#">Vše</a>
+          <a class="tab" href="#">Poznámky</a>
+          <a class="tab" href="#">Hovory</a>
+          <a class="tab" href="#">Schůzky</a>
+          <a class="tab" href="#">Systém</a>
+        </nav>
+      </div>
+
+      <p class="sub" style="margin:.6rem 0 .1rem;font-weight:600">Nadcházející</p>
+      <div class="tl-item" style="border-top:none">
+        <span class="feed-ico feed-ico--call" title="Hovor" aria-label="Hovor"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+        <div style="flex:1;min-width:0">
+          <div class="tl-head" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b>Já</b> <span class="when">· po 10:00 (naplánováno)</span>
+            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit">✎</button><button class="icon-btn" type="button" aria-label="Více" title="Více">⋯</button></span></div>
+          <div class="note-content tl-body"><p>Hovor — probrat rozpočet Q3, navýšení PPC.</p></div>
+        </div>
+      </div>
+
+      <p class="sub" style="margin:.7rem 0 .1rem;font-weight:600">Proběhlo</p>
+      <div class="tl-item">
+        <span class="feed-ico feed-ico--note" title="Poznámka" aria-label="Poznámka"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></span>
+        <div style="flex:1;min-width:0">
+          <div class="tl-head" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b>Petr Běloch</b> <span class="when">· dnes 9:14</span>
+            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit">✎</button><button class="icon-btn" type="button" aria-label="Více" title="Více">⋯</button></span></div>
+          <div class="note-content tl-body"><p>Klient potvrdil rozpočet na Q3. <strong>Fakturace beze změny.</strong></p></div>
+        </div>
+      </div>
+      <div class="tl-item tl-item--sys">
+        <span class="feed-ico feed-ico--sys" title="Systém" aria-label="Systémová událost"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="5"/></svg></span>
+        <div style="flex:1;min-width:0">
+          <div class="tl-head"><b class="sub">Systém</b> <span class="when">· včera 16:20</span></div>
+          <div class="tl-body sub">Přidán kontakt: e-mail jan@acme.cz</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <span class="feed-ico feed-ico--meet" title="Schůzka" aria-label="Schůzka"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        <div style="flex:1;min-width:0">
+          <div class="tl-head" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b>Jana Nováková</b> <span class="when">· 3. 6.</span> <span class="chip chip-soft-gray">u osoby Jan Novák</span>
+            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit">✎</button><button class="icon-btn" type="button" aria-label="Více" title="Více">⋯</button></span></div>
+          <div class="note-content tl-body"><p>Schůzka — kickoff PPC, odsouhlasen plán kampaní.</p></div>
+        </div>
+      </div>
+      <div class="tl-item tl-item--sys">
+        <span class="feed-ico feed-ico--sys" title="Systém" aria-label="Systémová událost"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="5"/></svg></span>
+        <div style="flex:1;min-width:0">
+          <div class="tl-head"><b class="sub">Systém</b> <span class="when">· 1. 6.</span></div>
+          <div class="tl-body sub">Firma založena</div>
+        </div>
+      </div>
+    </div>
+    <p class="kd" style="margin-top:.7rem"><b>Auto vs ruční:</b> systémové řádky jsou <b>utlumené</b> a bez akcí (jen čtení); ruční mají avatar/jméno autora, plný text a akce ✎/⋯. Třídy <code>.feed-ico</code> (kruhová ikona typu) a <code>.tl-item--sys</code> (utlumení) se při stavbě přidají do <code>public/theme.css</code> i <code>mockupy/styl.css</code>.</p>
+  </section>
+
 </main>
 
 <script>

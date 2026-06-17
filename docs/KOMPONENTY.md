@@ -509,6 +509,12 @@ Obecné mechanismy v `app.js` — použitelné v každém formuláři, žádný 
 Vlastní lehký editor pro poznámky — **žádná externí knihovna**. Mockup: `mockupy/komponenty.html` §15.
 Spec: [docs/specs/poznamky.md](specs/poznamky.md).
 
+> **Znovupoužitelná komponenta (rich-input).** Editor **není vázaný na Poznámky** — je to obecné pole
+> pro **formátovaný / komplexní vstup**. Používej ho všude, kde nestačí prostý `<input>`/`<textarea>`:
+> **ruční záznamy do Feedu** (§25 — hovor/schůzka/poznámka), popisy úkolů, delší komentáře atd. Stejná
+> komponenta, různé rendery (plná lišta vs. kompaktní za tužkou ✎, vzor §18). Server vždy očistí vstup
+> na allowlist (viz níže) bez ohledu na to, odkud editor voláš.
+
 - **Struktura:** `.note-editor` (rámeček) › `.note-toolbar` (lišta tlačítek) + `.note-area`
   (`contenteditable="true"`, plocha psaní). Vyrenderovaná poznámka jinde = `.note-content`
   (stejná typografie jako `.note-area`).
@@ -542,6 +548,28 @@ Spec: [docs/specs/poznamky.md](specs/poznamky.md).
 - **Aria:** `.note-toolbar` má `role="toolbar"` + `aria-label`; tlačítka `aria-label`/`title`;
   `.note-area` `aria-label`.
 - **Rozšíření (později):** obrázky a přílohy (lišta s nimi počítá), `@zmínky`.
+
+---
+
+## 25. Feed „Aktivity" — read-only přehled dění
+
+**Read-only** chronologický přehled na detailu zákazníka (firma/osoba): **lupa nad událostmi**
+(tabulka `events`), kam moduly samy zapisují přes `logEvent()`. Žádné vlastní úložiště, žádný zápis
+odtud. Komponenta `ActivityFeed` v `components.tsx`. Mockup: `mockupy/komponenty.html` §16. Spec:
+[docs/specs/feed-v1.md](specs/feed-v1.md). Vize: [VIZE — Feed](VIZE-feed-a-prilezitosti.md).
+
+- **Struktura:** záložka **„Aktivity"** (přejmenovaná „Historie"; **Poznámky** mají vlastní záložku) ›
+  filtr typů (`.tabs`) › chronologické řádky událostí (nejnovější nahoře).
+- **Řádek = ikona typu + autor + čas + text události.** Typ nese kruhová ikona **`.feed-ico`**
+  (varianty `--note`/`--task`/`--work` = barva akcentu; `--contact`/`--system` = utlumené). SVG Feather.
+- **Klasifikace typu** (`activityKind`) podle prefixu textu události: „Přidána/Upravena/Smazána
+  poznámka" → note; „Úkol …" → task; „Výkaz …" → work; obsahuje „kontakt" → contact; jinak → system.
+- **Filtr po typu** (`.tabs`): Vše · Poznámky · Úkoly · Výkazy · Ostatní — přes `?atyp=note|task|work|other`.
+- **Realtime:** záložka je živá zóna (`hx-trigger="live-update from:body"`); nové dění se objeví samo.
+- **CSS:** `.feed-ico` (+ varianty) je v `public/theme.css` **i** `mockupy/styl.css`.
+- **Prázdné stavy:** „Zatím se tu nic nedělo." / při filtru „V tomto filtru zatím nic není."
+- **Budoucí (ne ve v1):** ruční záznam komunikace (hovor/schůzka/e-mail přes editor §24), skupina
+  „Nadcházející", follow-up úkol — přijde s modulem **Komunikace**; mockup §16 to ukazuje jako „budoucí".
 
 ---
 

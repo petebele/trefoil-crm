@@ -24,6 +24,7 @@ import {
   ContactsSection,
   DetailTabs,
   EventRow,
+  ActivityFeed,
   Picker,
   ModalShell,
   ModalContactRows,
@@ -216,6 +217,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
   const p = await getCustomerPerson(t, c.req.param('id'));
   if (!p) return c.notFound();
   const tab = c.req.query('tab') ?? 'nastenka';
+  const atyp = c.req.query('atyp') ?? '';
 
   const [contacts, tags, allTags, labels, firms, events, firmServices] = await Promise.all([
     listContacts(t, 'person', p.id),
@@ -303,11 +305,8 @@ osobyRoutes.get('/osoby/:id', async (c) => {
             <NotesTab base={base} kind="person" entityId={p.id} notes={notes} person={person} canTask={modules.has('ukoly')} />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
-          ) : tab === 'historie' ? (
-            <div class="card">
-              <div class="card-head"><h3>{tr('Historie')}</h3></div>
-              {events.length ? <div>{events.map((e) => <EventRow e={e} />)}</div> : <EmptyState text={tr('Zatím žádná událost.')} />}
-            </div>
+          ) : tab === 'aktivity' ? (
+            <ActivityFeed events={events} base={base} active={atyp} />
           ) : (
             <>
               <div class="stats" style="grid-template-columns:repeat(3,1fr)">

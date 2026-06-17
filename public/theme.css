@@ -613,3 +613,8 @@ textarea.input[data-autogrow] { resize: none; overflow-y: hidden; min-height: 0;
   .page { padding: 1rem .9rem 3rem; }
   .stats { grid-template-columns: 1fr 1fr; }
 }
+
+/* Feed „Aktivity" — kruhová ikona typu záznamu (poznámka/úkol/výkaz/kontakt/systém) */
+.feed-ico { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); background: transparent; }
+.feed-ico--note, .feed-ico--task, .feed-ico--work { color: var(--accent); }
+.feed-ico--contact, .feed-ico--system { color: var(--muted); }

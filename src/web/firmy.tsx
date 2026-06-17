@@ -33,6 +33,7 @@ import {
   ContactsSection,
   DetailTabs,
   EventRow,
+  ActivityFeed,
   Picker,
   ModalShell,
   ModalContactRows,
@@ -408,6 +409,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   const client = await getClient(t, c.req.param('id'));
   if (!client) return c.notFound();
   const tab = c.req.query('tab') ?? 'nastenka';
+  const atyp = c.req.query('atyp') ?? '';
 
   const [contacts, tags, allTags, labels, statusItems, coworkers, people, persons, events, services, catalog] = await Promise.all([
     listContacts(t, 'client', client.id),
@@ -441,7 +443,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   const notes = tab === 'poznamky' ? await notesForEntity(t, 'client', client.id, person.id) : [];
 
   // Statistické dlaždice na Nástěnce firmy (počítáme jen pro tento pohled).
-  const isNastenka = tab !== 'sluzby' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'historie';
+  const isNastenka = tab !== 'sluzby' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'aktivity';
   let nast: { running: number; workMinutes: number; workMoney: number; expected: number } | null = null;
   if (isNastenka) {
     const money = await clientMonthMoney(t, client, month);
@@ -529,19 +531,12 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             <NotesTab base={base} kind="client" entityId={client.id} notes={notes} person={person} canTask={modules.has('ukoly')} />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
-          ) : tab === 'historie' ? (
-            <div class="card">
-              <div class="card-head"><h3>{tr('Historie')}</h3></div>
-              {events.length ? (
-                <div>{events.map((e) => <EventRow e={e} />)}</div>
-              ) : (
-                <EmptyState text={tr('Zatím žádná událost.')} />
-              )}
-            </div>
+          ) : tab === 'aktivity' ? (
+            <ActivityFeed events={events} base={base} active={atyp} />
           ) : (
             <>
               <div class="stats" style="grid-template-columns:repeat(4,1fr)">
-                <a class="stat" href={`${base}?tab=historie`}><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>{tr('poslední aktivita')}</span></a>
+                <a class="stat" href={`${base}?tab=aktivity`}><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>{tr('poslední aktivita')}</span></a>
                 <a class="stat" href={`${base}?tab=sluzby`}><b>{nast!.running}</b><span>{tr('běžící služby')}</span></a>
                 <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtMinutes(nast!.workMinutes)}</b><span>{tr('výkaz')} · {fmtNum(nast!.workMoney)} {currency()}</span></a>
                 <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtNum(nast!.expected)} {currency()}</b><span>{tr('očekávaný měsíc')}</span></a>
