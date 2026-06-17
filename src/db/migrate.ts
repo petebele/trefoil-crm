@@ -83,6 +83,8 @@ export async function migrate(): Promise<void> {
   await sql`ALTER TABLE clients ADD COLUMN address text`.execute(db).catch(() => {});
   await sql`ALTER TABLE clients ADD COLUMN hours_budget_monthly real`.execute(db).catch(() => {});
   await sql`ALTER TABLE clients ADD COLUMN retainer_price real`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN retainer_hourly_rate real`.execute(db).catch(() => {});
+  await sql`ALTER TABLE clients ADD COLUMN overage_rate real`.execute(db).catch(() => {});
   await sql`ALTER TABLE clients ADD COLUMN hours_rollover integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
   // Název zákazníka (zkrácený do hlavičky) + strukturovaná mezinárodní adresa (idempotentně)
   await sql`ALTER TABLE clients ADD COLUMN display_name text`.execute(db).catch(() => {});
@@ -264,6 +266,31 @@ export async function migrate(): Promise<void> {
     .addColumn('value', 'text', (c) => c.notNull())
     .addPrimaryKeyConstraint('person_prefs_pk', ['person_id', 'key'])
     .execute();
+
+  // --- modul Poznámky ---
+  await db.schema
+    .createTable('notes')
+    .ifNotExists()
+    .addColumn('id', 'text', (c) => c.primaryKey())
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('body_html', 'text', (c) => c.notNull())
+    .addColumn('created_by_id', 'text', (c) => c.references('persons.id'))
+    .addColumn('is_private', 'integer', (c) => c.notNull().defaultTo(0))
+    .addColumn('created_at', 'text', (c) => c.notNull())
+    .addColumn('updated_at', 'text', (c) => c.notNull())
+    .execute();
+  await db.schema.createIndex('notes_tenant').ifNotExists().on('notes').columns(['tenant_id', 'created_at']).execute();
+
+  await db.schema
+    .createTable('note_links')
+    .ifNotExists()
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('note_id', 'text', (c) => c.notNull().references('notes.id'))
+    .addColumn('entity_kind', 'text', (c) => c.notNull())
+    .addColumn('entity_id', 'text', (c) => c.notNull())
+    .addPrimaryKeyConstraint('note_links_pk', ['note_id', 'entity_kind', 'entity_id'])
+    .execute();
+  await db.schema.createIndex('note_links_entity').ifNotExists().on('note_links').columns(['entity_kind', 'entity_id']).execute();
 
   await db.schema
     .createTable('events')

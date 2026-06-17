@@ -109,14 +109,18 @@ export async function setClientServiceStatus(tenantId: string, id: string, statu
 export async function setClientRetainer(
   tenantId: string,
   clientId: string,
-  data: { hours: number | null; price: number | null; rollover: boolean },
+  data: { hours: number | null; hourlyRate: number | null; overageRate: number | null; rollover: boolean },
 ): Promise<void> {
   const clear = data.hours === null;
+  // měsíční cena paušálu = hodiny × sazba za paušální hodinu (odvozená, ať s ní počítá fakturace)
+  const price = clear || data.hourlyRate === null ? null : Math.round(data.hours! * data.hourlyRate);
   await db
     .updateTable('clients')
     .set({
       hours_budget_monthly: data.hours,
-      retainer_price: clear ? null : data.price,
+      retainer_hourly_rate: clear ? null : data.hourlyRate,
+      retainer_price: price,
+      overage_rate: clear ? null : data.overageRate,
       hours_rollover: clear ? 0 : data.rollover ? 1 : 0,
       updated_at: now(),
     })

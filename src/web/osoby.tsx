@@ -32,6 +32,8 @@ import {
 import { tr, relTime } from '../i18n';
 import { servicesOfPersonFirms, SERVICE_STATUS_LABELS } from '../domain/clientServices';
 import { SERVICE_MODE_LABELS } from '../domain/services';
+import { NotesTab } from './poznamky';
+import { notesForEntity } from '../domain/notes';
 
 export const osobyRoutes = new Hono<AppEnv>();
 
@@ -225,9 +227,11 @@ osobyRoutes.get('/osoby/:id', async (c) => {
     servicesOfPersonFirms(t, p.id),
   ]);
   const base = `/osoby/${p.id}`;
+  const modules = c.get('modules');
+  const notes = tab === 'poznamky' ? await notesForEntity(t, 'person', p.id, person.id) : [];
 
   return c.html(
-    <Layout title={p.name} person={person} modules={c.get('modules')} active="zakaznici">
+    <Layout title={p.name} person={person} modules={modules} active="zakaznici">
       <div class="detail-grid">
         {/* A) Levý panel */}
         <aside class="card">
@@ -295,6 +299,8 @@ osobyRoutes.get('/osoby/:id', async (c) => {
                 </div>
               )}
             </div>
+          ) : tab === 'poznamky' ? (
+            <NotesTab base={base} kind="person" entityId={p.id} notes={notes} person={person} canTask={modules.has('ukoly')} />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'historie' ? (

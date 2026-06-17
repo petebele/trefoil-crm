@@ -12,25 +12,29 @@
 > průvodcem (žádný hardcoded „conviu" login). Slovo „Conviu" zůstává už jen ve **firemním**
 > kontextu (agentura, doména `conviu.cz`) a v historických pasážích níže.
 
-## 0) Rychlý stav k 2026-06-16 (aktualizováno průběžně)
+## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
 
-> **Kde jsme naposledy v chatu skončili (2026-06-16):** postaveno a pushnuto **propojení
-> Výkazů ↔ Úkolů** (spec [vykazy-ukoly-propojeni.md](specs/vykazy-ukoly-propojeni.md)):
-> „Vykázat práci" z úkolu (⋯ menu i z modálu úkolu), u úkolu blok **„Vykázaná práce"** se
-> součtem a **klikací editací** jednotlivých výkazů, výkaz naopak ukazuje svůj úkol. K tomu:
-> **klik na název úkolu** (agenda i Kanban) a **na popis výkazu** otevře editaci — s pojistkou,
-> aby se modál neotevřel při přetahování v Kanbanu; **minuty se zadávají po jedné** (ne po 5);
-> a přibyly **per‑uživatelské předvolby** (`person_prefs`) — pamatuje se zvolené zobrazení
-> **Agenda/Kanban** (obecný mechanismus pro budoucí přepínače zobrazení).
-> **Další na řadě:** **Poznámky u klienta**, pak plnohodnotná **Nástěnka / Inbox
-> „Vyžaduje moji pozornost"**. Dvoustupňová uzávěrka měsíce zůstává jako návrh
-> (viz „Poslední domluva" + [AUTOMATION.md](AUTOMATION.md)).
+> **Kde jsme naposledy v chatu skončili (2026-06-17):** velká dávka **nasazena a pushnuta**:
+> (1) **Modul Poznámky (v1)** — záložka u firmy i osoby, **vlastní editor bez knihoven** (kompaktní
+> lišta, Enter=`<p>`/Shift+Enter=`<br>`, styly se nemíchají, robustní „vymazat formátování"),
+> server **očistí HTML na allowlist** (test proti XSS); propis **osoba→firma** přes „Týká se i firmy"
+> (na firmě štítek „u osoby X", u osoby štítek firmy), viditelnost Tým/Soukromá, „Vytvořit úkol",
+> realtime. (2) **Vyúčtování v1** — přepracovaná karta (paušál + čerpání + nevyčerpáno/přečerpáno +
+> nepaušální služby + Celkem), sdílený `billingTotal()`. (3) **Model paušálu změněn** — zadává se
+> **hodiny × sazba za paušální hodinu** (ne měsíční částka) + volitelná **sazba za vícepráce**.
+> (4) **Nástěnka firmy** — 4 klikací dlaždice se správnou částkou. (5) Editor/UX: dirty-guard
+> velkých modálů (klik vedle nezavře rozdělané). SQLite `busy_timeout`. CLAUDE.md pravidlo
+> „sám nabízej commit+push".
+> **POZOR:** Vyúčtování v1 a model paušálu **Petr ještě vizuálně neproklikal** — ověřit po pushi.
+> **Další na řadě:** plnohodnotná **Nástěnka / Inbox „Vyžaduje moji pozornost"**; pak hloubka úkolů,
+> RBAC, Zakázky/Obchod. Pozn.: Vyúčtování **v2** = schvalování víceprací (5 scénářů, viz
+> [AUTOMATION.md](AUTOMATION.md)); pro Poznámky později obrázky/přílohy, @zmínky, projekty.
 
 - Aplikace běží lokálně (port 3000, launcher na ploše). Stack: TS + Hono + SQLite + htmx.
 - Funguje: Zákazníci (firmy/osoby/kontakty/detail/Historie), Administrace
-  (Moduly, Tým, katalog Služeb), Služby u zákazníka (+ „Měsíčně celkem" / billing),
+  (Moduly, Tým, katalog Služeb), Služby u zákazníka (+ **Vyúčtování** / billing),
   Výkazy práce (`/vykazy`: Můj výkaz, Schvalování, Přehled), **Úkoly** (Agenda + **Kanban**),
-  systém SKINŮ (7 motivů).
+  **Poznámky** (záložka u firmy i osoby, vlastní editor), systém SKINŮ (7 motivů).
 - Projekt byl 2026-06-14 PŘESUNUT do `D:\Internet\Trefoil CRM`;
   git repo je `petebele/trefoil-crm`.
 - Přidáno po 2026-06-14:
@@ -64,6 +68,32 @@
   - **Minuty po jedné** (`step` 5→1). `ASSET_V` 33→34.
   - **`person_prefs`** (klíč→hodnota, doména `prefs.ts`) — obecné per‑uživatelské předvolby;
     první použití: zapamatování zvoleného zobrazení Úkolů (`ukoly.view`).
+- Přidáno 2026-06-17 — **Modul Poznámky (v1)** (spec `specs/poznamky.md`, katalog `KOMPONENTY.md §24`):
+  - **Záložka „Poznámky"** na detailu firmy i osoby (`DetailTabs`); feed karet (autor, čas, obsah).
+  - **Vlastní editor bez knihoven** (`contenteditable` + lišta v `app.js`): tučné/kurzíva/podtržení,
+    nadpisy H1–H3 (1.5/1.25/1.05 rem), seznamy, citace, odkaz, vymazat formátování. Kompaktní
+    hover skupiny (B→I/U, H1→H2/H3), Enter=`<p>` / Shift+Enter=`<br>`, nadpis/citace = přepínače,
+    tučné se nemíchá s nadpisem.
+  - **Bezpečnost:** server očistí HTML na allowlist + normalizuje strukturu (vlastní sanitizer
+    `src/domain/notes.ts`, otestováno proti XSS — script/onclick/javascript:/img onerror).
+  - **Propis osoba→firma** přes „Týká se i firmy" (štítek „u osoby X" u firmy); firma→osoba se
+    nepropisuje, jen **tichý odkaz** „U firmy X je dalších N poznámek →". **Osoba u více firem** funguje (M:N).
+  - **Viditelnost** Tým/Soukromá (soukromá vidí jen autor). **Vytvořit úkol z poznámky** (přenese
+    klienta, vazba `tasks.source='note'`). Realtime přes `logEvent`. Tabulky `notes` + `note_links`.
+- Přidáno 2026-06-17 — **Vyúčtování v1 + model paušálu + dlaždice firmy**:
+  - **Vyúčtování** (karta na detailu firmy → Služby): Měsíční paušál (dohodnutá cena) · čerpáno
+    X z Y · odrážky služeb z paušálu (čas) · **Nevyčerpáno** (−Kč, jen při převodu) / **Přečerpáno**
+    (+Kč, sazbou vícepráce nebo služby) / „zbývá (propadá)" · nepaušální služby (payg čas×sazba,
+    předplatné) · **Celkem**. Jeden zdroj pravdy `billingTotal()` (sdílí karta i dlaždice).
+  - **Model paušálu**: zadává se **hodiny + sazba za paušální hodinu** (Kč/h) → měsíční cena =
+    hodiny × sazba (odvozená); volitelná **sazba za vícepráce** (Kč/h). Nové sloupce
+    `clients.retainer_hourly_rate`, `clients.overage_rate`. Přečerpání účtuje sazbou vícepráce,
+    jinak sazbou služby (`workCosts`/`clientMonthMoney`). *(Stávající paušály: re-zadat sazbu/h.)*
+  - **Nástěnka firmy**: 4 dlaždice (poslední aktivita · běžící služby · výkaz h+Kč · očekávaný měsíc),
+    **klikací** na cíle, částka shodná s Vyúčtováním.
+  - **Velké modály**: klik vedle / Esc zavře jen **nezměněný** modál (dirty-guard); ✕/Zrušit vždy.
+  - SQLite `busy_timeout=5000` (souběh uživatelů). `ASSET_V` 36→40.
+  - Model schvalování víceprací (v2, 5 scénářů) + budoucí konfigurace paušálu sepsány v [AUTOMATION.md](AUTOMATION.md).
 
 - **Poslední domluva (2026-06-15) — uzávěrka zatím NÁVRH; výkazy↔úkoly UŽ POSTAVENO** (detail v [AUTOMATION.md](AUTOMATION.md)):
   - **Dvoustupňová uzávěrka:** (1) **provozní** (specialista, per board) — nezamyká,
@@ -73,9 +103,9 @@
   - **Výkazy ↔ úkoly:** „Vykázat práci" z karty úkolu i z ⋯ → nový výkaz s předvyplněným
     úkolem a klientem. Výkaz může (ale nemusí) odkazovat na úkol, **vždy** musí na klienta.
     Většina úkolů čas/výkaz nemá; čas i výkaz jde zadat i bez úkolu. **Timer zatím neřešíme.**
-- Další na řadě: **Poznámky u klienta**, pak plnohodnotná **NÁSTĚNKA / Inbox**
-  „Vyžaduje moji pozornost", Administrace/RBAC, Zakázky, Obchod, hledání, doleštění.
-  (Propojení výkazů↔úkolů hotové — viz výše.)
+- Další na řadě: plnohodnotná **NÁSTĚNKA / Inbox** „Vyžaduje moji pozornost", pak hloubka Úkolů,
+  Administrace/RBAC, Zakázky, Obchod, hledání, doleštění. (Poznámky v1 i propojení výkazů↔úkolů
+  hotové — viz výše. Pro Poznámky později: obrázky/přílohy, @zmínky, záložka u projektů.)
 
 ## 1) Kontext — kdo, co, proč
 

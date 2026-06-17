@@ -38,13 +38,15 @@ import {
   ModalContactRows,
   ContactsEditAll,
 } from './components';
-import { tr, relTime } from '../i18n';
+import { tr, relTime, fmtNum, currency } from '../i18n';
 import { tasksForClient, TaskItemRow } from './ukoly';
+import { NotesTab } from './poznamky';
+import { notesForEntity } from '../domain/notes';
 import { IconPhone, IconMail, IconUsers } from './icons';
 import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
 import { listClientServices } from '../domain/clientServices';
 import { listCatalog } from '../domain/services';
-import { listForClientMonth, clientMonthMoney, monthKey } from '../domain/workRecords';
+import { listForClientMonth, clientMonthMoney, monthKey, fmtMinutes, billingTotal } from '../domain/workRecords';
 
 export const firmyRoutes = new Hono<AppEnv>();
 
@@ -436,6 +438,28 @@ firmyRoutes.get('/firmy/:id', async (c) => {
       ? { person, records: await listForClientMonth(t, client.id, month), money: await clientMonthMoney(t, client, month), month }
       : undefined;
 
+  const notes = tab === 'poznamky' ? await notesForEntity(t, 'client', client.id, person.id) : [];
+
+  // Statistické dlaždice na Nástěnce firmy (počítáme jen pro tento pohled).
+  const isNastenka = tab !== 'sluzby' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'historie';
+  let nast: { running: number; workMinutes: number; workMoney: number; expected: number } | null = null;
+  if (isNastenka) {
+    const money = await clientMonthMoney(t, client, month);
+    const active = services.filter((s) => s.status === 'active');
+    nast = {
+      running: active.length,
+      workMinutes: money.totalMinutes,
+      workMoney: Math.round(money.billedCost + money.overageCost),
+      expected: billingTotal({
+        hoursBudget: client.hours_budget_monthly,
+        retainerPrice: client.retainer_price,
+        rollover: client.hours_rollover === 1,
+        money,
+        subscriptionAmounts: active.filter((s) => s.mode === 'subscription').map((s) => s.monthly_amount ?? 0),
+      }),
+    };
+  }
+
   return c.html(
     <Layout title={dn} person={person} modules={c.get('modules')} active="zakaznici">
       <div class="detail-grid">
@@ -501,6 +525,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
               err={c.req.query('err')}
               vykazy={vykazyData}
             />
+          ) : tab === 'poznamky' ? (
+            <NotesTab base={base} kind="client" entityId={client.id} notes={notes} person={person} canTask={modules.has('ukoly')} />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'historie' ? (
@@ -514,10 +540,11 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             </div>
           ) : (
             <>
-              <div class="stats" style="grid-template-columns:repeat(3,1fr)">
-                <div class="stat"><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>{tr('poslední aktivita')}</span></div>
-                <div class="stat"><b>{people.length}</b><span>{tr('lidé')}</span></div>
-                <div class="stat"><b>{contacts.length}</b><span>{tr('kontakty')}</span></div>
+              <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+                <a class="stat" href={`${base}?tab=historie`}><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>{tr('poslední aktivita')}</span></a>
+                <a class="stat" href={`${base}?tab=sluzby`}><b>{nast!.running}</b><span>{tr('běžící služby')}</span></a>
+                <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtMinutes(nast!.workMinutes)}</b><span>{tr('výkaz')} · {fmtNum(nast!.workMoney)} {currency()}</span></a>
+                <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtNum(nast!.expected)} {currency()}</b><span>{tr('očekávaný měsíc')}</span></a>
               </div>
               <div class="card" style="margin-top:1rem">
                 <div class="card-head"><h3>{tr('Poslední dění')}</h3></div>

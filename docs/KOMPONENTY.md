@@ -504,6 +504,45 @@ Obecné mechanismy v `app.js` — použitelné v každém formuláři, žádný 
   úprava jen předvyplní dřívější hodnoty; liší se nanejvýš poli, která po založení
   nedávají smysl měnit (např. výběr služby z katalogu).
 
+## 24. Editor poznámky (rich text, bez knihoven)
+
+Vlastní lehký editor pro poznámky — **žádná externí knihovna**. Mockup: `mockupy/komponenty.html` §15.
+Spec: [docs/specs/poznamky.md](specs/poznamky.md).
+
+- **Struktura:** `.note-editor` (rámeček) › `.note-toolbar` (lišta tlačítek) + `.note-area`
+  (`contenteditable="true"`, plocha psaní). Vyrenderovaná poznámka jinde = `.note-content`
+  (stejná typografie jako `.note-area`).
+- **Kompaktní lišta se skupinami.** Méně používané varianty jsou schované pod hlavním
+  tlačítkem ve `.note-tb-group` (dropdown `.note-tb-pop` se odkryje **najetím / fokusem**):
+  - **B** (tučné) → pop **I** (kurzíva), **U** (podtržení),
+  - **H1** (nadpis) → pop **H2**, **H3** (klik na hlavní = H1).
+  - Samostatně: **odrážkový** a **číslovaný seznam**, **citace**, **odkaz**, **vymazat
+    formátování** (vše **SVG ikony**, Feather styl; citace = SVG quote glyph).
+- **Formátování přes `document.execCommand`** (bez závislosti). Inline příkazy a seznamy mají
+  `data-cmd` (`bold`/`italic`/`underline`/`insertUnorderedList`/`insertOrderedList`/`createLink`).
+  **Vymazat formátování** (`data-cmd="clearformat"`) = `removeFormat` + `unlink` + `formatBlock P`
+  (vrátí běžný odstavec). **Blokové styly (nadpis, citace) mají `data-block`** (`H1`/`H2`/`H3`/
+  `BLOCKQUOTE`) a jsou **PŘEPÍNAČE**: klik na již aktivní stav vrátí blok na `<p>` → **žádné
+  vnořování citace na citaci**. Aktivní stav v `aria-pressed`. Obsluha v `app.js` (delegovaně);
+  `mousedown` na liště dělá `preventDefault`, ať se neztratí výběr.
+- **Velikosti nadpisů** (váha 650, font Poppins): H1 `1.5rem`, H2 `1.25rem`, H3 `1.05rem`, s
+  mírně větším odsazením (sladěno s typografií). Stejné v `.note-area` i `.note-content`.
+- **Styly se nemíchají.** Aktivní stav svítí **přesně**: H1 jen v H1 (ne v H2/H3), B jen
+  u tučného (ne u kurzívy/podtržení). **Tučné je v nadpisu neaktivní** (nesvítí ani nereaguje)
+  — nadpis je tučný ze stylu, ne přes `<strong>`; server proto uvnitř nadpisů `<strong>`/`<b>`
+  neukládá. Vyhodnocení i blokace jsou v `app.js` (sdílené s mockupem §15).
+- **Placeholder:** prázdná `.note-area` ukáže `data-placeholder` (přes `:empty::before`).
+- **Odřádkování:** `defaultParagraphSeparator = 'p'` → **Enter = nový odstavec `<p>`**,
+  **Shift+Enter = tvrdé zalomení `<br>`** (standardní zkratka; Ctrl+Enter neděláme — bývá „odeslat").
+- **Allowlist obsahu:** ukládá se HTML jen z: `p, br, strong, em, u, h1, h2, h3, ul, ol, li,
+  a[href], blockquote`. **Server vstup očistí** (klient není bezpečnostní hranice) — viz spec §3.
+- **Vložené vs. samostatné (progresivní odkrývání):** u jiného objektu (úkol/výkaz — později)
+  je editor kompaktní / skrytý za tužkou ✎ (vzor §18); plný s lištou jen na samostatné
+  poznámce. Stejná komponenta, dva rendery.
+- **Aria:** `.note-toolbar` má `role="toolbar"` + `aria-label`; tlačítka `aria-label`/`title`;
+  `.note-area` `aria-label`.
+- **Rozšíření (později):** obrázky a přílohy (lišta s nimi počítá), `@zmínky`.
+
 ---
 
 ## Jak katalog rozšiřovat

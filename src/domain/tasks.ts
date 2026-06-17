@@ -34,6 +34,8 @@ export interface TaskInput {
   dueAt: string | null;
   boardMonth?: string | null; // YYYY-MM; undefined = aktuální měsíc
   statusId?: string | null;
+  sourceKind?: string | null; // původ úkolu (např. 'note' u úkolu z poznámky)
+  sourceId?: string | null;
 }
 
 const today = (): string => new Date().toISOString().slice(0, 10);
@@ -125,8 +127,8 @@ export async function createTask(tenantId: string, createdById: string, data: Ta
       archived: 0,
       board_month: data.boardMonth !== undefined ? data.boardMonth : monthKey(),
       sort_order: 0,
-      source_kind: null,
-      source_id: null,
+      source_kind: data.sourceKind ?? null,
+      source_id: data.sourceId ?? null,
       created_by_id: createdById,
       created_at: now(),
     })

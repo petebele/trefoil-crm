@@ -20,6 +20,8 @@ export interface Database {
   tasks: TasksTable;
   task_statuses: TaskStatusesTable;
   person_prefs: PersonPrefsTable;
+  notes: NotesTable;
+  note_links: NoteLinksTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -73,7 +75,9 @@ export interface ClientsTable {
   owner_id: string | null; // odpovědná osoba (kolega)
   note: string | null;
   hours_budget_monthly: number | null; // paušál hodin (h/měs) — jeden na zákazníka
-  retainer_price: number | null; // cena paušálu (Kč/měs)
+  retainer_hourly_rate: number | null; // sazba za 1 paušální hodinu (Kč/h)
+  retainer_price: number | null; // cena paušálu (Kč/měs) — odvozeno = hodiny × sazba
+  overage_rate: number | null; // sazba za vícepráce nad paušál (Kč/h); null = sazba služby
   hours_rollover: number; // 0/1 — převádět nevyčerpané hodiny do dalšího měsíce
   created_at: string;
   updated_at: string;
@@ -206,6 +210,28 @@ export interface TasksTable {
   source_id: string | null;
   created_by_id: string | null;
   created_at: string;
+}
+
+/**
+ * Poznámka — samostatný objekt s formátovaným textem. Obsah je **očištěné HTML**
+ * (allowlist, viz src/domain/notes.ts). Váže se na entity přes `note_links` (víc naráz).
+ */
+export interface NotesTable {
+  id: string;
+  tenant_id: string;
+  body_html: string; // bezpečné formátované HTML (po sanitizaci)
+  created_by_id: string | null;
+  is_private: number; // 0/1 — soukromá vidí jen autor
+  created_at: string;
+  updated_at: string;
+}
+
+/** Vazba poznámky na entitu (zákazník/osoba; později projekt/úkol/výkaz). M:N. */
+export interface NoteLinksTable {
+  tenant_id: string;
+  note_id: string;
+  entity_kind: string; // 'client' | 'person' | …
+  entity_id: string;
 }
 
 /**

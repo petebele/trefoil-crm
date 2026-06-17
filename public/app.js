@@ -173,17 +173,24 @@ document.addEventListener('input', function (e) {
   });
 });
 
-// Velký modál: zavření křížkem [data-modal-close], klikem na pozadí nebo klávesou Esc.
+// Velký modál: zavření křížkem [data-modal-close] nebo „Zrušit" = VŽDY. Klik na pozadí / Esc
+// zavře jen modál BEZ uživatelských změn (předvyplněné z kontextu se nepočítají) — ať se omylem
+// neztratí rozdělaná data. „Změnu" pozná podle vstupu (input/change) uvnitř #modal.
+var modalDirty = false;
+function closeModal() { var m = document.getElementById('modal'); if (m) m.innerHTML = ''; modalDirty = false; }
+document.body.addEventListener('htmx:afterSwap', function (e) {
+  var t = e.target; if (t && (t.id === 'modal' || (t.closest && t.closest('#modal')))) modalDirty = false;
+});
+document.addEventListener('input', function (e) { if (e.target.closest && e.target.closest('#modal')) modalDirty = true; });
+document.addEventListener('change', function (e) { if (e.target.closest && e.target.closest('#modal')) modalDirty = true; });
 document.addEventListener('click', function (e) {
-  if (e.target.closest('[data-modal-close]') || e.target.classList.contains('modal-overlay')) {
-    var m = document.getElementById('modal');
-    if (m) m.innerHTML = '';
-  }
+  if (e.target.closest('[data-modal-close]')) { closeModal(); return; }                 // ✕ / Zrušit — vždy
+  if (e.target.classList.contains('modal-overlay') && !modalDirty) closeModal();        // klik vedle — jen bez změn
 });
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape') return;
   var m = document.getElementById('modal');
-  if (m && m.innerHTML) { m.innerHTML = ''; return; }
+  if (m && m.innerHTML) { if (!modalDirty) closeModal(); return; }                       // Esc — jen bez změn
   document.querySelectorAll('.menu.open').forEach(function (menu) { menu.classList.remove('open'); menu.classList.remove('up'); });
 });
 
@@ -337,5 +344,109 @@ document.addEventListener('change', function (e) {
       window.htmx.ajax('POST', '/ukoly/' + cardId + '/presun' + boardQuery(), { target: '#board', swap: 'outerHTML', values: { status_id: statusId, inbox: inbox, order: order } });
       cardId = null;
     }
+  });
+})();
+
+// ---------- Editor poznámky (rich text, bez knihoven) ----------
+// contenteditable .note-area + lišta .note-toolbar; formátování přes execCommand.
+// Enter = <p>, Shift+Enter = <br>. Nadpis/citace = přepínače. B je v nadpisu neaktivní.
+// Vše delegovaně (editor se načítá do modálu dynamicky). Viz docs/KOMPONENTY.md §24.
+(function () {
+  try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
+  function curBlock(area) {
+    var sel = window.getSelection(); if (!sel || !sel.rangeCount) return '';
+    var n = sel.anchorNode;
+    while (n && n !== area) { if (n.nodeType === 1 && /^(H1|H2|H3|H4|BLOCKQUOTE|P)$/.test(n.nodeName)) return n.nodeName; n = n.parentNode; }
+    return '';
+  }
+  function toggleBlock(area, tag) { document.execCommand('formatBlock', false, curBlock(area) === tag ? 'P' : tag); }
+  function sync(bar, area) {
+    var blk = curBlock(area), inHeading = /^H[1-3]$/.test(blk);
+    ['bold', 'italic', 'underline', 'insertUnorderedList', 'insertOrderedList'].forEach(function (cmd) {
+      bar.querySelectorAll('[data-cmd="' + cmd + '"]').forEach(function (b) {
+        var on = false; try { on = document.queryCommandState(cmd); } catch (e) {}
+        if (cmd === 'bold' && inHeading) on = false; // nadpis je tučný ze stylu
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    });
+    bar.querySelectorAll('[data-block]').forEach(function (b) {
+      b.setAttribute('aria-pressed', blk === b.getAttribute('data-block') ? 'true' : 'false');
+    });
+  }
+  function areaOf(el) { var ed = el.closest('.note-editor'); return ed ? ed.querySelector('.note-area') : null; }
+  // Vymazání formátování: dotčené bloky (i seznamy/nadpisy/citace) → prosté odstavce s holým textem.
+  // Spolehlivější než execCommand (to nechávalo zbytky při kombinaci nadpis+seznam apod.).
+  function topBlocks(area, range) {
+    function top(node) {
+      if (node === area) return null;
+      while (node && node.parentNode && node.parentNode !== area) node = node.parentNode;
+      return (node && node.parentNode === area) ? node : null;
+    }
+    var s = top(range.startContainer) || area.firstChild;
+    var e = top(range.endContainer) || area.lastChild;
+    var blocks = [], n = s;
+    while (n) { blocks.push(n); if (n === e) break; n = n.nextSibling; }
+    return blocks;
+  }
+  function clearFormat(area) {
+    var sel = window.getSelection(); if (!sel.rangeCount) return;
+    var blocks = topBlocks(area, sel.getRangeAt(0)); if (!blocks.length) return;
+    var frag = document.createDocumentFragment(), last = null;
+    blocks.forEach(function (b) {
+      if (b.nodeType === 1 && (b.tagName === 'UL' || b.tagName === 'OL')) {
+        Array.prototype.forEach.call(b.querySelectorAll('li'), function (li) {
+          var t = (li.textContent || '').trim(); if (!t) return;
+          var p = document.createElement('p'); p.textContent = t; frag.appendChild(p); last = p;
+        });
+      } else {
+        var p = document.createElement('p'), t = (b.textContent || '').trim();
+        if (t) p.textContent = t; else p.innerHTML = '<br>';
+        frag.appendChild(p); last = p;
+      }
+    });
+    if (!last) return;
+    var ref = blocks[blocks.length - 1].nextSibling;
+    blocks.forEach(function (b) { if (b.parentNode === area) area.removeChild(b); });
+    area.insertBefore(frag, ref);
+    var r = document.createRange(); r.selectNodeContents(last); r.collapse(false);
+    sel.removeAllRanges(); sel.addRange(r);
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  // neztratit výběr při kliknutí do lišty
+  document.addEventListener('mousedown', function (e) { if (e.target.closest && e.target.closest('.note-toolbar')) e.preventDefault(); });
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.note-toolbar button'); if (!btn) return;
+    var area = areaOf(btn); if (!area) return;
+    var bar = btn.closest('.note-toolbar');
+    area.focus();
+    if (btn.dataset.block) {
+      toggleBlock(area, btn.dataset.block);
+    } else if (btn.dataset.cmd === 'createLink') {
+      var url = prompt('Adresa odkazu (https://…):', 'https://'); if (url) document.execCommand('createLink', false, url);
+    } else if (btn.dataset.cmd === 'clearformat') {
+      clearFormat(area);
+    } else if (btn.dataset.cmd === 'bold' && /^H[1-3]$/.test(curBlock(area))) {
+      /* nadpis je tučný ze stylu — B nic nedělá */
+    } else if (btn.dataset.cmd) {
+      document.execCommand(btn.dataset.cmd, false, null);
+    }
+    sync(bar, area);
+  });
+  document.addEventListener('selectionchange', function () {
+    var sel = window.getSelection(); if (!sel || !sel.rangeCount) return;
+    var n = sel.anchorNode; var el = n && (n.nodeType === 1 ? n : n.parentElement);
+    var area = el && el.closest ? el.closest('.note-area') : null; if (!area) return;
+    var ed = area.closest('.note-editor'); var bar = ed && ed.querySelector('.note-toolbar'); if (bar) sync(bar, area);
+  });
+  // placeholder: třída .is-empty když je plocha prázdná (i s prázdným <p><br></p>)
+  document.addEventListener('input', function (e) {
+    var area = e.target.closest && e.target.closest('.note-area'); if (!area) return;
+    area.classList.toggle('is-empty', area.textContent.replace(/ /g, '').trim() === '');
+  });
+  // při odeslání formuláře přenes obsah editoru do skrytého pole body_html
+  document.addEventListener('submit', function (e) {
+    var form = e.target; if (!form || !form.querySelector) return;
+    var area = form.querySelector('.note-area'); if (!area) return;
+    var hid = form.querySelector('input[name="body_html"]'); if (hid) hid.value = area.innerHTML;
   });
 })();

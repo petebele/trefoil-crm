@@ -38,6 +38,7 @@ terminologie → [docs/SLOVNIK.md](docs/SLOVNIK.md); konkrétní modul → jeho 
 ## Pravidla tohoto projektu
 
 - **Čeština všude** — UI texty, komentáře, commit messages, dokumentace, chybové hlášky.
+- **Sám nabízej commit + push** — po dokončení větší změny (nový modul/feature, datový model, větší UX dávka, dořešený okruh) **proaktivně nabídni `git commit` + push na GitHub**. Petr rozhodne, kdy se pushne; ty na to upozorni, nečekej, až si vzpomene. Před pushem vždy aktualizuj `docs/SUMMARY.md` (viz níže). Drobnosti commituj v dávce, ne po každém kroku.
 - **Port 3000 je Petrův** — nikdy ho nezabíjej. `pnpm start` je `tsx watch`, změny kódu se nasadí samy. Pro testování použij běžící server; nikdy nespouštěj vlastní druhou instanci na 3000.
 - **Spec-first** — každý nový modul dostane nejdřív spec v `docs/specs/` (šablona `_SABLONA.md`), pak teprve stavbu. Nezačínej modul bez Petrova schválení.
 - **UI = katalog** — nové UI prvky nevymýšlej. Hledej v `docs/KOMPONENTY.md`. Chybí-li vzor, nejdřív ho navrhni do katalogu (+ `mockupy/komponenty.html`), teprve pak implementuj.

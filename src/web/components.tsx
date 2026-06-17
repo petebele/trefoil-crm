@@ -553,6 +553,7 @@ export function DetailTabs(props: { base: string; active: string }) {
   return (
     <nav class="tabs" style="margin-top:0" aria-label={tr('Sekce detailu')}>
       {tab('nastenka', tr('Nástěnka'))}
+      {tab('poznamky', tr('Poznámky'))}
       {tab('sluzby', tr('Služby'))}
       {tab('projekty', tr('Projekty'))}
       {tab('historie', tr('Historie'))}

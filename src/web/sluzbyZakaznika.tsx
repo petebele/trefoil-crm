@@ -18,7 +18,7 @@ import {
 } from '../domain/clientServices';
 import type { ClientsTable, PersonsTable } from '../db/schema';
 import { WorkRecordRow, MonthNav } from './vykazy';
-import { fmtMinutes, type WorkRecord, type MonthMoney } from '../domain/workRecords';
+import { fmtMinutes, monthLabel, billingTotal, type WorkRecord, type MonthMoney } from '../domain/workRecords';
 import { tr, fmtNum } from '../i18n';
 
 /**
@@ -123,9 +123,17 @@ function RetainerModal(props: { base: string; client: ClientsTable }) {
           <input class="input" type="number" name="hours" min="0" step="0.5" value={c.hours_budget_monthly ?? ''} required autofocus />
           <span class="help">{tr('Jeden paušál na zákazníka — kryje všechny jeho služby v režimu „{mode}".', { mode: tr(SERVICE_MODE_LABELS.retainer) })}</span>
         </div>
-        <div class="field">
-          <label>{tr('Cena paušálu')} ({tr('Kč/měs')})</label>
-          <input class="input" type="number" name="price" min="0" step="1" value={c.retainer_price ?? ''} />
+        <div class="field-row2" style="grid-template-columns:1fr 1fr">
+          <div class="field">
+            <label>{tr('Sazba za paušální hodinu')} ({tr('Kč/h')})</label>
+            <input class="input" type="number" name="rate" min="0" step="1" value={c.retainer_hourly_rate ?? ''} />
+            <span class="help">{tr('Měsíční cena = hodiny × sazba.')}</span>
+          </div>
+          <div class="field">
+            <label>{tr('Sazba za vícepráce')} ({tr('Kč/h')})</label>
+            <input class="input" type="number" name="overage_rate" min="0" step="1" value={c.overage_rate ?? ''} />
+            <span class="help">{tr('Práce nad paušál. Prázdné = sazba služby.')}</span>
+          </div>
         </div>
         <div class="field">
           <label style="display:flex;gap:.5rem;align-items:center;cursor:pointer">
@@ -227,46 +235,46 @@ export function SluzbyZakaznikaTab(props: {
   const archived = services.filter((s) => s.status === 'ended');
   const hasRetainer = client.hours_budget_monthly !== null;
 
-  // Pevné měsíční platby: paušál + předplatná. Samostatně účtovaná práce přijde z výkazů.
+  // ── Vyúčtování: paušál (dohodnutá cena) + čerpání/nevyčerpáno/přečerpáno + nepaušální služby ──
   const active = services.filter((s) => s.status === 'active');
-  const lines: Array<{ label: string; amount: number | null; note: string | null }> = [];
-  const vMoney = props.vykazy?.money;
-  if (hasRetainer) {
-    lines.push({
-      label: vMoney
-        ? tr('Paušál hodin (čerpáno {used} z {budget})', { used: fmtMinutes(vMoney.usedRetainerMinutes), budget: fmtMinutes(vMoney.budgetMinutes ?? 0) })
-        : tr('Paušál hodin ({hours} {unit})', { hours: kc(client.hours_budget_monthly!), unit: tr('h/měs') }),
-      amount: client.retainer_price,
-      note: client.retainer_price === null ? tr('cena nenastavena') : null,
-    });
-  } else if (active.some((s) => s.mode === 'retainer')) {
-    lines.push({ label: tr('Paušál hodin'), amount: null, note: tr('není nastaven — služby v režimu paušálu se nemají z čeho odečítat') });
-  }
-  for (const s of active) {
-    const name = s.detail ? `${s.label} · ${s.detail}` : s.label;
-    if (s.mode === 'subscription') {
-      lines.push({ label: name, amount: s.monthly_amount, note: s.monthly_amount === null ? tr('bez částky') : null });
-    } else if (s.mode === 'payg') {
-      lines.push({ label: name, amount: null, note: s.rate !== null ? tr('dle výkazů × {rate} {unit}', { rate: kc(s.rate), unit: tr('Kč/h') }) : tr('dle vykázané práce') });
+  const v = props.vykazy;
+  const money = v?.money;
+  const approved = (v?.records ?? []).filter((r) => r.status === 'approved');
+
+  const P = client.retainer_price ?? 0; // dohodnutá cena paušálu
+  const ratePausal = client.hours_budget_monthly && client.hours_budget_monthly > 0 ? P / client.hours_budget_monthly : 0; // Kč/h paušálu
+  const allowanceMin = money?.budgetMinutes ?? (client.hours_budget_monthly !== null ? Math.round(client.hours_budget_monthly * 60) : 0);
+  const usedMin = money?.usedRetainerMinutes ?? 0;
+  const overMin = money?.overageMinutes ?? 0;
+  const unusedMin = Math.max(0, allowanceMin - usedMin);
+
+  // rozpad SCHVÁLENÉ práce po službách: hodiny z paušálu (bez částky) a nepaušální (čas × sazba)
+  const svcKey = (r: WorkRecord) => (r.service_detail ? `${r.service_label} · ${r.service_detail}` : r.service_label);
+  const retainerSvc = new Map<string, number>();
+  const paygSvc = new Map<string, { minutes: number; amount: number; rate: number | null }>();
+  for (const r of approved) {
+    if (r.billing === 'retainer_hours') retainerSvc.set(svcKey(r), (retainerSvc.get(svcKey(r)) ?? 0) + r.minutes);
+    else if (r.billing === 'billed') {
+      const cur = paygSvc.get(svcKey(r)) ?? { minutes: 0, amount: 0, rate: r.service_rate };
+      cur.minutes += r.minutes;
+      cur.amount += (r.minutes / 60) * (r.service_rate ?? 0);
+      paygSvc.set(svcKey(r), cur);
     }
   }
-  const v = props.vykazy;
-  if (v && v.money.billedCost + v.money.overageCost > 0) {
-    lines.push({
-      label: tr('Vícepráce — schváleno ({mins})', { mins: fmtMinutes(v.money.billedMinutes + v.money.overageMinutes) }),
-      amount: Math.round(v.money.billedCost + v.money.overageCost),
-      note: null,
-    });
-  }
-  // čekající výkazy = rezervovaný čas a očekávané příjmy — do součtu patří také
-  if (v && v.money.pendingExtraMinutes > 0) {
-    lines.push({
-      label: tr('Vícepráce — čeká na schválení ({mins})', { mins: fmtMinutes(v.money.pendingExtraMinutes) }),
-      amount: Math.round(v.money.pendingExtraCost),
-      note: null,
-    });
-  }
-  const total = lines.reduce((sum, l) => sum + (l.amount ?? 0), 0);
+  const subscriptions = active.filter((s) => s.mode === 'subscription');
+
+  const overageCost = Math.round(money?.overageCost ?? 0);
+  // při převodu nevyčerpané hodiny snižují přínos měsíce (jejich hodnota se přesouvá dál)
+  const unusedDeduction = v && hasRetainer && client.hours_rollover === 1 ? Math.round((unusedMin / 60) * ratePausal) : 0;
+  // jeden zdroj pravdy pro celek (shodný s dlaždicí na nástěnce firmy)
+  const total = billingTotal({
+    hoursBudget: client.hours_budget_monthly,
+    retainerPrice: client.retainer_price,
+    rollover: client.hours_rollover === 1,
+    money,
+    subscriptionAmounts: subscriptions.map((s) => s.monthly_amount ?? 0),
+  });
+  const showVyuctovani = hasRetainer || subscriptions.length > 0 || paygSvc.size > 0;
 
   return (
     <>
@@ -401,24 +409,70 @@ export function SluzbyZakaznikaTab(props: {
         </div>
       ) : null}
 
-      {lines.length > 0 ? (
+      {showVyuctovani ? (
         <div class="card" style="margin-top:1rem">
-          <div class="card-head"><h3>{tr('Měsíčně celkem')}</h3></div>
-          {lines.map((l) => (
+          <div class="card-head"><h3>{tr('Vyúčtování')}{v ? <span class="sub" style="font-weight:400;text-transform:capitalize"> · {monthLabel(v.month)}</span> : ''}</h3></div>
+
+          {hasRetainer ? (
+            <>
+              <div style="display:flex;justify-content:space-between;gap:1rem;padding:.45rem 0;border-top:1px solid var(--line);font-size:.88rem">
+                <span>
+                  <b>{tr('Měsíční paušál')}</b>
+                  {v ? <> · {fmtMinutes(allowanceMin)} {tr('(čerpáno {used})', { used: fmtMinutes(Math.min(usedMin, allowanceMin)) })}</> : <> · {fmtMinutes(allowanceMin)}</>}
+                  <span class="sub" style="display:block;font-size:.78rem">
+                    {client.hours_rollover === 1 ? tr('Nevyčerpané hodiny se převádějí.') : tr('Nevyčerpané hodiny propadají.')}
+                  </span>
+                </span>
+                <span style="white-space:nowrap;font-weight:600">{client.retainer_price !== null ? <>{kc(P)} {tr('Kč')}</> : <span class="sub">{tr('cena nenastavena')}</span>}</span>
+              </div>
+              {[...retainerSvc.entries()].map(([label, mins]) => (
+                <div style="display:flex;justify-content:space-between;gap:1rem;padding:.12rem 0 .12rem 1.1rem;font-size:.8rem;color:var(--muted)">
+                  <span>• {label}</span>
+                  <span style="white-space:nowrap">{fmtMinutes(mins)}</span>
+                </div>
+              ))}
+              {v && overMin > 0 ? (
+                <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;font-size:.88rem">
+                  <span style="color:var(--red)">{tr('Přečerpáno {mins}', { mins: fmtMinutes(overMin) })}{client.overage_rate !== null ? ` × ${kc(client.overage_rate)} ${tr('Kč/h')}` : ''}</span>
+                  <span style="white-space:nowrap;font-weight:600">+ {kc(overageCost)} {tr('Kč')}</span>
+                </div>
+              ) : v && unusedMin > 0 ? (
+                client.hours_rollover === 1 ? (
+                  <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;font-size:.88rem">
+                    <span>{tr('Nevyčerpáno {mins} (převádí se)', { mins: fmtMinutes(unusedMin) })}</span>
+                    <span style="white-space:nowrap;font-weight:600">− {kc(unusedDeduction)} {tr('Kč')}</span>
+                  </div>
+                ) : (
+                  <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;font-size:.88rem">
+                    <span class="sub">{tr('Zbývá vyčerpat {mins} (propadá)', { mins: fmtMinutes(unusedMin) })}</span>
+                    <span class="sub" style="white-space:nowrap">—</span>
+                  </div>
+                )
+              ) : null}
+            </>
+          ) : null}
+
+          {[...paygSvc.entries()].map(([label, b]) => (
             <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--line);font-size:.88rem">
-              <span>{l.label}</span>
-              {l.amount !== null ? <span style="white-space:nowrap">{kc(l.amount)} {tr('Kč')}</span> : <span class="sub" style="white-space:nowrap">{l.note}</span>}
+              <span>{label} · {fmtMinutes(b.minutes)}{b.rate !== null ? ` × ${kc(b.rate)} ${tr('Kč/h')}` : ''}</span>
+              <span style="white-space:nowrap;font-weight:600">{kc(Math.round(b.amount))} {tr('Kč')}</span>
             </div>
           ))}
+
+          {subscriptions.map((s) => (
+            <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-top:1px solid var(--line);font-size:.88rem">
+              <span>{s.detail ? `${s.label} · ${s.detail}` : s.label}</span>
+              {s.monthly_amount !== null ? <span style="white-space:nowrap;font-weight:600">{kc(s.monthly_amount)} {tr('Kč')}</span> : <span class="sub" style="white-space:nowrap">{tr('bez částky')}</span>}
+            </div>
+          ))}
+
           <div style="display:flex;justify-content:space-between;padding:.5rem 0 0;border-top:2px solid var(--line);font-weight:700">
-            <span>{v ? tr('Očekávaný měsíc {month}', { month: v.month }) : tr('Pevné platby celkem')}</span>
+            <span>{tr('Celkem')}</span>
             <span>{kc(total)} {tr('Kč/měs')}</span>
           </div>
-          <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">
-            {v
-              ? tr('Pevné platby (paušál + předplatná) + vícepráce z výkazů zvoleného měsíce — schválené i čekající (rezervovaný čas a očekávané příjmy). Práce „z paušálu" v rámci limitu nemění částku, jen čerpá hodiny.')
-              : tr('Jen pevné měsíční platby (paušál + předplatná). Vícepráce se doplní z výkazů práce (zapněte modul Výkazy).')}
-          </p>
+          {v && v.money.pendingCount > 0 ? (
+            <p class="sub" style="margin:.6rem 0 0;font-size:.78rem">{tr('+ {n} výkazů čeká na schválení (do součtu se započte po schválení)', { n: v.money.pendingCount })}</p>
+          ) : null}
         </div>
       ) : null}
     </>
@@ -560,20 +614,22 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/pausal', async (c) => {
 
   const body = await c.req.parseBody();
   const hours = num(body.hours);
-  const price = num(body.price);
+  const hourlyRate = num(body.rate);
+  const overageRate = num(body.overage_rate);
   const rollover = String(body.rollover ?? '') === '1';
 
   // beze změn → nic neukládat ani nelogovat (Historie = jen reálné změny)
   const cl = g.client;
   if (
     (cl.hours_budget_monthly ?? null) === hours &&
-    (cl.retainer_price ?? null) === (hours === null ? null : price) &&
+    (cl.retainer_hourly_rate ?? null) === (hours === null ? null : hourlyRate) &&
+    (cl.overage_rate ?? null) === (hours === null ? null : overageRate) &&
     (cl.hours_rollover === 1) === (hours === null ? false : rollover)
   ) {
     return c.redirect(`${g.base}?tab=sluzby`);
   }
 
-  await setClientRetainer(g.t, g.clientId, { hours, price, rollover });
+  await setClientRetainer(g.t, g.clientId, { hours, hourlyRate, overageRate, rollover });
   await logEvent(
     g.t,
     'client',
@@ -581,7 +637,7 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/pausal', async (c) => {
     g.person.id,
     hours === null
       ? 'Paušál hodin zrušen'
-      : `Paušál hodin nastaven: ${kc(hours)} h/měs${price !== null ? ` za ${kc(price)} Kč/měs` : ''}, nevyčerpané hodiny se ${rollover ? 'převádějí' : 'nepřevádějí'}`,
+      : `Paušál nastaven: ${kc(hours)} h/měs${hourlyRate !== null ? ` × ${kc(hourlyRate)} Kč/h` : ''}${overageRate !== null ? `, vícepráce ${kc(overageRate)} Kč/h` : ''}, nevyčerpané hodiny se ${rollover ? 'převádějí' : 'nepřevádějí'}`,
   );
   return c.redirect(`${g.base}?tab=sluzby`);
 });

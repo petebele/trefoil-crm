@@ -257,8 +257,9 @@ export interface MonthMoney {
   pendingExtraCost: number;
 }
 
-/** Vícepráce nad množinou záznamů: přečerpání paušálu (chronologicky) + účtované zvlášť. */
-function workCosts(records: WorkRecord[], allowance: number) {
+/** Vícepráce nad množinou záznamů: přečerpání paušálu (chronologicky) + účtované zvlášť.
+ *  `overageRate` (Kč/h) = domluvená sazba za vícepráce; null = použij sazbu služby záznamu. */
+function workCosts(records: WorkRecord[], allowance: number, overageRate: number | null) {
   const retainerAsc = records
     .filter((r) => r.billing === 'retainer_hours')
     .sort((a, b) => a.performed_at.localeCompare(b.performed_at) || a.created_at.localeCompare(b.created_at));
@@ -270,7 +271,7 @@ function workCosts(records: WorkRecord[], allowance: number) {
     cumulative += r.minutes;
     if (over > 0) {
       overageMinutes += over;
-      overageCost += (over / 60) * (r.service_rate ?? 0);
+      overageCost += (over / 60) * (overageRate ?? r.service_rate ?? 0);
     }
   }
   const billed = records.filter((r) => r.billing === 'billed');
@@ -291,8 +292,8 @@ export async function clientMonthMoney(tenantId: string, client: ClientsTable, m
   const budgetMinutes = client.hours_budget_monthly === null ? null : Math.round(client.hours_budget_monthly * 60) + carryMinutes;
   const allowance = budgetMinutes ?? 0;
 
-  const confirmed = workCosts(approved, allowance);
-  const expected = workCosts(records, allowance); // vč. čekajících
+  const confirmed = workCosts(approved, allowance, client.overage_rate);
+  const expected = workCosts(records, allowance, client.overage_rate); // vč. čekajících
 
   return {
     totalMinutes: records.reduce((s, r) => s + r.minutes, 0),
@@ -308,6 +309,31 @@ export async function clientMonthMoney(tenantId: string, client: ClientsTable, m
       expected.overageMinutes + expected.billedMinutes - confirmed.overageMinutes - confirmed.billedMinutes,
     pendingExtraCost: Math.max(0, expected.overageCost + expected.billedCost - confirmed.overageCost - confirmed.billedCost),
   };
+}
+
+/**
+ * Celková měsíční částka „Vyúčtování" (jeden zdroj pravdy pro kartu i dlaždici nástěnky):
+ * paušál (dohodnutá cena) − nevyčerpané hodiny (jen při převodu) + přečerpání + účtováno
+ * zvlášť + předplatná. Vše ze SCHVÁLENÝCH výkazů (čekající se přičtou až po schválení).
+ */
+export function billingTotal(opts: {
+  hoursBudget: number | null; // paušál hodin (null = bez paušálu)
+  retainerPrice: number | null; // dohodnutá cena paušálu
+  rollover: boolean; // převádějí se nevyčerpané hodiny?
+  money: MonthMoney | null | undefined; // null/undefined = bez výkazů (jen pevné platby)
+  subscriptionAmounts: number[]; // měsíční částky aktivních předplatných
+}): number {
+  const P = opts.retainerPrice ?? 0;
+  const rate = opts.hoursBudget && opts.hoursBudget > 0 ? P / opts.hoursBudget : 0; // Kč/h paušálu
+  const m = opts.money;
+  const unusedMin = Math.max(0, (m?.budgetMinutes ?? 0) - (m?.usedRetainerMinutes ?? 0));
+  const unusedDeduction = m && opts.hoursBudget !== null && opts.rollover ? Math.round((unusedMin / 60) * rate) : 0;
+  let total = 0;
+  if (opts.hoursBudget !== null) total += P;
+  total -= unusedDeduction;
+  total += Math.round(m?.overageCost ?? 0) + Math.round(m?.billedCost ?? 0);
+  for (const a of opts.subscriptionAmounts) total += a;
+  return total;
 }
 
 /** Formát minut: „12:30 h". */
