@@ -631,6 +631,11 @@ function ActivityRow(props: { e: ActEvent }) {
   );
 }
 
+/** Jen řádky aktivit (bez karty a filtru) — pro náhled „Poslední aktivity" na Nástěnce. */
+export function ActivityList(props: { events: ActEvent[] }) {
+  return <div>{props.events.map((e) => <ActivityRow e={e} />)}</div>;
+}
+
 /** Read-only feed „Aktivity": filtr typů + událostní řádky s ikonami. */
 export function ActivityFeed(props: { events: ActEvent[]; base: string; active: string }) {
   const active = props.active || '';
@@ -647,7 +652,7 @@ export function ActivityFeed(props: { events: ActEvent[]; base: string; active: 
         ))}
       </nav>
       {shown.length ? (
-        <div>{shown.map((e) => <ActivityRow e={e} />)}</div>
+        <ActivityList events={shown} />
       ) : (
         <EmptyState text={active ? tr('V tomto filtru zatím nic není.') : tr('Zatím se tu nic nedělo.')} />
       )}
