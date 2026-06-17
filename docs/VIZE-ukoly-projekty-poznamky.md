@@ -1,6 +1,6 @@
 # Vize: Úkoly · Projekty · Poznámky (a kontextové prolínání)
 
-🧭 **Znalostní báze:** [mapa](../README.md) · [roadmap](ROADMAP.md) · [datový model](DATOVY-MODEL.md) · [komponenty](KOMPONENTY.md) · [UI zásady](UI-ZASADY.md) · [slovník](SLOVNIK.md) · [sumář](SUMMARY.md) · [specs](specs/)
+🧭 **Znalostní báze:** [mapa](../README.md) · [roadmap](ROADMAP.md) · [datový model](DATOVY-MODEL.md) · [komponenty](KOMPONENTY.md) · [UI zásady](UI-ZASADY.md) · [slovník](SLOVNIK.md) · [sumář](SUMMARY.md) · [vize feed](VIZE-feed-a-prilezitosti.md) · [specs](specs/)
 
 > **North‑star pro oblast „práce"** (úkoly, projekty, poznámky, notifikace, automatizace).
 > Není to specifikace ke stavbě — je to **směr**, ze kterého budou čerpat jednotlivé specifikace

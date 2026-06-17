@@ -26,6 +26,7 @@ dokumentu — pravidla viz [CLAUDE.md](CLAUDE.md) („Kdy aktualizovat dokumenta
 - [SUMMARY.md](docs/SUMMARY.md) — kontext, historie spolupráce, rozhodnutí, stav a plán („co, proč, kam dál").
 - [ROADMAP.md](docs/ROADMAP.md) — kroky vývoje (spec-first), co je hotové a co dál.
 - [VIZE — Úkoly · Projekty · Poznámky](docs/VIZE-ukoly-projekty-poznamky.md) — směr oblasti „práce" (průzkum trhu + rozhodnutí).
+- [VIZE — Feed · Příležitosti · Log komunikace](docs/VIZE-feed-a-prilezitosti.md) — směr oblasti „dění u zákazníka" (analýza konkurence: feed, příležitosti, follow-up).
 - [AUTOMATION.md](docs/AUTOMATION.md) — zápisník automatizací a vylepšení procesů (dvoustupňová uzávěrka, napojení výkazů na úkoly).
 
 **Jak to funguje uvnitř — architektura a data**

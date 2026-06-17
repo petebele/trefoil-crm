@@ -108,6 +108,61 @@ připravená struktura řádku (placeholder pro badge). Mezikrok: badge by mohl 
 
 ---
 
+## Obchod, leady a oslovování (inspirace Raynet)
+
+> Zdroj: přání kolegyně, inspirace nástrojem **Raynet** (CZ CRM). **Zatím jen evidence** — budoucí
+> okruh, žádný závazek. Spadá z větší části do budoucího modulu **Zakázky/Obchod (leady)**. U bodů,
+> kde už dnes máme stavební kámen, je značka **✅ částečně už teď**.
+
+### Sledování obchodních případů (pipeline)
+- Vést **obchodní případ / lead** u kontaktu: koho jsme oslovili, **kdy**, jaký je **stav**
+  (oslovili jsme ho / čekáme / domluveno / ztracený…), **kdy oslovit znovu**.
+- **Upozornění na budoucí oslovení** — připomínka „ozvi se klientovi X dne …". Navazuje na
+  budoucí **Nástěnku / Inbox „Vyžaduje moji pozornost"** a na termíny úkolů (`tasks.due_at`).
+- ✅ **částečně už teď:** stav leadu lze zachytit jako **Seznam** (číselník `lead_statuses`,
+  barevný chip přes `entity_list_items`); připomenutí jako úkol s termínem.
+
+### Komunikace z CRM
+- **Rozesílání e-mailů** přímo ze systému (jednotlivě i hromadně), vidět historii odeslaného.
+- **Rezervace schůzky** v systému (kalendář) — a v záznamu vidět stav (domluveno / proběhlo).
+- Pozn.: vyžaduje napojení na e-mail (SMTP/API) a kalendář — **nová infrastruktura**, do budoucna.
+
+### Návazné úkoly (řetězení)
+- Možnost vytvořit **návazný úkol**: jeden úkol uzavřu (nebo ne) a na to **automaticky/ručně vznikne
+  navazující úkol** (např. „oslovit → po týdnu follow-up → nabídka → …").
+- ✅ **částečně už teď:** úkoly mají `source_kind`/`source_id` (původ auto‑úkolu) a koncept
+  auto‑úkolů (viz uzávěrka výše) — řetězení by se na to dalo navázat.
+
+### Nabídky + automatický follow-up
+- **Vytvořit nabídku** klientovi; v kalendáři **nastavit follow-up po týdnu**.
+- Pak **automaticky**: notifikace + **vygenerování obsahu e‑mailu** + **automatická rozesílka**
+  follow-up e-mailu. (Generování obsahu = prostor pro AI; rozesílka = e‑mail infrastruktura.)
+- Pozn.: největší kus — kombinuje nabídky, kalendář, e‑mail i generování textu; daleká budoucnost.
+
+### Zájmy klienta (oblasti zájmu) — štítky s follow-upem
+- Evidovat, **o co klient projevil zájem** / o jaké **oblasti** — formou **štítků**.
+- Použití pro **cílené, personalizované oslovení**: „máme nově *automatický bidding* — koho můžu
+  oslovit, kdo o to **opravdu** měl zájem" → výběr klientů podle štítku zájmu.
+- Zužitkovat i jako **vstup do leadů/obchodu** a pro **kategorizaci klientů**.
+- ✅ **částečně už teď:** štítky zájmů = **Seznam** `client_interests` + přiřazení přes
+  `entity_list_items` (barevné chipy). Sběr zájmů můžeme začít evidovat hned; cílené oslovení
+  (filtr podle štítku → seznam ke kontaktu) dořešíme s modulem Obchod.
+
+### Typy zákazníků (segmentace)
+- V seznamu zákazníků **rozlišovat typ**: **agentura**, **eshopař** (rozšiřitelné).
+- Slouží k filtrování, jinému oslovení i reportům.
+- ✅ **částečně už teď:** buď nový **Seznam** `client_types` (chip přes `entity_list_items`),
+  nebo samostatné pole na firmě. Reuse stávajícího vykreslování chipů — levné zavést dřív než
+  celý modul Obchod.
+
+> **Společný jmenovatel:** štítky/segmentace (zájmy, typ zákazníka, stav leadu) stojí na už
+> existujícím systému **Seznamů** (`lists`/`list_items`/`entity_list_items`, barevné chipy) — dají
+> se zavést **inkrementálně už teď** a později se z nich „nakrmí" plnohodnotný modul **Obchod/Leady**
+> (pipeline, oslovování, nabídky, e‑maily). Komunikační část (e‑mail, kalendář, generování+rozesílka)
+> je samostatná infrastruktura na později.
+
+---
+
 ## Další nápady (zatím nezařazené)
 
 ### Jednoduchý chat (interní)
