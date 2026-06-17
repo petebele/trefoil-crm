@@ -273,12 +273,15 @@ export async function migrate(): Promise<void> {
     .ifNotExists()
     .addColumn('id', 'text', (c) => c.primaryKey())
     .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('title', 'text')
     .addColumn('body_html', 'text', (c) => c.notNull())
     .addColumn('created_by_id', 'text', (c) => c.references('persons.id'))
     .addColumn('is_private', 'integer', (c) => c.notNull().defaultTo(0))
     .addColumn('created_at', 'text', (c) => c.notNull())
     .addColumn('updated_at', 'text', (c) => c.notNull())
     .execute();
+  // nadpis poznámky (volitelný); starší DB idempotentně
+  await sql`ALTER TABLE notes ADD COLUMN title text`.execute(db).catch(() => {});
   await db.schema.createIndex('notes_tenant').ifNotExists().on('notes').columns(['tenant_id', 'created_at']).execute();
 
   await db.schema

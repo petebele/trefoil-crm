@@ -97,6 +97,9 @@ function NoteEditorModal(props: {
         {/* app.js přepíše z .note-area při odeslání */}
         <input type="hidden" name="body_html" value={note?.body_html ?? ''} />
         <div class="field">
+          <input class="input" type="text" name="title" value={note?.title ?? ''} placeholder={tr('Nadpis (nepovinný)')} aria-label={tr('Nadpis poznámky')} maxlength={120} />
+        </div>
+        <div class="field">
           <div class="note-editor">
             <NoteToolbar />
             <div
@@ -131,52 +134,70 @@ function NoteEditorModal(props: {
   );
 }
 
-/** Karta poznámky ve feedu. */
-function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedKind: 'client' | 'person'; canTask: boolean }) {
+/** Karta poznámky — rozložení `list` (řádky pod sebou) nebo `grid` (mozaika karet). */
+function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedKind: 'client' | 'person'; canTask: boolean; layout: 'list' | 'grid' }) {
   const { n, person } = props;
   const back = `${props.base}?tab=poznamky`;
   const canEdit = canEditNote(person, n);
   const upravitUrl = `/poznamky/${n.id}/upravit?back=${encodeURIComponent(back)}`;
   // ve feedu firmy ukaž navázané osoby („u osoby X"), ve feedu osoby navázané firmy (štítek firmy)
   const origins = props.feedKind === 'client' ? n.person_origins.map((o) => tr('u osoby {name}', { name: o.name })) : n.client_origins.map((c) => c.name);
+  const menu =
+    canEdit || props.canTask ? (
+      <span class="row-actions" style="margin-left:auto">
+        <KebabMenu id={`nMenu-${n.id}`} label={tr('Možnosti poznámky')}>
+          {canEdit ? (
+            <button class="opt" type="button" hx-get={upravitUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
+          ) : null}
+          {props.canTask ? (
+            <form method="post" action={`/poznamky/${n.id}/ukol`} class="m0">
+              <input type="hidden" name="back" value={back} />
+              <button class="opt" type="submit">{tr('Vytvořit úkol')}</button>
+            </form>
+          ) : null}
+          {canEdit ? (
+            <form method="post" action={`/poznamky/${n.id}/viditelnost`} class="m0">
+              <input type="hidden" name="back" value={back} />
+              <button class="opt" type="submit">{n.is_private === 1 ? tr('Zveřejnit (sdílet týmu)') : tr('Označit jako soukromou')}</button>
+            </form>
+          ) : null}
+          {canEdit ? (
+            <form method="post" action={`/poznamky/${n.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tuto poznámku?')}')`}>
+              <input type="hidden" name="back" value={back} />
+              <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
+            </form>
+          ) : null}
+        </KebabMenu>
+      </span>
+    ) : null;
+  const meta = (
+    <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+      <b style="font-size:.84rem">{n.author_name ?? '—'}</b>
+      <span class="sub" style="font-size:.76rem">· {relTime(n.created_at)}</span>
+      {n.is_private === 1 ? <span class="chip chip-soft-gray">{tr('Soukromá')}</span> : null}
+      {origins.map((label) => <span class="chip chip-soft-gray">{label}</span>)}
+      {menu}
+    </div>
+  );
+  const titleEl = n.title ? <div class="note-title">{n.title}</div> : null;
+  const bodyEl = <div class="note-content" style="margin-top:.3rem" dangerouslySetInnerHTML={{ __html: n.body_html }} />;
+
+  if (props.layout === 'grid') {
+    return (
+      <div class="card note-card hover-row">
+        {titleEl}
+        {bodyEl}
+        <div style="margin-top:.55rem">{meta}</div>
+      </div>
+    );
+  }
   return (
     <div class="hover-row" style="display:flex;gap:.7rem;padding:.7rem 0;border-top:1px solid var(--line)">
       <span class={`av ${avColor(n.author_name ?? '?')}`}>{initials(n.author_name ?? '?')}</span>
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-          <b style="font-size:.84rem">{n.author_name ?? '—'}</b>
-          <span class="sub" style="font-size:.76rem">· {relTime(n.created_at)}</span>
-          {n.is_private === 1 ? <span class="chip chip-soft-gray">{tr('Soukromá')}</span> : null}
-          {origins.map((label) => <span class="chip chip-soft-gray">{label}</span>)}
-          {canEdit || props.canTask ? (
-            <span class="row-actions" style="margin-left:auto">
-              <KebabMenu id={`nMenu-${n.id}`} label={tr('Možnosti poznámky')}>
-                {canEdit ? (
-                  <button class="opt" type="button" hx-get={upravitUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
-                ) : null}
-                {props.canTask ? (
-                  <form method="post" action={`/poznamky/${n.id}/ukol`} class="m0">
-                    <input type="hidden" name="back" value={back} />
-                    <button class="opt" type="submit">{tr('Vytvořit úkol')}</button>
-                  </form>
-                ) : null}
-                {canEdit ? (
-                  <form method="post" action={`/poznamky/${n.id}/viditelnost`} class="m0">
-                    <input type="hidden" name="back" value={back} />
-                    <button class="opt" type="submit">{n.is_private === 1 ? tr('Zveřejnit (sdílet týmu)') : tr('Označit jako soukromou')}</button>
-                  </form>
-                ) : null}
-                {canEdit ? (
-                  <form method="post" action={`/poznamky/${n.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tuto poznámku?')}')`}>
-                    <input type="hidden" name="back" value={back} />
-                    <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
-                  </form>
-                ) : null}
-              </KebabMenu>
-            </span>
-          ) : null}
-        </div>
-        <div class="note-content" style="margin-top:.3rem" dangerouslySetInnerHTML={{ __html: n.body_html }} />
+        {meta}
+        {titleEl}
+        {bodyEl}
       </div>
     </div>
   );
@@ -190,21 +211,35 @@ export function NotesTab(props: {
   notes: NoteRow[];
   person: PersonsTable;
   canTask: boolean;
+  view: 'seznam' | 'mozaika';
 }) {
   const back = `${props.base}?tab=poznamky`;
   const novyUrl = `/poznamky/novy?kind=${props.kind}&id=${props.entityId}&back=${encodeURIComponent(back)}`;
+  const isGrid = props.view === 'mozaika';
   return (
     <div class="card">
       <div class="card-head">
         <h3>{tr('Poznámky')}</h3>
-        <button class="btn btn-sm" type="button" hx-get={novyUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
+        <div style="display:flex;align-items:center;gap:.6rem">
+          {props.notes.length > 0 ? (
+            <nav class="tabs" style="margin:0" aria-label={tr('Zobrazení poznámek')}>
+              <a class={`tab ${!isGrid ? 'active' : ''}`} href={`${props.base}?tab=poznamky&pview=seznam`}>{tr('Seznam')}</a>
+              <a class={`tab ${isGrid ? 'active' : ''}`} href={`${props.base}?tab=poznamky&pview=mozaika`}>{tr('Mozaika')}</a>
+            </nav>
+          ) : null}
+          <button class="btn btn-sm" type="button" hx-get={novyUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
+        </div>
       </div>
       {props.notes.length === 0 ? (
         <EmptyState text={tr('Zatím žádná poznámka.')}>
           <button class="btn btn-sm btn-primary" type="button" hx-get={novyUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Napsat poznámku')}</button>
         </EmptyState>
+      ) : isGrid ? (
+        <div class="notes-grid">
+          {props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} canTask={props.canTask} layout="grid" />)}
+        </div>
       ) : (
-        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} canTask={props.canTask} />)}</div>
+        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} canTask={props.canTask} layout="list" />)}</div>
       )}
     </div>
   );
@@ -262,7 +297,7 @@ poznamkyRoutes.post('/poznamky', async (c) => {
   const bodyHtml = String(body.body_html ?? '');
   const { subjectKind, subjectId, links } = await subjectLinksFromBody(t, body);
   if (!subjectId || !sanitizeNoteHtml(bodyHtml)) return c.redirect(back); // prázdnou poznámku nezakládáme
-  await createNote(t, person.id, { bodyHtml, isPrivate: String(body.is_private ?? '') === '1', links });
+  await createNote(t, person.id, { title: String(body.title ?? '').trim() || null, bodyHtml, isPrivate: String(body.is_private ?? '') === '1', links });
   await logEvent(t, subjectKind, subjectId, person.id, `Přidána poznámka: ${noteExcerpt(bodyHtml)}`);
   return c.redirect(back);
 });
@@ -278,7 +313,7 @@ poznamkyRoutes.post('/poznamky/:id', async (c) => {
   const bodyHtml = String(body.body_html ?? '');
   if (!sanitizeNoteHtml(bodyHtml)) return c.redirect(back);
   const { subjectKind, subjectId, links } = await subjectLinksFromBody(t, body);
-  await updateNote(t, note.id, { bodyHtml, isPrivate: String(body.is_private ?? '') === '1' });
+  await updateNote(t, note.id, { bodyHtml, isPrivate: String(body.is_private ?? '') === '1', title: String(body.title ?? '').trim() || null });
   if (subjectId) await setNoteLinks(t, note.id, links); // přepočti vazby (i propis na firmy)
   await logEvent(t, subjectKind, subjectId || note.links[0]?.id || '', person.id, `Upravena poznámka: ${noteExcerpt(bodyHtml)}`);
   return c.redirect(back);

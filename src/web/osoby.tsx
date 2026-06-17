@@ -34,6 +34,7 @@ import { tr, relTime } from '../i18n';
 import { servicesOfPersonFirms, SERVICE_STATUS_LABELS } from '../domain/clientServices';
 import { SERVICE_MODE_LABELS } from '../domain/services';
 import { NotesTab } from './poznamky';
+import { getPref, setPref } from '../domain/prefs';
 import { notesForEntity } from '../domain/notes';
 
 export const osobyRoutes = new Hono<AppEnv>();
@@ -231,6 +232,14 @@ osobyRoutes.get('/osoby/:id', async (c) => {
   const base = `/osoby/${p.id}`;
   const modules = c.get('modules');
   const notes = tab === 'poznamky' ? await notesForEntity(t, 'person', p.id, person.id) : [];
+  // zobrazení Poznámek (Seznam/Mozaika) si pamatujeme per uživatel (klíč 'poznamky.view')
+  let poznView: 'seznam' | 'mozaika' = 'seznam';
+  if (tab === 'poznamky') {
+    const storedPV = await getPref(t, person.id, 'poznamky.view');
+    const rawPV = c.req.query('pview');
+    poznView = rawPV === 'mozaika' || rawPV === 'seznam' ? rawPV : storedPV === 'mozaika' ? 'mozaika' : 'seznam';
+    if ((rawPV === 'mozaika' || rawPV === 'seznam') && rawPV !== storedPV) await setPref(t, person.id, 'poznamky.view', poznView);
+  }
 
   return c.html(
     <Layout title={p.name} person={person} modules={modules} active="zakaznici">
@@ -302,7 +311,7 @@ osobyRoutes.get('/osoby/:id', async (c) => {
               )}
             </div>
           ) : tab === 'poznamky' ? (
-            <NotesTab base={base} kind="person" entityId={p.id} notes={notes} person={person} canTask={modules.has('ukoly')} />
+            <NotesTab base={base} kind="person" entityId={p.id} notes={notes} person={person} canTask={modules.has('ukoly')} view={poznView} />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'aktivity' ? (

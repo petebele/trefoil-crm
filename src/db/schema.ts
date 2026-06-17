@@ -219,6 +219,7 @@ export interface TasksTable {
 export interface NotesTable {
   id: string;
   tenant_id: string;
+  title: string | null; // volitelný nadpis poznámky
   body_html: string; // bezpečné formátované HTML (po sanitizaci)
   created_by_id: string | null;
   is_private: number; // 0/1 — soukromá vidí jen autor

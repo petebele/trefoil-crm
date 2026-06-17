@@ -491,6 +491,43 @@
     <p class="kd" style="margin-top:.7rem"><b>Auto vs ruční:</b> systémové řádky jsou <b>utlumené</b> a bez akcí (jen čtení); ruční mají avatar/jméno autora, plný text a akce ✎/⋯. Třídy <code>.feed-ico</code> (kruhová ikona typu) a <code>.tl-item--sys</code> (utlumení) se při stavbě přidají do <code>public/theme.css</code> i <code>mockupy/styl.css</code>.</p>
   </section>
 
+  <section class="ks">
+    <h2>17 · Poznámky — Seznam / Mozaika (Google Keep styl)</h2>
+    <p class="kd">Poznámka má volitelný <b>nadpis</b> (<code>.note-title</code>). Na záložce Poznámky jdou zobrazit <b>pod sebou (Seznam)</b> nebo jako <b>mozaiku karet ve dvou sloupcích</b> (<code>.notes-grid</code> = CSS sloupce, na mobilu 1 sloupec). Volba se <b>pamatuje per uživatel</b>. Katalog §26.</p>
+
+    <div class="kbox" style="max-width:680px">
+      <div class="card-head" style="margin-bottom:.5rem">
+        <h3 style="margin:0;font-size:.95rem;font-weight:650">Poznámky</h3>
+        <nav class="tabs" style="margin:0" aria-label="Zobrazení poznámek">
+          <a class="tab" href="#">Seznam</a>
+          <a class="tab active" href="#">Mozaika</a>
+        </nav>
+      </div>
+      <div class="notes-grid">
+        <div class="card note-card">
+          <div class="note-title">Schůzka 16. 6.</div>
+          <div class="note-content"><p>Domluveno: navýšit rozpočet, do pátku poslat návrh kampaně.</p></div>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b style="font-size:.84rem">Petr Běloch</b> <span class="when">· včera</span></div>
+        </div>
+        <div class="card note-card">
+          <div class="note-title">Přístupy</div>
+          <div class="note-content"><ul><li>GA4 — přidat servisní účet</li><li>Merchant Center — ověřit doménu</li></ul></div>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b style="font-size:.84rem">Jana N.</b> <span class="when">· po</span> <span class="chip chip-soft-gray">Soukromá</span></div>
+        </div>
+        <div class="card note-card">
+          <div class="note-content"><p>Klient zvažuje další službu (optimalizace feedů). Sledovat při příští schůzce.</p></div>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b style="font-size:.84rem">Petr Běloch</b> <span class="when">· 3. 6.</span></div>
+        </div>
+        <div class="card note-card">
+          <div class="note-title">Tón komunikace</div>
+          <div class="note-content"><p>Preferují stručné e-maily, telefonát jen u urgentních věcí.</p></div>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b style="font-size:.84rem">Jana N.</b> <span class="when">· 1. 6.</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="kd" style="margin-top:.7rem">Karta = <code>.card.note-card</code> (zdědí vzhled karty + <code>break-inside:avoid</code> a mezeru mezi sloupci). Bez nadpisu se ukáže jen text. „Seznam" = původní řádkový vzhled (avatar + autor + text pod sebou). Přepínač je <code>.tabs</code> v hlavičce.</p>
+  </section>
+
 </main>
 
 <script>

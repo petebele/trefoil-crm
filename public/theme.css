@@ -618,3 +618,9 @@ textarea.input[data-autogrow] { resize: none; overflow-y: hidden; min-height: 0;
 .feed-ico { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); background: transparent; }
 .feed-ico--note, .feed-ico--task, .feed-ico--work { color: var(--accent); }
 .feed-ico--contact, .feed-ico--system { color: var(--muted); }
+
+/* Poznámky — nadpis + mozaika (Google Keep styl: karty ve sloupcích) */
+.note-title { font-weight: 650; font-size: .92rem; margin: .1rem 0 .15rem; }
+.notes-grid { columns: 2; column-gap: 1rem; }
+.notes-grid .note-card { break-inside: avoid; -webkit-column-break-inside: avoid; display: inline-block; width: 100%; margin: 0 0 1rem; padding: .8rem .9rem; }
+@media (max-width: 720px) { .notes-grid { columns: 1; } }

@@ -48,6 +48,7 @@ import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
 import { listClientServices } from '../domain/clientServices';
 import { listCatalog } from '../domain/services';
 import { listForClientMonth, clientMonthMoney, monthKey, fmtMinutes, billingTotal } from '../domain/workRecords';
+import { getPref, setPref } from '../domain/prefs';
 
 export const firmyRoutes = new Hono<AppEnv>();
 
@@ -441,6 +442,14 @@ firmyRoutes.get('/firmy/:id', async (c) => {
       : undefined;
 
   const notes = tab === 'poznamky' ? await notesForEntity(t, 'client', client.id, person.id) : [];
+  // zobrazení Poznámek (Seznam/Mozaika) si pamatujeme per uživatel (klíč 'poznamky.view')
+  let poznView: 'seznam' | 'mozaika' = 'seznam';
+  if (tab === 'poznamky') {
+    const storedPV = await getPref(t, person.id, 'poznamky.view');
+    const rawPV = c.req.query('pview');
+    poznView = rawPV === 'mozaika' || rawPV === 'seznam' ? rawPV : storedPV === 'mozaika' ? 'mozaika' : 'seznam';
+    if ((rawPV === 'mozaika' || rawPV === 'seznam') && rawPV !== storedPV) await setPref(t, person.id, 'poznamky.view', poznView);
+  }
 
   // Statistické dlaždice na Nástěnce firmy (počítáme jen pro tento pohled).
   const isNastenka = tab !== 'sluzby' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'aktivity';
@@ -528,7 +537,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
               vykazy={vykazyData}
             />
           ) : tab === 'poznamky' ? (
-            <NotesTab base={base} kind="client" entityId={client.id} notes={notes} person={person} canTask={modules.has('ukoly')} />
+            <NotesTab base={base} kind="client" entityId={client.id} notes={notes} person={person} canTask={modules.has('ukoly')} view={poznView} />
           ) : tab === 'projekty' ? (
             <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'aktivity' ? (

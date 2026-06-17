@@ -573,6 +573,24 @@ odtud. Komponenta `ActivityFeed` v `components.tsx`. Mockup: `mockupy/komponenty
 
 ---
 
+## 26. Poznámky — nadpis + zobrazení Seznam / Mozaika
+
+Poznámka má **volitelný nadpis** (`title`, prostý text) + formátované tělo (editor §24). Na záložce
+**Poznámky** dva pohledy, volba **per uživatel** (`person_prefs`, klíč `poznamky.view`): **Seznam**
+(řádky pod sebou) a **Mozaika** (karty ve dvou sloupcích, Google Keep styl). Komponenty `NotesTab` /
+`NoteCard` v `poznamky.tsx`. Mockup: `mockupy/komponenty.html` §17. Spec poznámek: [docs/specs/poznamky.md](specs/poznamky.md).
+
+- **Nadpis:** vstup `.input` nad editorem v modálu; v kartě `.note-title` (tučně, nad tělem). Prázdný = nezobrazí se.
+- **Seznam (`layout="list"`):** původní řádek — avatar autora + meta (autor · čas · chipy) + nadpis + tělo.
+- **Mozaika (`layout="grid"`):** karta `.card.note-card` v kontejneru `.notes-grid` (CSS `columns: 2`,
+  `break-inside: avoid`; na mobilu 1 sloupec). Karty plynou po sloupcích (masonry-like, jako Keep).
+- **Přepínač** `.tabs` (Seznam/Mozaika) v hlavičce karty; odkazy `?tab=poznamky&pview=seznam|mozaika`.
+  Volba se uloží do `person_prefs` a drží i po realtime překreslení živé zóny.
+- **CSS** `.note-title`, `.notes-grid`, `.notes-grid .note-card` v `public/theme.css` **i** `mockupy/styl.css`.
+- Akce (⋯: Upravit / Vytvořit úkol / viditelnost / Smazat) a chipy „Soukromá" / „u osoby X" fungují v obou pohledech.
+
+---
+
 ## Jak katalog rozšiřovat
 
 1. Nový prvek nejdřív navrhnout v `mockupy/komponenty.html` (vidět = schválit),
