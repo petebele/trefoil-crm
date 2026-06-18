@@ -191,7 +191,7 @@ function serviceMoneyLine(s: ClientService): string {
 
 function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; vykazyMonth?: string }) {
   const { base, s, isAdmin } = props;
-  const vykazatBack = props.vykazyMonth ? `${base}?tab=sluzby&mesic=${props.vykazyMonth}` : `${base}?tab=sluzby`;
+  const vykazatBack = props.vykazyMonth ? `${base}?tab=vykazy&mesic=${props.vykazyMonth}` : `${base}?tab=vykazy`;
   const canVykaz = !!(props.vykazyMonth && s.status === 'active');
   const isEnded = s.status === 'ended';
   const hasMenu = isEnded ? isAdmin : isAdmin || canVykaz;
@@ -270,7 +270,12 @@ export function SluzbyZakaznikaTab(props: {
   coworkers: Array<{ id: string; name: string }>;
   isAdmin: boolean;
   err?: string;
-  /** Výkazy práce (jen se zapnutým modulem vykazy). */
+  /** Která polovina sekce se renderuje: „sluzby" = paušál + služby (nastavení),
+   *  „vykazy" = výkazy + vyúčtování (měsíční report). Dvě záložky, jedna komponenta. */
+  view: 'sluzby' | 'vykazy';
+  /** Aktuální měsíc pro akci „Vykázat" v řádku služby (jen se zapnutým modulem vykazy). */
+  vykazyMonth?: string;
+  /** Data reportingu — výkazy/vyúčtování (jen view='vykazy'). */
   vykazy?: { person: PersonsTable; records: WorkRecord[]; money: MonthMoney; month: string };
 }) {
   const { base, client, services, isAdmin } = props;
@@ -325,8 +330,11 @@ export function SluzbyZakaznikaTab(props: {
 
   return (
     <>
-      {props.err && ERRORS[props.err] ? <div class="form-error">{tr(ERRORS[props.err]!)}</div> : null}
+      {props.view === 'sluzby' && props.err && ERRORS[props.err] ? <div class="form-error">{tr(ERRORS[props.err]!)}</div> : null}
 
+      {/* === Nastavení: Paušál + Služby (záložka „Služby a rozpočty") === */}
+      {props.view === 'sluzby' ? (
+        <>
       {/* Akce sekcí: ⋯ v pravém rohu (vždy viditelné), prázdná sekce má textovou akci. */}
       <div class="card">
         <div class="card-head">
@@ -398,7 +406,7 @@ export function SluzbyZakaznikaTab(props: {
         ) : (
           <div style="margin-top:.4rem">
             {running.map((s) => (
-              <ServiceRow base={base} s={s} isAdmin={isAdmin} vykazyMonth={props.vykazy?.month} />
+              <ServiceRow base={base} s={s} isAdmin={isAdmin} vykazyMonth={props.vykazyMonth} />
             ))}
           </div>
         )}
@@ -410,24 +418,27 @@ export function SluzbyZakaznikaTab(props: {
             </button>
             <div id="svcArchive" class="hidden">
               {archived.map((s) => (
-                <ServiceRow base={base} s={s} isAdmin={isAdmin} vykazyMonth={props.vykazy?.month} />
+                <ServiceRow base={base} s={s} isAdmin={isAdmin} vykazyMonth={props.vykazyMonth} />
               ))}
             </div>
           </div>
         ) : null}
       </div>
+        </>
+      ) : null}
 
-      {v ? (
+      {/* === Report: Výkazy + Vyúčtování (záložka „Výkazy a vyúčtování") === */}
+      {props.view === 'vykazy' && v ? (
         <div class="card" style="margin-top:1rem">
           <div class="card-head">
             <h3>{tr('Výkazy')}</h3>
             <span style="display:flex;gap:.6rem;align-items:center">
-              <MonthNav month={v.month} hrefFor={(m) => `${base}?tab=sluzby&mesic=${m}`} />
+              <MonthNav month={v.month} hrefFor={(m) => `${base}?tab=vykazy&mesic=${m}`} />
               <KebabMenu id="vykazyMenu" label={tr('Možnosti výkazů')}>
                 <button
                   class="opt"
                   type="button"
-                  hx-get={`/vykazy/modal/novy?klient=${client.id}&back=${encodeURIComponent(`${base}?tab=sluzby&mesic=${v.month}`)}`}
+                  hx-get={`/vykazy/modal/novy?klient=${client.id}&back=${encodeURIComponent(`${base}?tab=vykazy&mesic=${v.month}`)}`}
                   hx-target="#modal"
                   hx-swap="innerHTML"
                 >
@@ -456,14 +467,14 @@ export function SluzbyZakaznikaTab(props: {
           ) : (
             <div>
               {v.records.map((r) => (
-                <WorkRecordRow r={r} person={v.person} ownerId={client.owner_id} back={`${base}?tab=sluzby&mesic=${v.month}`} showAmount={!hasActivePausal} />
+                <WorkRecordRow r={r} person={v.person} ownerId={client.owner_id} back={`${base}?tab=vykazy&mesic=${v.month}`} showAmount={!hasActivePausal} />
               ))}
             </div>
           )}
         </div>
       ) : null}
 
-      {showVyuctovani ? (
+      {props.view === 'vykazy' && showVyuctovani ? (
         <div class="card" style="margin-top:1rem">
           <div class="card-head"><h3>{tr('Vyúčtování')}{v ? <span class="sub" style="font-weight:400;text-transform:capitalize"> · {monthLabel(v.month)}</span> : ''}</h3></div>
 

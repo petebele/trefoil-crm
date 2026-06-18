@@ -544,7 +544,7 @@ export function ContactsSection(props: {
 
 // ---------- Taby detailu + feed ----------
 
-export function DetailTabs(props: { base: string; active: string }) {
+export function DetailTabs(props: { base: string; active: string; sluzbyLabel?: string; showVykazy?: boolean }) {
   const tab = (key: string, label: string) => (
     <a class={`tab ${props.active === key ? 'active' : ''}`} href={`${props.base}?tab=${key}`}>
       {label}
@@ -554,7 +554,8 @@ export function DetailTabs(props: { base: string; active: string }) {
     <nav class="tabs" style="margin-top:0" aria-label={tr('Sekce detailu')}>
       {tab('nastenka', tr('Nástěnka'))}
       {tab('poznamky', tr('Poznámky'))}
-      {tab('sluzby', tr('Služby'))}
+      {tab('sluzby', props.sluzbyLabel ?? tr('Služby'))}
+      {props.showVykazy ? tab('vykazy', tr('Výkazy a vyúčtování')) : null}
       {tab('projekty', tr('Projekty'))}
       {tab('aktivity', tr('Aktivity'))}
     </nav>

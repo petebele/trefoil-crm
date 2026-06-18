@@ -14,6 +14,17 @@
 
 ## 0) Rychlý stav k 2026-06-18 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka J — rozdělení záložky Služby na nastavení × report):**
+> Záložka **Služby** u firmy se rozdělila na dvě (osa nastavení × provoz): **„Služby a rozpočty"** (`?tab=sluzby`
+> — paušál hodin + přidělené služby + alokace rozpočtů; jen manažer) a **„Výkazy a vyúčtování"** (`?tab=vykazy`
+> — vykázaná práce v měsíci + čerpáno z paušálu + vyúčtování/podklad k fakturaci). Důvod: jiný účel i tempo,
+> sedí to na práva, a kopíruje to logiku detailu služby (alokace = nastavení, čerpání = report). Technicky:
+> `SluzbyZakaznikaTab` dostal prop **`view: 'sluzby' | 'vykazy'`** (jedna komponenta, dvě záložky); `DetailTabs`
+> má `sluzbyLabel` + `showVykazy` (záložka Výkazy jen u **firmy** se zapnutým modulem vykazy — **osoba** má dál
+> jen read-only „Služby"). Akce „Vykázat" a dlaždice na Nástěnce vedou na `?tab=vykazy`. Bez změny DB.
+> „Reporting" do budoucna = rozšíření té záložky (hodiny po pracovnících, spend v čase). **Další na řadě:**
+> ověřit v prohlížeči; pak **osobní dashboard / Inbox „Vyžaduje moji pozornost"** (Petrova volba).
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka I — poznámky jako karty + drag/drop, feed, služby):**
 > **(1) Feed Aktivit:** přepínač „rozbalit/sbalit vše" už není „+", ale **šipka** (`IconChevron`, otočí se
 > o 180°); při rozbaleném stavu **mizí** per-skupinové odkazy „Zobrazit změny" (`.act-more`). Ikony:

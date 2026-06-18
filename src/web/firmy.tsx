@@ -437,7 +437,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   const rawMonth = c.req.query('mesic') ?? '';
   const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(rawMonth) ? rawMonth : monthKey(new Date());
   const vykazyData =
-    tab === 'sluzby' && c.get('modules').has('vykazy')
+    tab === 'vykazy' && c.get('modules').has('vykazy')
       ? { person, records: await listForClientMonth(t, client.id, month), money: await clientMonthMoney(t, client, month), month }
       : undefined;
 
@@ -452,7 +452,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   }
 
   // Statistické dlaždice na Nástěnce firmy (počítáme jen pro tento pohled).
-  const isNastenka = tab !== 'sluzby' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'aktivity';
+  const isNastenka = tab !== 'sluzby' && tab !== 'vykazy' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'aktivity';
   let nast: { running: number; workMinutes: number; workMoney: number; expected: number } | null = null;
   if (isNastenka) {
     const money = await clientMonthMoney(t, client, month);
@@ -524,8 +524,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
 
         {/* B) Střední panel — živá zóna (realtime) */}
         <section id="stred" hx-get={`${base}?tab=${tab}`} hx-select="#stred" hx-target="this" hx-swap="outerHTML" hx-trigger="live-update from:body" hx-disinherit="*">
-          <DetailTabs base={base} active={tab} />
-          {tab === 'sluzby' ? (
+          <DetailTabs base={base} active={tab} sluzbyLabel={tr('Služby a rozpočty')} showVykazy={modules.has('vykazy')} />
+          {tab === 'sluzby' || tab === 'vykazy' ? (
             <SluzbyZakaznikaTab
               base={base}
               client={client}
@@ -534,6 +534,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
               coworkers={coworkers}
               isAdmin={person.is_admin === 1}
               err={c.req.query('err')}
+              view={tab === 'vykazy' ? 'vykazy' : 'sluzby'}
+              vykazyMonth={modules.has('vykazy') ? month : undefined}
               vykazy={vykazyData}
             />
           ) : tab === 'poznamky' ? (
@@ -547,8 +549,8 @@ firmyRoutes.get('/firmy/:id', async (c) => {
               <div class="stats" style="grid-template-columns:repeat(4,1fr)">
                 <a class="stat" href={`${base}?tab=aktivity`}><b>{events.length ? relTime(events[0]!.created_at) : '—'}</b><span>{tr('poslední aktivita')}</span></a>
                 <a class="stat" href={`${base}?tab=sluzby`}><b>{nast!.running}</b><span>{tr('běžící služby')}</span></a>
-                <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtMinutes(nast!.workMinutes)}</b><span>{tr('výkaz')} · {fmtNum(nast!.workMoney)} {currency()}</span></a>
-                <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtNum(nast!.expected)} {currency()}</b><span>{tr('očekávaný měsíc')}</span></a>
+                <a class="stat" href={`${base}?tab=vykazy&mesic=${month}`}><b>{fmtMinutes(nast!.workMinutes)}</b><span>{tr('výkaz')} · {fmtNum(nast!.workMoney)} {currency()}</span></a>
+                <a class="stat" href={`${base}?tab=vykazy&mesic=${month}`}><b>{fmtNum(nast!.expected)} {currency()}</b><span>{tr('očekávaný měsíc')}</span></a>
               </div>
               <RecentActivityCard events={events.slice(0, 8)} base={base} />
             </>
