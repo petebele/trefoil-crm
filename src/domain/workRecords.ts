@@ -165,6 +165,7 @@ export async function createWorkRecord(tenantId: string, workerId: string, data:
       status: 'pending',
       approved_by_id: null,
       approved_at: null,
+      rejection_reason: null,
       created_at: now(),
     })
     .execute();
@@ -194,10 +195,41 @@ export async function deleteWorkRecord(tenantId: string, id: string): Promise<vo
 export async function approveWorkRecord(tenantId: string, id: string, approverId: string): Promise<void> {
   await db
     .updateTable('work_records')
-    .set({ status: 'approved', approved_by_id: approverId, approved_at: now() })
+    .set({ status: 'approved', approved_by_id: approverId, approved_at: now(), rejection_reason: null })
     .where('tenant_id', '=', tenantId)
     .where('id', '=', id)
     .execute();
+}
+
+/** Vrácení výkazu k přepracování (zamítnutí) — uloží důvod, pracovník ho uvidí a může opravit. */
+export async function rejectWorkRecord(tenantId: string, id: string, reason: string | null): Promise<void> {
+  await db
+    .updateTable('work_records')
+    .set({ status: 'rejected', rejection_reason: reason, approved_by_id: null, approved_at: null })
+    .where('tenant_id', '=', tenantId)
+    .where('id', '=', id)
+    .execute();
+}
+
+/** Znovuodeslání vráceného výkazu ke schválení (po opravě pracovníkem) — vyčistí důvod. */
+export async function resubmitWorkRecord(tenantId: string, id: string): Promise<void> {
+  await db
+    .updateTable('work_records')
+    .set({ status: 'pending', rejection_reason: null })
+    .where('tenant_id', '=', tenantId)
+    .where('id', '=', id)
+    .execute();
+}
+
+/** Výkazy pracovníka vrácené k přepracování (pro jeho Nástěnku „Vyžaduje moji pozornost"). */
+export async function listRejectedForWorker(tenantId: string, workerId: string): Promise<WorkRecord[]> {
+  const rows = await baseSelect()
+    .where('work_records.tenant_id', '=', tenantId)
+    .where('work_records.worker_id', '=', workerId)
+    .where('work_records.status', '=', 'rejected')
+    .orderBy('work_records.performed_at', 'desc')
+    .execute();
+  return rows as WorkRecord[];
 }
 
 // ---------- čerpání paušálu a peníze měsíce ----------
@@ -293,7 +325,8 @@ function workCosts(records: WorkRecord[], allowance: number, overageRate: number
  * Schválené = potvrzené; čekající = očekávané/rezervované (počítají se zvlášť).
  */
 export async function clientMonthMoney(tenantId: string, client: ClientsTable, month: string): Promise<MonthMoney> {
-  const records = await listForClientMonth(tenantId, client.id, month);
+  const all = await listForClientMonth(tenantId, client.id, month);
+  const records = all.filter((r) => r.status !== 'rejected'); // vrácené k přepracování se nepočítají
   const approved = records.filter((r) => r.status === 'approved');
 
   const carryMinutes = await carryoverMinutes(tenantId, client, month);

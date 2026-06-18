@@ -141,6 +141,7 @@ a.fpill { text-decoration: none; color: var(--ink); }
 .chip-soft-teal { background: var(--teal-soft); color: var(--teal-ink); }
 .chip-soft-gray { background: var(--chip-bg); color: var(--muted); }
 .chip-soft-orange { background: var(--chip-orange-bg); color: var(--chip-orange-ink); }
+.chip-soft-red { background: var(--red-soft); color: var(--red); }
 .chip-soft-dark { background: var(--chip-dark-bg); color: var(--chip-dark-ink); }
 .cat {
   display: inline-flex; align-items: center;

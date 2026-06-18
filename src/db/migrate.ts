@@ -145,6 +145,8 @@ export async function migrate(): Promise<void> {
   // volitelná vazba výkazu na úkol (Propojení Výkazů a Úkolů) — starší DB idempotentně
   await sql`ALTER TABLE work_records ADD COLUMN task_id text`.execute(db).catch(() => {});
   await db.schema.createIndex('work_records_task').ifNotExists().on('work_records').columns(['task_id']).execute();
+  // zamítnutí (vrácení k přepracování) — důvod vrácení; starší DB idempotentně
+  await sql`ALTER TABLE work_records ADD COLUMN rejection_reason text`.execute(db).catch(() => {});
 
   await db.schema
     .createTable('person_clients')

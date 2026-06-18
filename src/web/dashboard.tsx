@@ -3,7 +3,10 @@ import type { AppEnv } from '../types';
 import { Layout } from './layout';
 import { openTasksForPerson } from '../domain/tasks';
 import { listRecentEvents } from '../domain/events';
+import { listPendingForApprover, listRejectedForWorker } from '../domain/workRecords';
 import { TaskGroups } from './ukoly';
+import { WorkRecordRow } from './vykazy';
+import { EmptyState, ActIcon, activityKind } from './components';
 import { tr, getLocale, fmtDateLong, fmtDateTime } from '../i18n';
 
 export const dashboardRoutes = new Hono<AppEnv>();
@@ -31,15 +34,25 @@ dashboardRoutes.get('/', async (c) => {
   const person = c.get('person')!;
   const t = person.tenant_id;
   const modules = c.get('modules');
+  const isAdmin = person.is_admin === 1;
   const firstName = person.name.split(/\s+/)[0] ?? person.name;
   // český vokativ má smysl jen v češtině; v angličtině jen křestní jméno
   const greetName = getLocale() === 'cs' ? vocative(firstName) : firstName;
   const today = new Date();
 
-  const [tasks, recent] = await Promise.all([
+  const [tasks, approvals, rejected, recent] = await Promise.all([
     modules.has('ukoly') ? openTasksForPerson(t, person.id) : Promise.resolve([]),
+    modules.has('vykazy') ? listPendingForApprover(t, person.id, isAdmin) : Promise.resolve([]),
+    modules.has('vykazy') ? listRejectedForWorker(t, person.id) : Promise.resolve([]),
     listRecentEvents(t, 12),
   ]);
+
+  // Schvalovací auto‑úkoly („schválit výkaz", source_kind='work_record') do úkolových sekcí NEpatří —
+  // schválení řešíme přímo řádkem výkazu v Inboxu (žádné duplicity).
+  const mineTasks = tasks.filter((x) => x.source_kind !== 'work_record');
+  // Inbox „Vyžaduje moji pozornost" = jen věci k ROZHODNUTÍ (schválení). Úkoly po termínu patří
+  // mezi ostatní úkoly (jediná „po termínu" položka jsou dnes úkoly), proto je má „Moje úkoly".
+  const showInbox = modules.has('vykazy');
 
   return c.html(
     <Layout title={tr('Nástěnka')} person={person} modules={modules} active="nastenka">
@@ -48,53 +61,102 @@ dashboardRoutes.get('/', async (c) => {
         {tr(greeting(today.getHours()))}, {greetName}
       </h1>
 
-      {modules.has('ukoly') ? (
-        <div class="card" style="margin-top:1.25rem">
-          <div class="card-head">
-            <h3>{tr('Moje úkoly')}</h3>
-            <button class="btn btn-sm btn-primary" type="button" hx-get="/ukoly/modal/novy?back=/" hx-target="#modal" hx-swap="innerHTML">
-              {tr('Přidat úkol')}
-            </button>
+      {/* Střed Nástěnky je živá zóna — po schválení/odškrtnutí/novém dění se Inbox sám překreslí. */}
+      <section
+        id="dashlive"
+        hx-get="/"
+        hx-select="#dashlive"
+        hx-target="this"
+        hx-swap="outerHTML"
+        hx-trigger="live-update from:body"
+        hx-disinherit="*"
+      >
+        {/* Inbox „Vyžaduje moji pozornost" — co čeká na mé rozhodnutí (schválit) i na mou opravu (vráceno) */}
+        {showInbox ? (
+          <div class="card" style="margin-top:1.25rem">
+            <div class="card-head"><h3>{tr('Vyžaduje moji pozornost')}</h3></div>
+            {approvals.length === 0 && rejected.length === 0 ? (
+              <EmptyState text={tr('Nic nečeká — máš čisto. 🎉')} />
+            ) : (
+              <>
+                {approvals.length > 0 ? (
+                  <div>
+                    <p class="sub" style="margin:.2rem 0 .2rem;font-weight:600">{tr('Ke schválení')} ({approvals.length})</p>
+                    {approvals.map((r) => (
+                      <WorkRecordRow r={r} person={person} ownerId={person.id} back="/" showClient />
+                    ))}
+                  </div>
+                ) : null}
+                {rejected.length > 0 ? (
+                  <div style="margin-top:.7rem">
+                    <p class="sub" style="margin:.2rem 0 .2rem;font-weight:600;color:var(--red)">{tr('Vrácené k přepracování')} ({rejected.length})</p>
+                    {rejected.map((r) => (
+                      <WorkRecordRow r={r} person={person} ownerId={null} back="/" showClient />
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
-          <div id="dash-tasks">
+        ) : null}
+
+        {/* Moje úkoly — dnes a tento týden (schvalovačky jsou v Inboxu výše) */}
+        {modules.has('ukoly') ? (
+          <div class="card" style="margin-top:1rem">
+            <div class="card-head">
+              <h3>{tr('Moje úkoly')}</h3>
+              <button class="btn btn-sm btn-primary" type="button" hx-get="/ukoly/modal/novy?back=/" hx-target="#modal" hx-swap="innerHTML">
+                {tr('Přidat úkol')}
+              </button>
+            </div>
             <TaskGroups
-              tasks={tasks}
+              tasks={mineTasks}
               person={person}
               back="/"
-              target="#dash-tasks"
+              target="#dashlive"
               showClient
               buckets={['overdue', 'today', 'week']}
-              emptyText={tr('Na dnešek ani na tento týden nic nemáš. 🎉')}
+              emptyText={tr('Žádné úkoly po termínu, na dnešek ani na tento týden. 🎉')}
               canVykaz={modules.has('vykazy')}
             />
+            <p class="sub" style="margin:.7rem 0 0">
+              <a href="/ukoly">{tr('Zobrazit všechny úkoly →')}</a>
+            </p>
           </div>
-          <p class="sub" style="margin:.7rem 0 0">
-            <a href="/ukoly">{tr('Zobrazit všechny úkoly →')}</a>
-          </p>
-        </div>
-      ) : null}
+        ) : null}
 
-      <div class="card" style="margin-top:1rem">
-        <div class="card-head"><h3>{tr('Poslední dění')}</h3></div>
-        {recent.length === 0 ? (
-          <div class="empty"><span class="big">✓</span>{tr('Zatím se tu nic nestalo.')}</div>
-        ) : (
-          <div>
-            {recent.map((e) => (
-              <div style="display:flex;gap:.7rem;padding:.5rem 0;border-top:1px solid var(--line);font-size:.83rem">
-                <span class="sub" style="white-space:nowrap">{fmtDateTime(e.created_at)}</span>
-                <span style="font-weight:600;white-space:nowrap">{e.person_name ?? '—'}</span>
-                <span style="flex:1">
-                  {e.action}
-                  {e.entity_kind === 'client' && e.client_name ? (
-                    <> · <a href={`/firmy/${e.entity_id}`}>{e.client_name}</a></>
-                  ) : null}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        {/* Poslední dění — vzhled feedu Aktivit (ikony typů), napříč klienty s odkazem na firmu */}
+        <div class="card" style="margin-top:1rem">
+          <div class="card-head"><h3>{tr('Poslední dění')}</h3></div>
+          {recent.length === 0 ? (
+            <EmptyState text={tr('Zatím se tu nic nestalo.')} />
+          ) : (
+            <div>
+              {recent.map((e) => {
+                const k = activityKind(e.action);
+                const muted = k === 'contact' || k === 'system';
+                return (
+                  <div style={`display:flex;gap:.7rem;padding:.55rem 0;border-top:1px solid var(--line)${muted ? ';opacity:.62' : ''}`}>
+                    <span class={`feed-ico feed-ico--${k}`} aria-hidden="true"><ActIcon kind={k} /></span>
+                    <div style="flex:1;min-width:0">
+                      <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;font-size:.82rem">
+                        <b>{e.person_name ?? tr('Systém')}</b>
+                        <span class="sub">· {fmtDateTime(e.created_at)}</span>
+                      </div>
+                      <div style="font-size:.86rem">
+                        {e.action}
+                        {e.entity_kind === 'client' && e.client_name ? (
+                          <> · <a href={`/firmy/${e.entity_id}`}>{e.client_name}</a></>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
 
       {!modules.has('ukoly') ? (
         <p class="sub" style="margin-top:.8rem">{tr('Zapni modul Úkoly v Administraci a uvidíš tu svůj přehled úkolů.')}</p>

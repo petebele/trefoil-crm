@@ -48,6 +48,13 @@ export const IconCheck = (p: IconProps = {}) => (
   </Svg>
 );
 
+/** Prostá fajfka (Lucide „check") — primární akce „Schválit". */
+export const IconCheckPlain = (p: IconProps = {}) => (
+  <Svg size={p.size ?? 16}>
+    <polyline points="20 6 9 17 4 12" />
+  </Svg>
+);
+
 export const IconBriefcase = (p: IconProps = {}) => (
   <Svg size={p.size}>
     <rect x="2" y="7" width="20" height="14" rx="2" />

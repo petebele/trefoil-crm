@@ -14,6 +14,18 @@
 
 ## 0) Rychlý stav k 2026-06-18 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka K — osobní Nástěnka: Inbox „Vyžaduje moji pozornost"):**
+> Úvodní stránka (`/`) přestavěna na **osobní velín** (spec `nastenka-inbox-v1.md`, Krok 4 roadmapy):
+> nahoře **Inbox „Vyžaduje moji pozornost"** = **Ke schválení** (čekající výkazy, kde jsem odpovědná osoba
+> — `listPendingForApprover`, render `WorkRecordRow` s inline **Schválit**) + **Po termínu** (moje úkoly po
+> termínu, `TaskItemRow`). Pod tím **Moje úkoly** (dnes/týden) — **bez** schvalovacích auto‑úkolů
+> (`source_kind='work_record'`), aby se neopakovaly. **Poslední dění** dostalo **vzhled feedu Aktivit**
+> (ikony typů `feed-ico` + odkaz na firmu napříč klienty; bez slučování — to je per‑entita). Střed je
+> **živá zóna** `#dashlive` (po schválení/odškrtnutí/novém dění se sám překreslí). Bez změny DB; reuse
+> existujících funkcí/komponent. `activityKind`/`ActIcon`/`TaskItemRow` exportovány. **Pozn.:** schvalování
+> i drag/odškrtnutí jsou interaktivní → **ověřit v prohlížeči**. **Další na řadě:** ověřit; pak @zmínky
+> (až bude @mention), Příležitosti (obchod), nebo Vyúčtování v2.
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka J — rozdělení záložky Služby na nastavení × report):**
 > Záložka **Služby** u firmy se rozdělila na dvě (osa nastavení × provoz): **„Služby a rozpočty"** (`?tab=sluzby`
 > — paušál hodin + přidělené služby + alokace rozpočtů; jen manažer) a **„Výkazy a vyúčtování"** (`?tab=vykazy`

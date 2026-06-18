@@ -168,9 +168,10 @@ export interface WorkRecordsTable {
   minutes: number;
   performed_at: string; // den práce (YYYY-MM-DD)
   billing: 'retainer_hours' | 'billed' | 'free'; // z paušálu / účtovat zvlášť / neúčtovat
-  status: 'pending' | 'approved';
+  status: 'pending' | 'approved' | 'rejected'; // čeká / schváleno / vráceno k přepracování
   approved_by_id: string | null;
   approved_at: string | null;
+  rejection_reason: string | null; // důvod vrácení (uvidí ho pracovník); čistí se při znovuodeslání
   created_at: string;
 }
 

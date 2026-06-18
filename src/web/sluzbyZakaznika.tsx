@@ -595,7 +595,7 @@ function ServiceDetail(props: {
   // Reference = vlastní rozpočet služby (budget_hours), jinak celý paušál klienta
   // (aby uživatel viděl reálné „vyčerpáno X z Y h" i bez per-službové alokace).
   const budgetH = svc.budget_hours;
-  const spentMin = props.records.filter((r) => r.billing === 'retainer_hours').reduce((s, r) => s + r.minutes, 0);
+  const spentMin = props.records.filter((r) => r.billing === 'retainer_hours' && r.status !== 'rejected').reduce((s, r) => s + r.minutes, 0);
   const hasSvcBudget = budgetH != null && budgetH > 0;
   const refH = hasSvcBudget ? budgetH! : hasActivePausal ? client.hours_budget_monthly! : null;
   const burnPct = refH && refH > 0 ? Math.round((spentMin / 60 / refH) * 100) : 0;

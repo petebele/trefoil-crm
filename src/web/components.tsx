@@ -580,9 +580,9 @@ export function EventRow(props: { e: { id: string; action: string; created_at: s
 // jen lepší prezentace tabulky `events`. Spec: docs/specs/feed-v1.md.
 
 type ActEvent = { id: string; action: string; created_at: string; person_name: string | null };
-type ActKind = 'note' | 'task' | 'work' | 'contact' | 'system';
+export type ActKind = 'note' | 'task' | 'work' | 'contact' | 'system';
 
-function activityKind(action: string): ActKind {
+export function activityKind(action: string): ActKind {
   if (/^(Přidána|Upravena|Smazána) poznámka/.test(action)) return 'note';
   if (/^Úkol /.test(action)) return 'task';
   if (/^Výkaz /.test(action)) return 'work';
@@ -598,7 +598,7 @@ const ACT_FILTERS: Array<{ key: string; label: string; kinds: ActKind[] }> = [
   { key: 'other', label: 'Ostatní', kinds: ['contact', 'system'] },
 ];
 
-function ActIcon(props: { kind: ActKind }) {
+export function ActIcon(props: { kind: ActKind }) {
   const s = { width: '15', height: '15', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' } as const;
   switch (props.kind) {
     case 'note':
