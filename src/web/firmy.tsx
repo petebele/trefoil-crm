@@ -33,7 +33,7 @@ import {
   ContactsSection,
   DetailTabs,
   ActivityFeed,
-  ActivityList,
+  RecentActivityCard,
   Picker,
   ModalShell,
   ModalContactRows,
@@ -550,17 +550,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
                 <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtMinutes(nast!.workMinutes)}</b><span>{tr('výkaz')} · {fmtNum(nast!.workMoney)} {currency()}</span></a>
                 <a class="stat" href={`${base}?tab=sluzby&mesic=${month}`}><b>{fmtNum(nast!.expected)} {currency()}</b><span>{tr('očekávaný měsíc')}</span></a>
               </div>
-              <div class="card" style="margin-top:1rem">
-                <div class="card-head"><h3>{tr('Poslední aktivity')}</h3></div>
-                {events.length ? (
-                  <ActivityList events={events.slice(0, 8)} />
-                ) : (
-                  <EmptyState text={tr('Zatím se tu nic nedělo.')} />
-                )}
-                {events.length ? (
-                  <p class="sub" style="margin:.8rem 0 0"><a href={`${base}?tab=aktivity`}>{tr('Zobrazit všechny aktivity →')}</a></p>
-                ) : null}
-              </div>
+              <RecentActivityCard events={events.slice(0, 8)} base={base} />
             </>
           )}
         </section>

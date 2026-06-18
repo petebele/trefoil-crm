@@ -565,7 +565,27 @@ odtud. Komponenta `ActivityFeed` v `components.tsx`. Mockup: `mockupy/komponenty
 - **Klasifikace typu** (`activityKind`) podle prefixu textu události: „Přidána/Upravena/Smazána
   poznámka" → note; „Úkol …" → task; „Výkaz …" → work; obsahuje „kontakt" → contact; jinak → system.
 - **Filtr po typu** (`.tabs`): Vše · Poznámky · Úkoly · Výkazy · Ostatní — přes `?atyp=note|task|work|other`.
-- **Realtime:** záložka je živá zóna (`hx-trigger="live-update from:body"`); nové dění se objeví samo.
+- **Slučování opakování** (`groupActivities`): **po sobě jdoucí** události se **stejným „podpisem"
+  akce** od **téhož autora** se sloučí do jednoho řádku `ActivityGroup` — hlavička **„N× ‹podpis›"**
+  (chip s počtem) + rozbalovací blok s detaily jednotlivých změn (`data-reveal`, odkaz „Zobrazit
+  změny (N)"). „Podpis" = text akce bez proměnlivých hodnot (`actionSignature` utne vše od prvního
+  `(` nebo `:`), takže 3× úprava rozpočtu téže služby = jeden řádek, ale úpravy dvou různých služeb
+  zůstanou oddělené. Skupina o 1 prvku se renderuje jako běžný `ActivityRow`. Platí i pro náhled
+  „Poslední aktivity" na Nástěnce (sdílený `ActivityList`).
+- **Přepínač „rozbalit / sbalit vše"** (`ActivityExpandToggle`, jedno tlačítko se **šipkou** `IconChevron`
+  v hlavičce karty): překlopí stav všech sloučených bloků v sekci naráz — rozbalí detaily všech skupin,
+  další klik vrátí do výchozího sbaleného stavu. Bez JS frameworku: `data-reveal-all="‹idSekce›"` v
+  `app.js` přepíná `.hidden` na všech `.act-detail` v sekci a překlápí `aria-expanded` (šipka se přes CSS
+  **otočí o 180°**). Při rozbaleném stavu se **skryjí redundantní per-skupinové odkazy** „Zobrazit změny"
+  (třída `.act-more`). Renderuje se **jen když je co rozbalovat** (aspoň jedna skupina > 1). Je na **plném
+  feedu** (sekce `#actFeed`) i v náhledu **„Poslední aktivity"** (sekce `#recentAct`). Styl `.act-toggle`
+  (rotace šipky) v `theme.css` i `mockupy/styl.css`. Ikona je z modulu `src/web/icons.tsx` (Feather/Lucide
+  styl — jediný zdroj ikon).
+- **`RecentActivityCard`** = sdílená karta „Poslední aktivity" na Nástěnce firmy i osoby (hlavička
+  s přepínačem + náhled `ActivityList` + odkaz „Zobrazit všechny aktivity →"). Dřív duplikováno v
+  `firmy.tsx`/`osoby.tsx`, teď jedna komponenta.
+- **Realtime:** záložka je živá zóna (`hx-trigger="live-update from:body"`); nové dění se objeví samo
+  (rozbalení skupiny se po překreslení vrátí do sbaleného stavu — výchozí).
 - **CSS:** `.feed-ico` (+ varianty) je v `public/theme.css` **i** `mockupy/styl.css`.
 - **Prázdné stavy:** „Zatím se tu nic nedělo." / při filtru „V tomto filtru zatím nic není."
 - **Budoucí (ne ve v1):** ruční záznam komunikace (hovor/schůzka/e-mail přes editor §24), skupina
@@ -576,17 +596,33 @@ odtud. Komponenta `ActivityFeed` v `components.tsx`. Mockup: `mockupy/komponenty
 ## 26. Poznámky — nadpis + zobrazení Seznam / Mozaika
 
 Poznámka má **volitelný nadpis** (`title`, prostý text) + formátované tělo (editor §24). Na záložce
-**Poznámky** dva pohledy, volba **per uživatel** (`person_prefs`, klíč `poznamky.view`): **Seznam**
-(řádky pod sebou) a **Mozaika** (karty ve dvou sloupcích, Google Keep styl). Komponenty `NotesTab` /
-`NoteCard` v `poznamky.tsx`. Mockup: `mockupy/komponenty.html` §17. Spec poznámek: [docs/specs/poznamky.md](specs/poznamky.md).
+**Poznámky** jsou **vždy karty** — dva pohledy se liší jen počtem sloupců: **Seznam** = 1 sloupec,
+**Mozaika** = 2 sloupce. Volba **per uživatel** (`person_prefs`, klíč `poznamky.view`). Komponenty
+`NotesTab` / `NoteCard` v `poznamky.tsx`. Mockup: `mockupy/komponenty.html` §17. Spec poznámek: [docs/specs/poznamky.md](specs/poznamky.md).
 
-- **Nadpis:** vstup `.input` nad editorem v modálu; v kartě `.note-title` (tučně, nad tělem). Prázdný = nezobrazí se.
-- **Seznam (`layout="list"`):** původní řádek — avatar autora + meta (autor · čas · chipy) + nadpis + tělo.
-- **Mozaika (`layout="grid"`):** karta `.card.note-card` v kontejneru `.notes-grid` (CSS `columns: 2`,
-  `break-inside: avoid`; na mobilu 1 sloupec). Karty plynou po sloupcích (masonry-like, jako Keep).
+- **Jednotný pattern karty:** 1) nahoře **nadpis** vlevo (`.note-title`) + **⋯ menu vždy vpravo nahoře**
+  (NE hover-only — ustálené místo, ať ho uživatel nehledá dole); 2) druhý řádek menším písmem
+  **autor · datum** (`relOrDate` — do 2 dnů relativně „před 5 min/včera", starší absolutním datem)
+  + štítky (Soukromá / „u osoby X" / firma); 3) **samotný text**. **Bez nadpisu** se ukáže šedý zástupný
+  text **„Poznámka bez nadpisu"** (`.note-title--empty`), ⋯ zůstává vpravo. (`NoteCard` má prop `layout`:
+  **`card`** = tahle karta, **`feed`** = jednoduchý řádek pro feed „Dění u služby" — neřadí se, není karta.)
+- **Pevná výška náhledu + rozbalení:** karta má v mřížce pevnou výšku (`height: 14rem`, tělo `flex`
+  s `overflow:hidden`). Je-li text oříznutý, JS (`markClamped`) přidá `.has-more` a ukáže **subtilní
+  rozbalovací řádek na střed** `.note-expand` (šipka `IconChevron` + text **„zobrazit více"** / po
+  rozbalení **„zobrazit méně"**); klik přepne `.expanded` (výška auto, šipka se otočí). Labely se
+  přepínají přes CSS (`.lbl-more`/`.lbl-less`).
+- **Mřížka:** `.notes-grid` = CSS **grid** (pořadí v DOM = vizuální pořadí), `--one` = 1 sloupec (Seznam),
+  jinak 2 sloupce (Mozaika); na mobilu vždy 1. *(Pozn.: nahradilo dřívější `columns` masonry — to
+  neumožňovalo přehledný drag/drop.)*
+- **Drag/drop řazení (oba pohledy):** celá karta je `draggable` (JS hlídá, ať tažení nezačne z menu/
+  odkazu/tlačítka); po dropu se pošle nové pořadí na **`POST /poznamky/poradi?kind=&id=`** (`order` =
+  čárkou oddělená id) → `reorderNotes` zapíše `note_links.sort_order`. **Pořadí je sdílené pro tým**
+  (poznámky = společná báze), drží přes `notes` řazené `sort_order` ASC, pak `created_at` DESC (nové
+  nahoře, dokud se nepřesunou). Kontejner nese `data-reorder` + `data-reorder-url`.
 - **Přepínač** `.tabs` (Seznam/Mozaika) v hlavičce karty; odkazy `?tab=poznamky&pview=seznam|mozaika`.
   Volba se uloží do `person_prefs` a drží i po realtime překreslení živé zóny.
-- **CSS** `.note-title`, `.notes-grid`, `.notes-grid .note-card` v `public/theme.css` **i** `mockupy/styl.css`.
+- **CSS** `.note-title`, `.notes-grid`(`--one`), `.note-card`(`.dragging`/`.expanded`/`.has-more`),
+  `.note-expand` v `public/theme.css` **i** `mockupy/styl.css`.
 - Akce (⋯: Upravit / Vytvořit úkol / viditelnost / Smazat) a chipy „Soukromá" / „u osoby X" fungují v obou pohledech.
 
 ---

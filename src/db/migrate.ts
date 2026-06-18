@@ -295,8 +295,11 @@ export async function migrate(): Promise<void> {
     .addColumn('note_id', 'text', (c) => c.notNull().references('notes.id'))
     .addColumn('entity_kind', 'text', (c) => c.notNull())
     .addColumn('entity_id', 'text', (c) => c.notNull())
+    .addColumn('sort_order', 'real', (c) => c.notNull().defaultTo(0))
     .addPrimaryKeyConstraint('note_links_pk', ['note_id', 'entity_kind', 'entity_id'])
     .execute();
+  // ruční pořadí poznámek u entity (drag/drop v mozaice); starší DB idempotentně
+  await sql`ALTER TABLE note_links ADD COLUMN sort_order real NOT NULL DEFAULT 0`.execute(db).catch(() => {});
   await db.schema.createIndex('note_links_entity').ifNotExists().on('note_links').columns(['entity_kind', 'entity_id']).execute();
 
   await db.schema

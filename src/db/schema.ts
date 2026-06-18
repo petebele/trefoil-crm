@@ -236,6 +236,7 @@ export interface NoteLinksTable {
   note_id: string;
   entity_kind: string; // 'client' | 'person' | …
   entity_id: string;
+  sort_order: number; // ruční pořadí poznámek u entity (drag/drop v mozaice); menší = výš
 }
 
 /**

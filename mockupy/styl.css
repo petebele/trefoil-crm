@@ -737,6 +737,9 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
   color: var(--muted); font-size: .8rem; padding: 0;
 }
 .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+/* přepínač „rozbalit/sbalit vše" nad sloučenými aktivitami — šipka se při rozbalení otočí */
+.act-toggle svg { transition: transform .15s ease; }
+.act-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .hover-row .row-actions { opacity: 0; transition: opacity .12s ease; }
 .hover-row:hover .row-actions, .hover-row:focus-within .row-actions { opacity: 1; }
 /* sekční varianta (skryté přidávání): platí pro celou sekci vč. zanořených obalů */
@@ -829,6 +832,24 @@ summary.subtle-action::marker { content: ''; }
 
 /* Poznámky — nadpis + mozaika (Google Keep styl: karty ve sloupcích) */
 .note-title { font-weight: 650; font-size: .92rem; margin: .1rem 0 .15rem; }
-.notes-grid { columns: 2; column-gap: 1rem; }
-.notes-grid .note-card { break-inside: avoid; -webkit-column-break-inside: avoid; display: inline-block; width: 100%; margin: 0 0 1rem; padding: .8rem .9rem; }
-@media (max-width: 720px) { .notes-grid { columns: 1; } }
+.note-title--empty { font-weight: 500; color: var(--muted); } /* zástupný text „Poznámka bez nadpisu" */
+/* Poznámky = vždy karty; Seznam = 1 sloupec (.notes-grid--one), Mozaika = 2 sloupce.
+   Zarovnaná mřížka (pořadí v DOM = vizuální pořadí) kvůli přehlednému drag/drop. */
+.notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; align-items: start; }
+.notes-grid--one { grid-template-columns: 1fr; }
+@media (max-width: 720px) { .notes-grid { grid-template-columns: 1fr; } }
+/* karta s pevnou výškou náhledu: tělo se ořízne (flex), řádek „zobrazit více" zůstává dole */
+.notes-grid .note-card { margin: 0; padding: .8rem .9rem; display: flex; flex-direction: column; height: 14rem; cursor: grab; }
+.notes-grid .note-card.dragging { opacity: .5; cursor: grabbing; }
+.notes-grid .note-card .note-content { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.notes-grid .note-card.expanded { height: auto; }
+.notes-grid .note-card.expanded .note-content { overflow: visible; }
+/* subtilní rozbalovací řádek na střed: ikona + text „zobrazit více/méně" */
+.note-expand { display: none; align-self: center; flex: none; align-items: center; gap: .3rem; margin-top: .35rem; padding: .1rem .4rem; background: none; border: none; cursor: pointer; color: var(--muted); font-size: .74rem; }
+.note-expand:hover { color: var(--ink); }
+.note-expand svg { transition: transform .15s ease; }
+.note-expand .lbl-less { display: none; }
+.notes-grid .note-card.has-more .note-expand, .notes-grid .note-card.expanded .note-expand { display: inline-flex; }
+.notes-grid .note-card.expanded .note-expand .lbl-more { display: none; }
+.notes-grid .note-card.expanded .note-expand .lbl-less { display: inline; }
+.notes-grid .note-card.expanded .note-expand svg { transform: rotate(180deg); }

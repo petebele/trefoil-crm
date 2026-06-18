@@ -102,6 +102,12 @@ export function relTime(iso: string): string {
   return d === 1 ? tr('včera') : tr('před {n} dny', { n: d });
 }
 
+/** Čerstvé relativně (do 2 dnů: „před 5 min", „včera"), starší absolutním datem. */
+export function relOrDate(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return days <= 2 ? relTime(iso) : fmtDate(iso);
+}
+
 /** Měsíc a rok dlouze (např. „červen 2026" / „June 2026"). */
 export function monthLabel(month: string): string {
   const [y, m] = month.split('-').map(Number);

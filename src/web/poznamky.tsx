@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from '../types';
-import { ModalShell, EmptyState, KebabMenu, initials, avColor } from './components';
+import { ModalShell, EmptyState, KebabMenu } from './components';
 import { logEvent } from '../domain/events';
 import { clientsOfPerson } from '../domain/clients';
 import {
@@ -10,13 +10,15 @@ import {
   updateNote,
   deleteNote,
   setNoteLinks,
+  reorderNotes,
   sanitizeNoteHtml,
   noteExcerpt,
   type NoteRow,
   type NoteLink,
 } from '../domain/notes';
 import type { PersonsTable, NotesTable } from '../db/schema';
-import { tr, relTime } from '../i18n';
+import { tr, relOrDate } from '../i18n';
+import { IconChevron } from './icons';
 
 export const poznamkyRoutes = new Hono<AppEnv>();
 
@@ -133,8 +135,13 @@ function NoteEditorModal(props: {
   );
 }
 
-/** Karta poznámky — rozložení `list` (řádky pod sebou) nebo `grid` (mozaika karet). */
-export function NoteCard(props: { n: NoteRow; person: PersonsTable; back: string; feedKind: 'client' | 'person' | 'service'; subjectId: string; canTask: boolean; layout: 'list' | 'grid' }) {
+/**
+ * Karta poznámky — jednotný pattern (list i grid):
+ *   1) nahoře **nadpis** vlevo + **⋯ menu vždy vpravo nahoře** (uživatel ho nehledá dole),
+ *   2) druhý řádek menším písmem: **autor · datum** (do 2 dnů relativně, starší absolutně) + štítky,
+ *   3) pak **samotná poznámka**.
+ */
+export function NoteCard(props: { n: NoteRow; person: PersonsTable; back: string; feedKind: 'client' | 'person' | 'service'; subjectId: string; canTask: boolean; layout: 'card' | 'feed' }) {
   const { n, person } = props;
   const back = props.back;
   const canEdit = canEditNote(person, n);
@@ -145,62 +152,78 @@ export function NoteCard(props: { n: NoteRow; person: PersonsTable; back: string
   const taskClientId = props.feedKind === 'client' ? props.subjectId : n.client_origins[0]?.id ?? '';
   // úkol z poznámky se NEzakládá rovnou — otevře modál nového úkolu předvyplněný (název + klient + vazba)
   const novyUkolUrl = `/ukoly/modal/novy?nazev=${encodeURIComponent(n.title || noteExcerpt(n.body_html, 90))}&source_kind=note&source_id=${n.id}${taskClientId ? `&klient=${taskClientId}` : ''}&back=${encodeURIComponent(back)}`;
+  // ⋯ menu je VŽDY vpravo nahoře (ne hover-only) — ustálený pattern, ať se nehledá dole
   const menu =
     canEdit || props.canTask ? (
-      <span class="row-actions" style="margin-left:auto">
-        <KebabMenu id={`nMenu-${n.id}`} label={tr('Možnosti poznámky')}>
-          {canEdit ? (
-            <button class="opt" type="button" hx-get={upravitUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
-          ) : null}
-          {props.canTask ? (
-            <button class="opt" type="button" hx-get={novyUkolUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Vytvořit úkol')}</button>
-          ) : null}
-          {canEdit ? (
-            <form method="post" action={`/poznamky/${n.id}/viditelnost`} class="m0">
-              <input type="hidden" name="back" value={back} />
-              <button class="opt" type="submit">{n.is_private === 1 ? tr('Zveřejnit (sdílet týmu)') : tr('Označit jako soukromou')}</button>
-            </form>
-          ) : null}
-          {canEdit ? (
-            <form method="post" action={`/poznamky/${n.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tuto poznámku?')}')`}>
-              <input type="hidden" name="back" value={back} />
-              <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
-            </form>
-          ) : null}
-        </KebabMenu>
-      </span>
+      <KebabMenu id={`nMenu-${n.id}`} label={tr('Možnosti poznámky')}>
+        {canEdit ? (
+          <button class="opt" type="button" hx-get={upravitUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
+        ) : null}
+        {props.canTask ? (
+          <button class="opt" type="button" hx-get={novyUkolUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Vytvořit úkol')}</button>
+        ) : null}
+        {canEdit ? (
+          <form method="post" action={`/poznamky/${n.id}/viditelnost`} class="m0">
+            <input type="hidden" name="back" value={back} />
+            <button class="opt" type="submit">{n.is_private === 1 ? tr('Zveřejnit (sdílet týmu)') : tr('Označit jako soukromou')}</button>
+          </form>
+        ) : null}
+        {canEdit ? (
+          <form method="post" action={`/poznamky/${n.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tuto poznámku?')}')`}>
+            <input type="hidden" name="back" value={back} />
+            <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
+          </form>
+        ) : null}
+      </KebabMenu>
     ) : null;
-  const meta = (
-    <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-      <b style="font-size:.84rem">{n.author_name ?? '—'}</b>
-      <span class="sub" style="font-size:.76rem">· {relTime(n.created_at)}</span>
-      {n.is_private === 1 ? <span class="chip chip-soft-gray">{tr('Soukromá')}</span> : null}
-      {origins.map((label) => <span class="chip chip-soft-gray">{label}</span>)}
+  // 1) hlavička: nadpis (bez nadpisu = šedý zástupný text) vlevo, ⋯ vpravo nahoře
+  const header = (
+    <div style="display:flex;align-items:flex-start;gap:.5rem">
+      {n.title ? (
+        <div class="note-title" style="flex:1;min-width:0;margin-top:0">{n.title}</div>
+      ) : (
+        <div class="note-title note-title--empty" style="flex:1;min-width:0;margin-top:0">{tr('Poznámka bez nadpisu')}</div>
+      )}
       {menu}
     </div>
   );
-  const titleEl = n.title ? <div class="note-title">{n.title}</div> : null;
-  const bodyEl = <div class="note-content" style="margin-top:.3rem" dangerouslySetInnerHTML={{ __html: n.body_html }} />;
+  // 2) autor + datum + štítky (menší písmo)
+  const metaLine = (
+    <div class="sub" style="font-size:.76rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.05rem">
+      <span>{n.author_name ?? '—'}</span>
+      <span>· {relOrDate(n.created_at)}</span>
+      {n.is_private === 1 ? <span class="chip chip-soft-gray">{tr('Soukromá')}</span> : null}
+      {origins.map((label) => <span class="chip chip-soft-gray">{label}</span>)}
+    </div>
+  );
+  // 3) samotná poznámka
+  const bodyEl = <div class="note-content" style="margin-top:.45rem" dangerouslySetInnerHTML={{ __html: n.body_html }} />;
+  const inner = (
+    <>
+      {header}
+      {metaLine}
+      {bodyEl}
+    </>
+  );
 
-  if (props.layout === 'grid') {
+  if (props.layout === 'card') {
+    // karta (Seznam i Mozaika): pevná výška náhledu + rozbalení (tlačítko ukáže JS jen u oříznutých)
+    // + drag/drop řazení (celá karta je draggable, JS hlídá kliky do menu/odkazů)
     return (
-      <div class="card note-card hover-row">
-        {titleEl}
+      <div class="card note-card" draggable={true} data-note-id={n.id}>
+        {header}
+        {metaLine}
         {bodyEl}
-        <div style="margin-top:.55rem">{meta}</div>
+        <button type="button" class="note-expand" aria-label={tr('Rozbalit nebo sbalit poznámku')}>
+          <IconChevron size={14} />
+          <span class="lbl-more">{tr('zobrazit více')}</span>
+          <span class="lbl-less">{tr('zobrazit méně')}</span>
+        </button>
       </div>
     );
   }
-  return (
-    <div class="hover-row" style="display:flex;gap:.7rem;padding:.7rem 0;border-top:1px solid var(--line)">
-      <span class={`av ${avColor(n.author_name ?? '?')}`}>{initials(n.author_name ?? '?')}</span>
-      <div style="flex:1;min-width:0">
-        {meta}
-        {titleEl}
-        {bodyEl}
-      </div>
-    </div>
-  );
+  // feed „Dění u služby": jednoduchý řádek bez karty (chronologicky, neřadí se)
+  return <div style="padding:.7rem 0;border-top:1px solid var(--line)">{inner}</div>;
 }
 
 /** Záložka „Poznámky" na detailu firmy/osoby (vykresluje firmy.tsx / osoby.tsx). */
@@ -234,12 +257,11 @@ export function NotesTab(props: {
         <EmptyState text={tr('Zatím žádná poznámka.')}>
           <button class="btn btn-sm btn-primary" type="button" hx-get={novyUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Napsat poznámku')}</button>
         </EmptyState>
-      ) : isGrid ? (
-        <div class="notes-grid">
-          {props.notes.map((n) => <NoteCard n={n} person={props.person} back={back} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="grid" />)}
-        </div>
       ) : (
-        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} back={back} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="list" />)}</div>
+        // Seznam i Mozaika = karty, jen 1 vs 2 sloupce; obojí jde řadit drag/drop
+        <div class={`notes-grid${isGrid ? '' : ' notes-grid--one'}`} data-reorder data-reorder-url={`/poznamky/poradi?kind=${props.kind}&id=${props.entityId}`}>
+          {props.notes.map((n) => <NoteCard n={n} person={props.person} back={back} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="card" />)}
+        </div>
       )}
     </div>
   );
@@ -303,6 +325,22 @@ poznamkyRoutes.post('/poznamky', async (c) => {
   await createNote(t, person.id, { title: String(body.title ?? '').trim() || null, bodyHtml, isPrivate: String(body.is_private ?? '') === '1', links });
   await logEvent(t, subjectKind, subjectId, person.id, `Přidána poznámka: ${noteExcerpt(bodyHtml)}`);
   return c.redirect(back);
+});
+
+// Uložení ručního pořadí poznámek u entity (drag/drop v mozaice). Statická cesta MUSÍ být před :id.
+poznamkyRoutes.post('/poznamky/poradi', async (c) => {
+  const person = c.get('person')!;
+  const kindQ = c.req.query('kind');
+  const kind = kindQ === 'client' || kindQ === 'person' || kindQ === 'service' ? kindQ : null;
+  const id = c.req.query('id') ?? '';
+  if (!kind || !id) return c.body(null, 400);
+  const body = await c.req.parseBody();
+  const order = String(body.order ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (order.length) await reorderNotes(person.tenant_id, kind, id, order);
+  return c.body(null, 204);
 });
 
 poznamkyRoutes.post('/poznamky/:id', async (c) => {

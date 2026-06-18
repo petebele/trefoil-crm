@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
-import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil } from './icons';
+import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil, IconChevron } from './icons';
 import { tr, fmtDateTime } from '../i18n';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
@@ -631,9 +631,92 @@ function ActivityRow(props: { e: ActEvent }) {
   );
 }
 
+/**
+ * „Podpis" akce pro slučování opakování: text bez proměnlivých hodnot — vše od první
+ * „(" nebo „:" se utne, takže „Upravena služba „PPC" (1 200 Kč/h)" → „Upravena služba „PPC"".
+ * Stejný podpis + stejný autor + stejný typ jdoucí po sobě = jedna skupina.
+ */
+function actionSignature(action: string): string {
+  const i = action.search(/[(:]/);
+  return (i >= 0 ? action.slice(0, i) : action).trim();
+}
+
+type ActGroup = { key: string; kind: ActKind; person_name: string | null; signature: string; events: ActEvent[] };
+
+/** Sloučí po sobě jdoucí události stejného typu od téhož autora (events jsou nejnovější první). */
+function groupActivities(events: ActEvent[]): ActGroup[] {
+  const groups: ActGroup[] = [];
+  for (const e of events) {
+    const kind = activityKind(e.action);
+    const signature = actionSignature(e.action);
+    const last = groups[groups.length - 1];
+    if (last && last.kind === kind && last.person_name === e.person_name && last.signature === signature) {
+      last.events.push(e);
+    } else {
+      groups.push({ key: e.id, kind, person_name: e.person_name, signature, events: [e] });
+    }
+  }
+  return groups;
+}
+
+/** Sloučený řádek: hlavička „N× <podpis>" + rozbalovací detaily jednotlivých změn. */
+function ActivityGroup(props: { g: ActGroup }) {
+  const { g } = props;
+  const k = g.kind;
+  const muted = k === 'contact' || k === 'system';
+  const latest = g.events[0]!; // nejnovější (events jsou seřazené desc)
+  const id = `actg-${g.key}`;
+  return (
+    <div style={`display:flex;gap:.7rem;padding:.55rem 0;border-top:1px solid var(--line)${muted ? ';opacity:.62' : ''}`}>
+      <span class={`feed-ico feed-ico--${k}`} aria-hidden="true"><ActIcon kind={k} /></span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;font-size:.82rem">
+          <b>{g.person_name ?? tr('Systém')}</b>
+          <span class="sub">· {fmtDateTime(latest.created_at)}</span>
+        </div>
+        <div style="font-size:.86rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <span class="chip chip-soft-gray">{g.events.length}×</span>
+          <span>{g.signature}</span>
+        </div>
+        <button type="button" class="subtle-action act-more" data-reveal={id} aria-controls={id} style="font-size:.78rem;margin-top:.2rem">
+          {tr('Zobrazit změny ({n})', { n: g.events.length })}
+        </button>
+        <div id={id} class="act-detail hidden" style="margin-top:.25rem;padding-left:.2rem;border-left:2px solid var(--line)">
+          {g.events.map((e) => (
+            <div style="font-size:.8rem;color:var(--muted);padding:.18rem 0 .18rem .5rem">
+              <span class="sub">{fmtDateTime(e.created_at)}</span> — {e.action}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Jen řádky aktivit (bez karty a filtru) — pro náhled „Poslední aktivity" na Nástěnce. */
 export function ActivityList(props: { events: ActEvent[] }) {
-  return <div>{props.events.map((e) => <ActivityRow e={e} />)}</div>;
+  const groups = groupActivities(props.events);
+  return <div>{groups.map((g) => (g.events.length > 1 ? <ActivityGroup g={g} /> : <ActivityRow e={g.events[0]!} />))}</div>;
+}
+
+/**
+ * Přepínač „rozbalit / sbalit vše" pro sloučené skupiny — jedno tlačítko +/−.
+ * Klik (app.js, `data-reveal-all`) přepne `.hidden` na všech `.act-detail` v sekci `scopeId`
+ * a překlopí symbol. Renderuj jen když je co rozbalovat (existuje aspoň jedna skupina > 1).
+ */
+function ActivityExpandToggle(props: { scopeId: string }) {
+  return (
+    <button
+      type="button"
+      class="icon-btn act-toggle"
+      data-reveal-all={props.scopeId}
+      aria-expanded="false"
+      aria-label={tr('Rozbalit nebo sbalit detaily')}
+      title={tr('Rozbalit vše')}
+    >
+      <IconChevron size={16} />
+    </button>
+  );
 }
 
 /** Read-only feed „Aktivity": filtr typů + událostní řádky s ikonami. */
@@ -641,9 +724,13 @@ export function ActivityFeed(props: { events: ActEvent[]; base: string; active: 
   const active = props.active || '';
   const sel = ACT_FILTERS.find((f) => f.key === active) ?? ACT_FILTERS[0]!;
   const shown = sel.kinds.length ? props.events.filter((e) => sel.kinds.includes(activityKind(e.action))) : props.events;
+  const expandable = groupActivities(shown).some((g) => g.events.length > 1);
   return (
     <div class="card">
-      <div class="card-head"><h3>{tr('Aktivity')}</h3></div>
+      <div class="card-head">
+        <h3>{tr('Aktivity')}</h3>
+        {expandable ? <ActivityExpandToggle scopeId="actFeed" /> : null}
+      </div>
       <nav class="tabs" style="margin:.1rem 0 .5rem" aria-label={tr('Filtr aktivit')}>
         {ACT_FILTERS.map((f) => (
           <a class={`tab ${f.key === active ? 'active' : ''}`} href={`${props.base}?tab=aktivity${f.key ? `&atyp=${f.key}` : ''}`}>
@@ -652,9 +739,40 @@ export function ActivityFeed(props: { events: ActEvent[]; base: string; active: 
         ))}
       </nav>
       {shown.length ? (
-        <ActivityList events={shown} />
+        <div id="actFeed">
+          <ActivityList events={shown} />
+        </div>
       ) : (
         <EmptyState text={active ? tr('V tomto filtru zatím nic není.') : tr('Zatím se tu nic nedělo.')} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Karta „Poslední aktivity" na Nástěnce (firma i osoba): hlavička s přepínačem rozbalit/sbalit
+ * vše + náhled posledních událostí + odkaz na plný feed. Sdílená, ať je chování konzistentní.
+ */
+export function RecentActivityCard(props: { events: ActEvent[]; base: string }) {
+  const { events, base } = props;
+  const expandable = groupActivities(events).some((g) => g.events.length > 1);
+  return (
+    <div class="card" style="margin-top:1rem">
+      <div class="card-head">
+        <h3>{tr('Poslední aktivity')}</h3>
+        {events.length && expandable ? <ActivityExpandToggle scopeId="recentAct" /> : null}
+      </div>
+      {events.length ? (
+        <>
+          <div id="recentAct">
+            <ActivityList events={events} />
+          </div>
+          <p class="sub" style="margin:.8rem 0 0">
+            <a href={`${base}?tab=aktivity`}>{tr('Zobrazit všechny aktivity →')}</a>
+          </p>
+        </>
+      ) : (
+        <EmptyState text={tr('Zatím se tu nic nedělo.')} />
       )}
     </div>
   );

@@ -12,8 +12,40 @@
 > průvodcem (žádný hardcoded „conviu" login). Slovo „Conviu" zůstává už jen ve **firemním**
 > kontextu (agentura, doména `conviu.cz`) a v historických pasážích níže.
 
-## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
+## 0) Rychlý stav k 2026-06-18 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka I — poznámky jako karty + drag/drop, feed, služby):**
+> **(1) Feed Aktivit:** přepínač „rozbalit/sbalit vše" už není „+", ale **šipka** (`IconChevron`, otočí se
+> o 180°); při rozbaleném stavu **mizí** per-skupinové odkazy „Zobrazit změny" (`.act-more`). Ikony:
+> potvrzen modul `src/web/icons.tsx` (Feather/Lucide styl) jako jediný zdroj; **přidána sada Lucide**
+> ikon (chevron-up/left/right, x, more, grip, trash, calendar, file-text, message). Bez nadpisu má
+> karta šedý zástupný text „Poznámka bez nadpisu".
+> **(2) Ukončené služby → „Aktivovat službu":** v seznamu i na detailu (admin) lze ukončenou službu vrátit
+> do *aktivní* (status route uvolněna pro ended→active, log „znovu aktivována"). **(3) Karta poznámky —
+> nový pattern:** nadpis nahoře + **⋯ vždy vpravo nahoře** (ne hover), 2. řádek autor·datum (`relOrDate`:
+> do 2 dnů relativně, starší absolutně), pak text. **(4) Poznámky = VŽDY karty** (Seznam = 1 sloupec,
+> Mozaika = 2; `.notes-grid` přešla z CSS columns na **grid**), karta má **pevnou výšku náhledu** (14rem,
+> tělo ~2×) **+ rozbalení** (subtilní řádek na střed „zobrazit více/méně", šipka; JS detekuje ořez) a jde
+> **řadit drag/drop** v obou pohledech → `POST /poznamky/poradi`
+> → `note_links.sort_order` (**sdílené pro tým**, idempotentní migrace). `NoteCard.layout` = `card`/`feed`
+> (feed = řádek ve „Dění u služby"). `ASSET_V`=45; KOMPONENTY §25/§26, mockup §16/§17, DATOVÝ-MODEL,
+> spec poznámky §9 aktualizovány. **Pozn.:** drag/drop + rozbalení je nutné **ověřit v prohlížeči**
+> (JS se netestuje typecheckem). **Další na řadě:** ověřit; pak globální Nástěnka/Inbox, příležitosti, Vyúčtování v2.
+>
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka H — UI doladění detailu služby):** na základě
+> Petrovy zpětné vazby přerovnán **layout detailu služby** do tří samostatných karet: **1) Detail služby**
+> (jen nastavení, bez čísel o rozpočtu), **2) Čerpání = KOMPLETNÍ zpráva o čerpání** — nahoře mini-graf
+> burn-up („Vyčerpáno X **z Y h**", %, lišta + chipy, přepínač měsíce, „Vykázat práci") a **pod ním
+> jednotlivé výkazy v plném detailu** (`WorkRecordRow`); **3) Dění u služby = stručný log + poznámky** —
+> poznámky plně (`NoteCard`), ale **výkazy odtud vyčleněné** na jednořádkovou systémovou zprávu „pro
+> úplnost" (`WorkLogLine`). Princip: vše o čerpání patří do bloku Čerpání, Dění je jen log dění + diskuze.
+> **Oprava matoucího čísla:** dřív se ukazovala jen *alokace* („alokováno 0 z 5 h"), ne *skutečné čerpání*
+> → burn-up se teď měří proti **vlastnímu rozpočtu služby**, a když ho služba nemá, **proti celému paušálu
+> klienta** (takže „vyčerpáno 1 z 5 h" sedí s výkazy). Alokace napříč službami zůstala jako odlišený
+> vedlejší řádek. **Modál služby** u pole Rozpočet nově ukazuje kontext **„Paušál klienta B h/měs · jiným
+> službám přiděleno A h · zbývá rozdělit R h"**. Bez změny schématu; spec `sluzba-detail-v1.md` §8
+> aktualizován. **Další na řadě:** ověřit v prohlížeči; pak globální Nástěnka/Inbox, příležitosti, nebo Vyúčtování v2.
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka G — NASAZENO):** detail služby rozšířen o
 > **(1) sloučený feed „Dění u služby"** (výkazy + poznámky v jednom chronologickém proudu po měsících,
 > místo dvou boxů) a **(2) rozpočet na službě** — služba (retainer) má **alokaci hodin z paušálu**

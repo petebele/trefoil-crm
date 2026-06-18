@@ -123,3 +123,14 @@
 - [ ] Poznámka se objeví ve feedu dotčených entit **realtime** (`logEvent` + živé zóny).
 - [ ] Nový editor je v **`docs/KOMPONENTY.md` + `mockupy/komponenty.html`**.
 - [ ] `pnpm typecheck` zelený, proklik v prohlížeči, odpovídá UI zásadám (⋯, prázdné stavy, čeština, aria).
+
+## 9. Stav rozšíření
+
+- **Nadpis + Seznam/Mozaika (HOTOVO 2026-06-18):** poznámka má volitelný `notes.title`; přepínač
+  zobrazení per uživatel (`person_prefs` klíč `poznamky.view`). Detaily v `KOMPONENTY.md §26`.
+- **Jednotná karta + řazení (UPRAVENO 2026-06-18):** Poznámky jsou **vždy karty** (Seznam = 1 sloupec,
+  Mozaika = 2). Karta: **nadpis nahoře + ⋯ vždy vpravo nahoře** (ne hover), 2. řádek **autor · datum**
+  (`relOrDate`: do 2 dnů relativně, starší absolutně), pak text. **Pevná výška náhledu** s **rozbalením**
+  (`.note-expand`, JS detekuje ořez). **Drag/drop řazení** v obou pohledech → `POST /poznamky/poradi`
+  → `note_links.sort_order` (**sdílené pro tým**). `NoteCard` prop `layout`: `card` (Poznámky) /
+  `feed` (řádek ve „Dění u služby", neřadí se). Bez změny tabulek kromě `note_links.sort_order`.

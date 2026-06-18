@@ -202,6 +202,21 @@ document.addEventListener('click', function (e) {
   if (el) el.classList.toggle('hidden');
 });
 
+// Rozbalit/sbalit vše: [data-reveal-all="idSekce"] = jeden přepínač +/− nad sloučenými
+// skupinami aktivit. Přepne .hidden na všech .act-detail v sekci a překlopí symbol.
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-reveal-all]');
+  if (!t) return;
+  var scope = document.getElementById(t.getAttribute('data-reveal-all'));
+  if (!scope) return;
+  var expand = t.getAttribute('aria-expanded') !== 'true';
+  scope.querySelectorAll('.act-detail').forEach(function (el) { el.classList.toggle('hidden', !expand); });
+  // když je rozbaleno vše, skryj redundantní per-skupinové odkazy „Zobrazit změny"
+  scope.querySelectorAll('.act-more').forEach(function (b) { b.classList.toggle('hidden', expand); });
+  t.setAttribute('aria-expanded', expand ? 'true' : 'false'); // šipka se otočí přes CSS
+  t.title = expand ? 'Sbalit vše' : 'Rozbalit vše';
+});
+
 // Formuláře: tlačítko [data-add-row="idTemplate"] přidá další řádek (např. kontakt).
 document.addEventListener('click', function (e) {
   var btn = e.target.closest('[data-add-row]');
@@ -449,4 +464,79 @@ document.addEventListener('change', function (e) {
     var area = form.querySelector('.note-area'); if (!area) return;
     var hid = form.querySelector('input[name="body_html"]'); if (hid) hid.value = area.innerHTML;
   });
+})();
+
+// ---------- Poznámky: karty (Seznam i Mozaika) — rozbalení + drag/drop řazení ----------
+// Karta má pevnou výšku náhledu; je-li text oříznutý, ukáže se „rozbalit". Celá karta je
+// draggable (kliky do menu/odkazů/rozbalení se nezahajují jako tažení). Pořadí je sdílené
+// pro tým a ukládá se na /poznamky/poradi. Viz docs/KOMPONENTY.md §26.
+(function () {
+  // a) pevná výška náhledu → zjisti, zda je text oříznutý (jen pak má smysl „rozbalit")
+  function markClamped(card) {
+    if (!card || card.classList.contains('expanded')) return;
+    var body = card.querySelector('.note-content');
+    card.classList.toggle('has-more', body ? body.scrollHeight - body.clientHeight > 2 : false);
+  }
+  function markAll() { document.querySelectorAll('.notes-grid .note-card').forEach(markClamped); }
+  document.addEventListener('DOMContentLoaded', markAll);
+  document.body.addEventListener('htmx:afterSwap', markAll);
+  window.addEventListener('resize', markAll);
+
+  // b) rozbalit / sbalit kartu
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.note-expand'); if (!btn) return;
+    var card = btn.closest('.note-card'); if (!card) return;
+    e.preventDefault();
+    card.classList.toggle('expanded');
+    if (!card.classList.contains('expanded')) markClamped(card); // po sbalení zachovej tlačítko
+  });
+
+  // c) drag/drop řazení karet v .notes-grid[data-reorder]
+  var drag = null, lastEnd = 0;
+  function afterNote(grid, x, y) {
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.note-card:not(.dragging)'));
+    var best = null, bestDist = Infinity, before = true;
+    cards.forEach(function (c) {
+      var b = c.getBoundingClientRect();
+      var cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+      var d = (y - cy) * (y - cy) + (x - cx) * (x - cx);
+      if (d < bestDist) { bestDist = d; best = c; before = y < cy || (Math.abs(y - cy) < b.height / 2 && x < cx); }
+    });
+    return { el: best, before: before };
+  }
+  document.addEventListener('dragstart', function (e) {
+    var card = e.target.closest && e.target.closest('.notes-grid[data-reorder] > .note-card');
+    if (!card) return;
+    // nezahajuj tažení z menu / odkazu / tlačítka (rozbalit, ⋯)
+    if (e.target.closest('a, button, .menu')) { e.preventDefault(); return; }
+    drag = card;
+    card.classList.add('dragging');
+    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', card.getAttribute('data-note-id') || ''); } catch (_) {}
+  });
+  document.addEventListener('dragend', function () {
+    if (drag) drag.classList.remove('dragging');
+    drag = null; lastEnd = Date.now();
+  });
+  document.addEventListener('dragover', function (e) {
+    if (!drag) return;
+    var grid = e.target.closest && e.target.closest('.notes-grid[data-reorder]'); if (!grid) return;
+    e.preventDefault();
+    var pos = afterNote(grid, e.clientX, e.clientY);
+    if (!pos.el) grid.appendChild(drag);
+    else grid.insertBefore(drag, pos.before ? pos.el : pos.el.nextSibling);
+  });
+  document.addEventListener('drop', function (e) {
+    if (!drag) return;
+    var grid = e.target.closest && e.target.closest('.notes-grid[data-reorder]'); if (!grid) { drag = null; return; }
+    e.preventDefault();
+    var url = grid.getAttribute('data-reorder-url'); if (!url) { drag = null; return; }
+    var ids = Array.prototype.map.call(grid.querySelectorAll('.note-card'), function (c) { return c.getAttribute('data-note-id'); }).filter(Boolean).join(',');
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'order=' + encodeURIComponent(ids), credentials: 'same-origin' }).catch(function () {});
+  });
+  // pojistka: po tažení nespouštěj klik na kartě (neotevři omylem rozbalení/menu)
+  document.addEventListener('click', function (e) {
+    if (Date.now() - lastEnd < 300 && e.target.closest && e.target.closest('.notes-grid[data-reorder] .note-card')) {
+      e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
 })();

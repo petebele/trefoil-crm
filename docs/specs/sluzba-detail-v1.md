@@ -78,10 +78,28 @@ Slovní wireframe:
   apod.) ve feedu zatím nejsou — vyžadovalo by vázat `events` na službu (další krok).
 - **Rozpočet služby + burn-up (HOTOVO 2026-06-18):** služba (retainer) má **alokaci hodin z klientského
   paušálu** (`budget_hours`), **checkbox „povolit přečerpání"** (`allow_overage`) a **práh upozornění**
-  (`alert_pct`, default 80). Detail ukazuje **burn-up** (vyčerpáno z X h, %, lišta `.progress`, chip
-  „blíží se limitu"/„přečerpáno") + řádek **„z paušálu klienta alokováno celkem A z B h"**. Čerpání =
-  vykázané hodiny „z paušálu" v měsíci. **Soft** (neblokuje zápis, jen upozorňuje — viz
-  [VIZE §7.5 + Přečerpání](../VIZE-feed-a-prilezitosti.md)); cross-service „borrow" a schvalování = v2.
+  (`alert_pct`, default 80). Čerpání = vykázané hodiny „z paušálu" v měsíci. **Soft** (neblokuje zápis,
+  jen upozorňuje — viz [VIZE §7.5 + Přečerpání](../VIZE-feed-a-prilezitosti.md)); cross-service „borrow"
+  a schvalování = v2.
+- **Layout detailu (UPRAVENO 2026-06-18):** stránka má tři samostatné karty pod sebou —
+  **1) Detail služby** (jen nastavení: název, firma, režim, stav, sazba, odpovědná, popis — bez čísel
+  o rozpočtu), **2) Čerpání = KOMPLETNÍ zpráva o čerpání na jednom místě:** nahoře mini-graf burn-up
+  („Vyčerpáno X **z Y h**", %, lišta `.progress`, chipy, + přepínač měsíce a „Vykázat práci"), **pod ním
+  jednotlivé výkazy služby v plném detailu** (`WorkRecordRow` — editace, schválení, účtování). **3) Dění
+  u služby** = **stručný log + poznámky/komentáře**: poznámky se zobrazují plně (`NoteCard`), ale **výkazy
+  jsou odtud vyčleněné** — zůstává po nich jen **jednořádková systémová zpráva** „pro úplnost"
+  (`WorkLogLine`: datum · „Výkaz: popis · pracovník · čas", read-only, bez akcí). Důvod (Petrova zpětná
+  vazba): **vše o čerpání patří do bloku Čerpání**, Dění je jen přehledový log dění + diskuze.
+- **Reference čerpání (UPRAVENO 2026-06-18):** burn-up se měří proti **vlastnímu rozpočtu služby**
+  (`budget_hours`), a **když služba rozpočet nemá**, proti **celému paušálu klienta** — aby uživatel
+  vždy viděl reálné „vyčerpáno X z Y h" (dřív se bez per-službové alokace čerpání vůbec neukazovalo).
+  Chipy limit/přečerpání svítí jen u vlastního rozpočtu služby (proti paušálu klienta = jen podíl).
+  Vedlejší řádek **„z paušálu klienta je službám předem přiděleno celkem A z B h"** = plánovaná alokace
+  napříč službami (odlišené od skutečného čerpání).
+- **Kontext alokace v modálu (HOTOVO 2026-06-18):** u pole **Rozpočet z paušálu** modál ukazuje nápovědu
+  **„Paušál klienta B h/měs · jiným službám přiděleno A h · zbývá rozdělit R h"** (R = B − alokace
+  ostatních neukončených služeb, bez té právě upravované). Bez nastaveného paušálu klienta = výzva ho
+  nejdřív nastavit.
 
 ## 9. Otevřené otázky
 1. Zahrnout **Poznámky na službě** do v1 (doporučuju ano — je to jádro „jaká tam padla poznámka"),

@@ -23,7 +23,7 @@ import { WorkRecordRow, MonthNav } from './vykazy';
 import { fmtMinutes, monthLabel, monthKey, billingTotal, listForService, type WorkRecord, type MonthMoney } from '../domain/workRecords';
 import { notesForEntity, type NoteRow } from '../domain/notes';
 import { NoteCard } from './poznamky';
-import { tr, fmtNum } from '../i18n';
+import { tr, fmtNum, fmtDate } from '../i18n';
 
 /**
  * Záložka Služby v detailu zákazníka (Krok 5): paušál hodin, přidělené služby
@@ -54,9 +54,13 @@ function ServiceModal(props: {
   available: CatalogService[];
   coworkers: Array<{ id: string; name: string }>;
   defaultOwnerId: string | null;
+  clientBudgetHours: number | null; // paušál klienta (h/měs) — kontext pro alokaci
+  allocatedOther: number; // už přiděleno jiným službám (h)
 }) {
   const s = props.service;
   const mode = s?.mode ?? 'retainer';
+  const hasPausal = props.clientBudgetHours != null && props.clientBudgetHours > 0;
+  const remainingH = hasPausal ? Math.max(0, props.clientBudgetHours! - props.allocatedOther) : 0;
   return (
     <ModalShell title={s ? `${tr('Upravit službu')} · ${s.label}${s.detail ? ` · ${s.detail}` : ''}` : tr('Přidělit službu')}>
       <form method="post" action={s ? `${props.base}/sluzby/${s.id}` : `${props.base}/sluzby`}>
@@ -98,6 +102,19 @@ function ServiceModal(props: {
         <div class={`field ${mode === 'retainer' ? '' : 'hidden'}`} data-depends-on="mode" data-depends-value="retainer">
           <label>{tr('Rozpočet z paušálu')} ({tr('h/měs')})</label>
           <input class="input" type="number" name="budget_hours" min="0" step="0.5" value={s?.budget_hours ?? ''} placeholder={tr('např. 6 (z celkového paušálu klienta)')} />
+          <span class="help">
+            {hasPausal ? (
+              <>
+                {tr('Paušál klienta {b} h/měs', { b: kc(props.clientBudgetHours!) })}
+                {' · '}
+                {tr('jiným službám přiděleno {a} h', { a: kc(props.allocatedOther) })}
+                {' · '}
+                <b>{tr('zbývá rozdělit {r} h', { r: kc(remainingH) })}</b>
+              </>
+            ) : (
+              tr('Klient nemá nastavený paušál hodin — nastavte ho v sekci „Paušál hodin“, jinak je alokace jen orientační.')
+            )}
+          </span>
           <label style="display:flex;align-items:center;gap:.45rem;font-size:.84rem;margin:.4rem 0 0">
             <input type="checkbox" name="allow_overage" value="1" checked={s?.allow_overage === 1} /> {tr('Povolit přečerpání (čerpat z rozpočtu jiných služeb)')}
           </label>
@@ -176,7 +193,8 @@ function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; v
   const { base, s, isAdmin } = props;
   const vykazatBack = props.vykazyMonth ? `${base}?tab=sluzby&mesic=${props.vykazyMonth}` : `${base}?tab=sluzby`;
   const canVykaz = !!(props.vykazyMonth && s.status === 'active');
-  const hasMenu = s.status !== 'ended' && (isAdmin || canVykaz);
+  const isEnded = s.status === 'ended';
+  const hasMenu = isEnded ? isAdmin : isAdmin || canVykaz;
   return (
     <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.6' : ''}`}>
       <span style="flex:1">
@@ -203,32 +221,41 @@ function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; v
       </span>
       {hasMenu ? (
         <span class="row-actions"><KebabMenu id={`svcRow-${s.id}`} label={tr('Možnosti služby')}>
-          {canVykaz ? (
-            <button
-              class="opt"
-              type="button"
-              hx-get={`/vykazy/modal/novy?klient=${s.client_id}&sluzba=${s.id}&back=${encodeURIComponent(vykazatBack)}`}
-              hx-target="#modal"
-              hx-swap="innerHTML"
-            >
-              {tr('Vykázat')}
-            </button>
-          ) : null}
-          {isAdmin ? (
+          {isEnded ? (
+            <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
+              <input type="hidden" name="status" value="active" />
+              <button class="opt" type="submit">{tr('Aktivovat službu')}</button>
+            </form>
+          ) : (
             <>
-              <button class="opt" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
-                {tr('Upravit')}
-              </button>
-              <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
-                <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
-                <button class="opt" type="submit">{s.status === 'paused' ? tr('Obnovit') : tr('Pozastavit')}</button>
-              </form>
-              <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit={`return confirm('${tr('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')}')`}>
-                <input type="hidden" name="status" value="ended" />
-                <button class="opt" type="submit">{tr('Ukončit')}</button>
-              </form>
+              {canVykaz ? (
+                <button
+                  class="opt"
+                  type="button"
+                  hx-get={`/vykazy/modal/novy?klient=${s.client_id}&sluzba=${s.id}&back=${encodeURIComponent(vykazatBack)}`}
+                  hx-target="#modal"
+                  hx-swap="innerHTML"
+                >
+                  {tr('Vykázat')}
+                </button>
+              ) : null}
+              {isAdmin ? (
+                <>
+                  <button class="opt" type="button" hx-get={`${base}/sluzby/${s.id}/modal`} hx-target="#modal" hx-swap="innerHTML">
+                    {tr('Upravit')}
+                  </button>
+                  <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0">
+                    <input type="hidden" name="status" value={s.status === 'paused' ? 'active' : 'paused'} />
+                    <button class="opt" type="submit">{s.status === 'paused' ? tr('Obnovit') : tr('Pozastavit')}</button>
+                  </form>
+                  <form method="post" action={`${base}/sluzby/${s.id}/stav`} class="m0" onsubmit={`return confirm('${tr('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')}')`}>
+                    <input type="hidden" name="status" value="ended" />
+                    <button class="opt" type="submit">{tr('Ukončit')}</button>
+                  </form>
+                </>
+              ) : null}
             </>
-          ) : null}
+          )}
         </KebabMenu></span>
       ) : null}
     </div>
@@ -518,6 +545,23 @@ export function SluzbyZakaznikaTab(props: {
 
 // ---------- detail služby (/firmy/:id/sluzby/:sid) ----------
 
+/**
+ * Stručný „systémový" řádek výkazu do feedu Dění — výkazy mají kompletní detail
+ * v bloku Čerpání, tady zůstává jen jednořádková zpráva pro úplnost (bez akcí).
+ */
+function WorkLogLine(props: { r: WorkRecord }) {
+  const { r } = props;
+  return (
+    <div style="display:flex;gap:.6rem;align-items:baseline;padding:.4rem 0;border-top:1px solid var(--line);font-size:.82rem;color:var(--muted)">
+      <span style="white-space:nowrap">{fmtDate(r.performed_at)}</span>
+      <span style="flex:1;min-width:0">
+        <b style="font-weight:600">{tr('Výkaz')}:</b> {r.description}
+        <span style="white-space:nowrap"> · {r.worker_name} · {fmtMinutes(r.minutes)}</span>
+      </span>
+    </div>
+  );
+}
+
 function ServiceDetail(props: {
   base: string;
   detailBase: string;
@@ -536,14 +580,20 @@ function ServiceDetail(props: {
   const sid = svc.id;
   const hasActivePausal = (client.hours_budget_monthly ?? 0) > 0;
   const vykBack = `${detailBase}?mesic=${props.month}`;
-  const totalMin = props.records.reduce((s, r) => s + r.minutes, 0);
-  // rozpočet služby (alokace z paušálu) — čerpání = vykázané hodiny „z paušálu" v měsíci
+  // Čerpání služby = vykázané hodiny „z paušálu" v měsíci, měřené proti referenci.
+  // Reference = vlastní rozpočet služby (budget_hours), jinak celý paušál klienta
+  // (aby uživatel viděl reálné „vyčerpáno X z Y h" i bez per-službové alokace).
   const budgetH = svc.budget_hours;
   const spentMin = props.records.filter((r) => r.billing === 'retainer_hours').reduce((s, r) => s + r.minutes, 0);
-  const budgetPct = budgetH && budgetH > 0 ? Math.round((spentMin / 60 / budgetH) * 100) : 0;
+  const hasSvcBudget = budgetH != null && budgetH > 0;
+  const refH = hasSvcBudget ? budgetH! : hasActivePausal ? client.hours_budget_monthly! : null;
+  const burnPct = refH && refH > 0 ? Math.round((spentMin / 60 / refH) * 100) : 0;
   const alertPct = svc.alert_pct ?? 80;
-  const over = budgetH != null && budgetH > 0 && spentMin / 60 > budgetH;
-  const alertHit = budgetH != null && budgetH > 0 && budgetPct >= alertPct;
+  // Limit/přečerpání má smysl jen u vlastního rozpočtu služby (proti paušálu klienta jen ukazujeme podíl).
+  const over = hasSvcBudget && spentMin / 60 > budgetH!;
+  const alertHit = hasSvcBudget && burnPct >= alertPct;
+  // Blok Čerpání = mini-graf (je-li rozpočet/paušál) + kompletní výkazy služby.
+  const showCerpani = props.canVykaz || hasActivePausal || hasSvcBudget;
   const novaPoznamkaUrl = `/poznamky/novy?kind=service&id=${sid}&back=${encodeURIComponent(detailBase)}`;
   // sloučený proud „dění": výkazy (měsíc) + poznámky (měsíc) promíchané podle data, nejnovější nahoře
   const monthNotes = props.notes.filter((n) => n.created_at.startsWith(props.month));
@@ -576,6 +626,13 @@ function ServiceDetail(props: {
                 <button class="opt" type="submit">{tr('Ukončit')}</button>
               </form>
             </KebabMenu>
+          ) : isAdmin && svc.status === 'ended' ? (
+            <KebabMenu id="svcDetailMenu" label={tr('Možnosti služby')}>
+              <form method="post" action={`${base}/sluzby/${sid}/stav`} class="m0">
+                <input type="hidden" name="status" value="active" />
+                <button class="opt" type="submit">{tr('Aktivovat službu')}</button>
+              </form>
+            </KebabMenu>
           ) : null}
         </div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
@@ -587,39 +644,81 @@ function ServiceDetail(props: {
           {serviceMoneyLine(svc)} · {svc.owner_name ? tr('odpovídá {name}', { name: svc.owner_name }) : tr('bez odpovědné osoby')}
         </p>
         {svc.description ? <p class="sub" style="margin:.3rem 0 0">{svc.description}</p> : null}
-        {budgetH != null ? (
-          <div style="margin-top:.7rem">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;margin-bottom:.25rem">
-              <span class="sub">{tr('Rozpočet z paušálu')}: <b>{fmtMinutes(spentMin)}</b> {tr('z')} {budgetH} {tr('h')}</span>
-              <span style={over ? 'color:var(--red);font-weight:600' : 'font-weight:600'}>{budgetPct} %</span>
-            </div>
-            <div class="progress"><i style={`width:${Math.min(100, budgetPct)}%${over ? ';background:var(--red)' : ''}`}></i></div>
-            <div style="margin-top:.35rem;display:flex;gap:.35rem;flex-wrap:wrap">
-              {over ? (
-                <span class="chip chip-soft-orange">{svc.allow_overage === 1 ? tr('Přečerpáno (povoleno)') : tr('Přečerpáno bez povolení')}</span>
-              ) : alertHit ? (
-                <span class="chip chip-soft-orange">{tr('Blíží se limitu ({pct} %)', { pct: String(alertPct) })}</span>
-              ) : null}
-              {svc.allow_overage === 1 && !over ? <span class="chip chip-soft-gray">{tr('přečerpání povoleno')}</span> : null}
-            </div>
-          </div>
-        ) : null}
-        {hasActivePausal ? (
-          <p class="sub" style="margin:.5rem 0 0;font-size:.78rem">
-            {tr('Z paušálu klienta alokováno celkem {a} z {b} h', { a: String(props.allocatedTotal), b: String(client.hours_budget_monthly) })}
-          </p>
-        ) : null}
       </div>
 
-      {/* Dění u služby — sloučený proud výkazů a poznámek (po měsících) */}
+      {/* Čerpání — kompletní zpráva: mini-graf burn-up + jednotlivé výkazy (vše o čerpání pohromadě) */}
+      {showCerpani ? (
+        <div class="card" style="margin-top:1rem">
+          <div class="card-head">
+            <h3>{tr('Čerpání')}</h3>
+            <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+              <MonthNav month={props.month} hrefFor={(m) => `${detailBase}?mesic=${m}`} />
+              {props.canVykaz && svc.status === 'active' ? (
+                <button class="btn btn-sm" type="button" hx-get={`/vykazy/modal/novy?klient=${client.id}&sluzba=${sid}&back=${encodeURIComponent(vykBack)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
+              ) : null}
+            </div>
+          </div>
+
+          {/* mini-graf burn-up — nad jednotlivými záznamy čerpání */}
+          {refH != null ? (
+            <>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.3rem">
+                <span style="font-size:.95rem">
+                  {tr('Vyčerpáno')} <b>{fmtMinutes(spentMin)}</b>
+                  <span class="sub"> {tr('z')} {kc(refH)} {tr('h')} {hasSvcBudget ? tr('rozpočtu služby') : tr('paušálu klienta')}</span>
+                </span>
+                <span style={over ? 'color:var(--red);font-weight:700' : 'font-weight:700'}>{burnPct} %</span>
+              </div>
+              <div class="progress"><i style={`width:${Math.min(100, burnPct)}%${over ? ';background:var(--red)' : ''}`}></i></div>
+              {over || alertHit || (svc.allow_overage === 1 && hasSvcBudget) ? (
+                <div style="margin-top:.4rem;display:flex;gap:.35rem;flex-wrap:wrap">
+                  {over ? (
+                    <span class="chip chip-soft-orange">{svc.allow_overage === 1 ? tr('Přečerpáno (povoleno)') : tr('Přečerpáno bez povolení')}</span>
+                  ) : alertHit ? (
+                    <span class="chip chip-soft-orange">{tr('Blíží se limitu ({pct} %)', { pct: String(alertPct) })}</span>
+                  ) : null}
+                  {svc.allow_overage === 1 && hasSvcBudget && !over ? <span class="chip chip-soft-gray">{tr('přečerpání povoleno')}</span> : null}
+                </div>
+              ) : null}
+              {hasActivePausal ? (
+                <p class="sub" style="margin:.55rem 0 0;font-size:.78rem">
+                  {tr('Z paušálu klienta je službám předem přiděleno celkem {a} z {b} h', { a: kc(props.allocatedTotal), b: kc(client.hours_budget_monthly!) })}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
+          {/* jednotlivé záznamy čerpání — kompletní výkazy služby (detail, editace, schválení) */}
+          {props.canVykaz ? (
+            props.records.length === 0 ? (
+              <div style={refH != null ? 'margin-top:.7rem;padding-top:.2rem;border-top:1px solid var(--line)' : ''}>
+                <EmptyState text={tr('U této služby zatím není v tomto měsíci vykázaná žádná práce.')}>
+                  {svc.status === 'active' ? (
+                    <button class="btn btn-sm btn-primary" type="button" hx-get={`/vykazy/modal/novy?klient=${client.id}&sluzba=${sid}&back=${encodeURIComponent(vykBack)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
+                  ) : null}
+                </EmptyState>
+              </div>
+            ) : (
+              <div style={refH != null ? 'margin-top:.6rem' : ''}>
+                {props.records.map((r) => (
+                  <WorkRecordRow r={r} person={props.person} ownerId={client.owner_id} back={vykBack} showAmount={!hasActivePausal} />
+                ))}
+              </div>
+            )
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Dění u služby — stručný log (výkazy jen jednořádkově „pro úplnost") + poznámky/komentáře */}
       <div class="card" style="margin-top:1rem">
         <div class="card-head">
-          <h3>{tr('Dění u služby')}{props.canVykaz && totalMin ? <> · <b>{fmtMinutes(totalMin)}</b></> : null}</h3>
+          <h3>{tr('Dění u služby')}</h3>
           <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-            <MonthNav month={props.month} hrefFor={(m) => `${detailBase}?mesic=${m}`} />
-            {props.canVykaz && svc.status === 'active' ? (
-              <button class="btn btn-sm" type="button" hx-get={`/vykazy/modal/novy?klient=${client.id}&sluzba=${sid}&back=${encodeURIComponent(vykBack)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
-            ) : null}
+            {showCerpani ? (
+              <span class="sub" style="text-transform:capitalize">{monthLabel(props.month)}</span>
+            ) : (
+              <MonthNav month={props.month} hrefFor={(m) => `${detailBase}?mesic=${m}`} />
+            )}
             <button class="btn btn-sm" type="button" hx-get={novaPoznamkaUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
           </div>
         </div>
@@ -631,9 +730,9 @@ function ServiceDetail(props: {
           <div>
             {feed.map((it) =>
               it.kind === 'work' ? (
-                <WorkRecordRow r={it.r} person={props.person} ownerId={client.owner_id} back={vykBack} showAmount={!hasActivePausal} />
+                <WorkLogLine r={it.r} />
               ) : (
-                <NoteCard n={it.n} person={props.person} back={detailBase} feedKind="service" subjectId={sid} canTask={props.canTask} layout="list" />
+                <NoteCard n={it.n} person={props.person} back={detailBase} feedKind="service" subjectId={sid} canTask={props.canTask} layout="feed" />
               ),
             )}
           </div>
@@ -664,9 +763,18 @@ async function guard(c: any): Promise<Guarded | Response> {
 sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/modal/nova', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
-  const [catalog, coworkers] = await Promise.all([listCatalog(g.t), listCoworkers(g.t)]);
+  const [catalog, coworkers, services] = await Promise.all([listCatalog(g.t), listCoworkers(g.t), listClientServices(g.t, g.clientId)]);
+  const allocatedOther = services.filter((x) => x.status !== 'ended').reduce((sum, x) => sum + (x.budget_hours ?? 0), 0);
   return c.html(
-    <ServiceModal base={g.base} service={null} available={catalog.filter((it) => it.active === 1)} coworkers={coworkers} defaultOwnerId={g.client.owner_id} />,
+    <ServiceModal
+      base={g.base}
+      service={null}
+      available={catalog.filter((it) => it.active === 1)}
+      coworkers={coworkers}
+      defaultOwnerId={g.client.owner_id}
+      clientBudgetHours={g.client.hours_budget_monthly}
+      allocatedOther={allocatedOther}
+    />,
   );
 });
 
@@ -675,8 +783,19 @@ sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/:sid/modal', async (c) => {
   if (g instanceof Response) return g;
   const svc = await getClientService(g.t, c.req.param('sid'));
   if (!svc || svc.client_id !== g.clientId) return c.notFound();
-  const coworkers = await listCoworkers(g.t);
-  return c.html(<ServiceModal base={g.base} service={svc} available={[]} coworkers={coworkers} defaultOwnerId={g.client.owner_id} />);
+  const [coworkers, services] = await Promise.all([listCoworkers(g.t), listClientServices(g.t, g.clientId)]);
+  const allocatedOther = services.filter((x) => x.status !== 'ended' && x.id !== svc.id).reduce((sum, x) => sum + (x.budget_hours ?? 0), 0);
+  return c.html(
+    <ServiceModal
+      base={g.base}
+      service={svc}
+      available={[]}
+      coworkers={coworkers}
+      defaultOwnerId={g.client.owner_id}
+      clientBudgetHours={g.client.hours_budget_monthly}
+      allocatedOther={allocatedOther}
+    />,
+  );
 });
 
 sluzbyZakaznikaRoutes.get('/firmy/:id/pausal/modal', async (c) => {
@@ -811,10 +930,12 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid/stav', async (c) => {
   const body = await c.req.parseBody();
   const raw = String(body.status ?? '');
   const status = (['active', 'paused', 'ended'] as const).find((s) => s === raw);
-  if (!status || svc.status === 'ended') return c.redirect(`${g.base}?tab=sluzby`);
+  if (!status || status === svc.status) return c.redirect(`${g.base}?tab=sluzby`);
 
   await setClientServiceStatus(g.t, svc.id, status);
-  const verb = status === 'active' ? 'obnovena' : status === 'paused' ? 'pozastavena' : 'ukončena';
+  // ukončenou službu lze znovu aktivovat (Aktivovat službu) — odliš od obnovení pozastavené
+  const verb =
+    status === 'active' ? (svc.status === 'ended' ? 'znovu aktivována' : 'obnovena') : status === 'paused' ? 'pozastavena' : 'ukončena';
   await logEvent(g.t, 'client', g.clientId, g.person.id, `Služba „${svc.label}${svc.detail ? ` · ${svc.detail}` : ''}" ${verb}`);
   return c.redirect(`${g.base}?tab=sluzby`);
 });
