@@ -190,8 +190,12 @@ function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; v
             {tr(SERVICE_STATUS_LABELS[s.status])}
           </span>
         ) : null}
+        {s.allow_overage === 1 && s.budget_hours != null ? (
+          <span class="chip chip-soft-orange" style="margin-left:.35rem" data-tip={tr('Smí přečerpat alokaci z rozpočtu jiných služeb')}>{tr('přečerpání povoleno')}</span>
+        ) : null}
         <span class="sub" style="display:block">
           {serviceMoneyLine(s)}
+          {s.budget_hours != null ? <> · {s.budget_hours} {tr('h z paušálu')}</> : null}
           {' · '}
           {s.owner_name ? tr('odpovídá {name}', { name: s.owner_name }) : tr('bez odpovědné osoby')}
         </span>

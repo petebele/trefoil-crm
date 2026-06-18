@@ -21,7 +21,8 @@
 > (`alert_pct`, default 80). Detail ukazuje **burn-up** (vyčerpáno/%/lišta `.progress` + chip „blíží se
 > limitu"/„přečerpáno") a řádek „z paušálu klienta alokováno A z B h". Čerpání = vykázané hodiny
 > „z paušálu" v měsíci; **soft** (neblokuje zápis). Migrace idempotentní; pole v ServiceModal jen pro
-> retainer. **Mimo v1:** systémové události ve feedu, cross-service borrow + schvalování víceprací (v2).
+> retainer. V **seznamu služeb** (záložka Služby) řádek nově ukazuje **chip „přečerpání povoleno"** +
+> alokaci „X h z paušálu". **Mimo v1:** systémové události ve feedu, cross-service borrow + schvalování víceprací (v2).
 > **Další na řadě:** ověřit v prohlížeči; pak globální Nástěnka/Inbox, příležitosti, nebo Vyúčtování v2.
 >
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka F — NASAZENO):** **Detail / dashboard služby v1.**
