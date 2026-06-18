@@ -14,6 +14,16 @@
 
 ## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka F — NASAZENO):** **Detail / dashboard služby v1.**
+> Nová stránka **`/firmy/:id/sluzby/:sid`** (klik na název služby v záložce Služby): hlavička (název, firma,
+> chip režim/stav, sazba, odpovědná, detail/popis + admin ⋯ Upravit/Pozastavit/Ukončit), **Vykázaná práce**
+> služby (přepínač měsíců `MonthNav` + `WorkRecordRow` + součet + „Vykázat práci" předvyplní službu),
+> **Poznámky služby** (poznámky se nově vážou i na `entity_kind='service'`; „Nová poznámka" + reuse `NoteCard`).
+> Bez změny schématu: `listForService()` nad `work_records.service_id`, `note_links` na službu; `NoteCard`
+> dostal explicitní `back` a je exportovaný. Naplňuje rozhodnutí „**služba = stavební kámen**". Spec
+> `sluzba-detail-v1.md`. **Mimo v1:** sloučený service-feed (events nejsou na službě) a rozpočet/burn-up.
+> **Další na řadě:** ověřit v prohlížeči; pak globální Nástěnka/Inbox, příležitosti, nebo rozpočet na službě.
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka E — NASAZENO):** **Poznámky — nadpis +
 > Seznam/Mozaika.** Poznámka má volitelný **nadpis** (`notes.title`, migrace idempotentně). Na záložce
 > Poznámky **přepínač Seznam / Mozaika** (mozaika = karty ve dvou sloupcích, Google Keep styl,

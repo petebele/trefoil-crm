@@ -17,8 +17,11 @@ import {
   type ClientServiceInput,
 } from '../domain/clientServices';
 import type { ClientsTable, PersonsTable } from '../db/schema';
+import { Layout } from './layout';
 import { WorkRecordRow, MonthNav } from './vykazy';
-import { fmtMinutes, monthLabel, billingTotal, type WorkRecord, type MonthMoney } from '../domain/workRecords';
+import { fmtMinutes, monthLabel, monthKey, billingTotal, listForService, type WorkRecord, type MonthMoney } from '../domain/workRecords';
+import { notesForEntity, type NoteRow } from '../domain/notes';
+import { NoteCard } from './poznamky';
 import { tr, fmtNum } from '../i18n';
 
 /**
@@ -167,7 +170,7 @@ function ServiceRow(props: { base: string; s: ClientService; isAdmin: boolean; v
   return (
     <div class="hover-row" style={`display:flex;gap:.7rem;align-items:flex-start;padding:.6rem 0;border-top:1px solid var(--line);${s.status === 'ended' ? 'opacity:.6' : ''}`}>
       <span style="flex:1">
-        <span style="font-weight:600">{s.label}</span>
+        <a href={`${base}/sluzby/${s.id}`} style="font-weight:600;color:inherit;text-decoration:none" data-tip={tr('Otevřít detail služby')}>{s.label}</a>
         {s.detail ? <span class="sub" style="font-weight:600"> · {s.detail}</span> : null}
         <span class={`chip ${s.mode === 'retainer' ? 'chip-soft-teal' : s.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`} style="margin-left:.5rem">
           {tr(SERVICE_MODE_LABELS[s.mode])}
@@ -499,6 +502,100 @@ export function SluzbyZakaznikaTab(props: {
   );
 }
 
+// ---------- detail služby (/firmy/:id/sluzby/:sid) ----------
+
+function ServiceDetail(props: {
+  base: string;
+  detailBase: string;
+  client: ClientsTable;
+  svc: ClientService;
+  isAdmin: boolean;
+  canVykaz: boolean;
+  month: string;
+  records: WorkRecord[];
+  notes: NoteRow[];
+  person: PersonsTable;
+  canTask: boolean;
+}) {
+  const { base, detailBase, client, svc, isAdmin } = props;
+  const sid = svc.id;
+  const hasActivePausal = (client.hours_budget_monthly ?? 0) > 0;
+  const vykBack = `${detailBase}?mesic=${props.month}`;
+  const totalMin = props.records.reduce((s, r) => s + r.minutes, 0);
+  const novaPoznamkaUrl = `/poznamky/novy?kind=service&id=${sid}&back=${encodeURIComponent(detailBase)}`;
+  return (
+    <>
+      <p style="margin:.2rem 0 .8rem">
+        <a href={`${base}?tab=sluzby`} class="subtle-action">‹ {tr('Zpět na firmu {name}', { name: client.name })}</a>
+      </p>
+
+      <div class="card">
+        <div class="card-head">
+          <h3 style="font-size:1.05rem">
+            {svc.label}
+            {svc.detail ? <span class="sub" style="font-weight:600"> · {svc.detail}</span> : null}
+          </h3>
+          {isAdmin && svc.status !== 'ended' ? (
+            <KebabMenu id="svcDetailMenu" label={tr('Možnosti služby')}>
+              <button class="opt" type="button" hx-get={`${base}/sluzby/${sid}/modal`} hx-target="#modal" hx-swap="innerHTML">{tr('Upravit')}</button>
+              <form method="post" action={`${base}/sluzby/${sid}/stav`} class="m0">
+                <input type="hidden" name="status" value={svc.status === 'paused' ? 'active' : 'paused'} />
+                <button class="opt" type="submit">{svc.status === 'paused' ? tr('Obnovit') : tr('Pozastavit')}</button>
+              </form>
+              <form method="post" action={`${base}/sluzby/${sid}/stav`} class="m0" onsubmit={`return confirm('${tr('Ukončit tuto službu? Přesune se do archivu, historie zůstane zachovaná.')}')`}>
+                <input type="hidden" name="status" value="ended" />
+                <button class="opt" type="submit">{tr('Ukončit')}</button>
+              </form>
+            </KebabMenu>
+          ) : null}
+        </div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+          <a href={`${base}?tab=sluzby`} class="chip chip-soft-gray" style="text-decoration:none">{client.name}</a>
+          <span class={`chip ${svc.mode === 'retainer' ? 'chip-soft-teal' : svc.mode === 'subscription' ? 'chip-soft-dark' : 'chip-soft-gray'}`}>{tr(SERVICE_MODE_LABELS[svc.mode])}</span>
+          <span class={`chip ${svc.status === 'active' ? 'chip-soft-teal' : svc.status === 'paused' ? 'chip-soft-orange' : 'chip-soft-gray'}`}>{tr(SERVICE_STATUS_LABELS[svc.status])}</span>
+        </div>
+        <p class="sub" style="margin:.5rem 0 0">
+          {serviceMoneyLine(svc)} · {svc.owner_name ? tr('odpovídá {name}', { name: svc.owner_name }) : tr('bez odpovědné osoby')}
+        </p>
+        {svc.description ? <p class="sub" style="margin:.3rem 0 0">{svc.description}</p> : null}
+      </div>
+
+      {props.canVykaz ? (
+        <div class="card" style="margin-top:1rem">
+          <div class="card-head">
+            <h3>{tr('Vykázaná práce')}{props.records.length ? <> · <b>{fmtMinutes(totalMin)}</b></> : null}</h3>
+            <div style="display:flex;align-items:center;gap:.5rem">
+              <MonthNav month={props.month} hrefFor={(m) => `${detailBase}?mesic=${m}`} />
+              {svc.status === 'active' ? (
+                <button class="btn btn-sm" type="button" hx-get={`/vykazy/modal/novy?klient=${client.id}&sluzba=${sid}&back=${encodeURIComponent(vykBack)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
+              ) : null}
+            </div>
+          </div>
+          {props.records.length === 0 ? (
+            <EmptyState text={tr('U této služby zatím není vykázaná žádná práce.')} />
+          ) : (
+            <div>{props.records.map((r) => <WorkRecordRow r={r} person={props.person} ownerId={client.owner_id} back={vykBack} showAmount={!hasActivePausal} />)}</div>
+          )}
+        </div>
+      ) : null}
+
+      <div class="card" style="margin-top:1rem">
+        <div class="card-head">
+          <h3>{tr('Poznámky')}</h3>
+          <button class="btn btn-sm" type="button" hx-get={novaPoznamkaUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
+        </div>
+        {props.notes.length === 0 ? (
+          <EmptyState text={tr('Zatím žádná poznámka k této službě.')}>
+            <button class="btn btn-sm btn-primary" type="button" hx-get={novaPoznamkaUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Napsat poznámku')}</button>
+          </EmptyState>
+        ) : (
+          <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} back={detailBase} feedKind="service" subjectId={sid} canTask={props.canTask} layout="list" />)}</div>
+        )}
+      </div>
+    </>
+  );
+}
+
 // ---------- routy (vše jen admin) ----------
 
 type Guarded = { t: string; clientId: string; base: string; client: ClientsTable; person: PersonsTable };
@@ -539,6 +636,44 @@ sluzbyZakaznikaRoutes.get('/firmy/:id/pausal/modal', async (c) => {
   const g = await guard(c);
   if (g instanceof Response) return g;
   return c.html(<RetainerModal base={g.base} client={g.client} />);
+});
+
+// --- detail služby (čte i nepadmin; akce úprav jen admin) ---
+sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/:sid', async (c) => {
+  const person = c.get('person');
+  if (!person) return c.redirect('/login');
+  if (!c.get('modules').has('zakaznici')) return c.redirect('/');
+  const t = person.tenant_id;
+  const clientId = c.req.param('id');
+  const sid = c.req.param('sid');
+  const [client, svc] = await Promise.all([getClient(t, clientId), getClientService(t, sid)]);
+  if (!client || !svc || svc.client_id !== clientId) return c.notFound();
+  const base = `/firmy/${clientId}`;
+  const detailBase = `${base}/sluzby/${sid}`;
+  const canVykaz = c.get('modules').has('vykazy');
+  const rawMonth = c.req.query('mesic') ?? '';
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(rawMonth) ? rawMonth : monthKey(new Date());
+  const [records, notes] = await Promise.all([
+    canVykaz ? listForService(t, sid, month) : Promise.resolve([] as WorkRecord[]),
+    notesForEntity(t, 'service', sid, person.id),
+  ]);
+  return c.html(
+    <Layout title={svc.label} person={person} modules={c.get('modules')} active="zakaznici">
+      <ServiceDetail
+        base={base}
+        detailBase={detailBase}
+        client={client}
+        svc={svc}
+        isAdmin={person.is_admin === 1}
+        canVykaz={canVykaz}
+        month={month}
+        records={records}
+        notes={notes}
+        person={person}
+        canTask={c.get('modules').has('ukoly')}
+      />
+    </Layout>,
+  );
 });
 
 // --- mutace ---

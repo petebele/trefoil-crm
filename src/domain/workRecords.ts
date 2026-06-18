@@ -77,6 +77,14 @@ export async function listForClientMonth(tenantId: string, clientId: string, mon
   return rows as WorkRecord[];
 }
 
+/** Výkazy jedné služby (detail služby), volitelně v měsíci (YYYY-MM); nejnovější nahoře. */
+export async function listForService(tenantId: string, serviceId: string, month?: string): Promise<WorkRecord[]> {
+  let q = baseSelect().where('work_records.tenant_id', '=', tenantId).where('work_records.service_id', '=', serviceId);
+  if (month) q = q.where('work_records.performed_at', 'like', `${month}%`);
+  const rows = await q.orderBy('work_records.performed_at', 'desc').orderBy('work_records.created_at', 'desc').execute();
+  return rows as WorkRecord[];
+}
+
 /** Výkazy navázané na úkol (blok „Vykázaná práce" v modálu úkolu), nejnovější nahoře. */
 export async function listForTask(tenantId: string, taskId: string): Promise<WorkRecord[]> {
   const rows = await baseSelect()

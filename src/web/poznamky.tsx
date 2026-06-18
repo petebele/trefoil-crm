@@ -78,7 +78,7 @@ function NoteToolbar() {
 /** Modál nové/upravené poznámky. U osoby (subjekt) nabídne „Týká se i firmy" (i v editaci). */
 function NoteEditorModal(props: {
   note: (NotesTable & { links: NoteLink[] }) | null;
-  subjectKind: 'client' | 'person';
+  subjectKind: 'client' | 'person' | 'service';
   subjectId: string;
   back: string;
   companies: Array<{ id: string; name: string }>;
@@ -134,9 +134,9 @@ function NoteEditorModal(props: {
 }
 
 /** Karta poznámky — rozložení `list` (řádky pod sebou) nebo `grid` (mozaika karet). */
-function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedKind: 'client' | 'person'; subjectId: string; canTask: boolean; layout: 'list' | 'grid' }) {
+export function NoteCard(props: { n: NoteRow; person: PersonsTable; back: string; feedKind: 'client' | 'person' | 'service'; subjectId: string; canTask: boolean; layout: 'list' | 'grid' }) {
   const { n, person } = props;
-  const back = `${props.base}?tab=poznamky`;
+  const back = props.back;
   const canEdit = canEditNote(person, n);
   const upravitUrl = `/poznamky/${n.id}/upravit?back=${encodeURIComponent(back)}`;
   // ve feedu firmy ukaž navázané osoby („u osoby X"), ve feedu osoby navázané firmy (štítek firmy)
@@ -206,7 +206,7 @@ function NoteCard(props: { n: NoteRow; person: PersonsTable; base: string; feedK
 /** Záložka „Poznámky" na detailu firmy/osoby (vykresluje firmy.tsx / osoby.tsx). */
 export function NotesTab(props: {
   base: string;
-  kind: 'client' | 'person';
+  kind: 'client' | 'person' | 'service';
   entityId: string;
   notes: NoteRow[];
   person: PersonsTable;
@@ -236,10 +236,10 @@ export function NotesTab(props: {
         </EmptyState>
       ) : isGrid ? (
         <div class="notes-grid">
-          {props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="grid" />)}
+          {props.notes.map((n) => <NoteCard n={n} person={props.person} back={back} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="grid" />)}
         </div>
       ) : (
-        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} base={props.base} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="list" />)}</div>
+        <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} back={back} feedKind={props.kind} subjectId={props.entityId} canTask={props.canTask} layout="list" />)}</div>
       )}
     </div>
   );
@@ -251,8 +251,9 @@ export function NotesTab(props: {
 async function subjectLinksFromBody(
   t: string,
   body: Record<string, unknown>,
-): Promise<{ subjectKind: 'client' | 'person'; subjectId: string; links: NoteLink[] }> {
-  const subjectKind: 'client' | 'person' = body.subject_kind === 'person' ? 'person' : 'client';
+): Promise<{ subjectKind: 'client' | 'person' | 'service'; subjectId: string; links: NoteLink[] }> {
+  const sk = String(body.subject_kind ?? '');
+  const subjectKind: 'client' | 'person' | 'service' = sk === 'person' ? 'person' : sk === 'service' ? 'service' : 'client';
   const subjectId = String(body.subject_id ?? '');
   const links: NoteLink[] = subjectId ? [{ kind: subjectKind, id: subjectId }] : [];
   if (subjectKind === 'person' && subjectId) {
@@ -267,7 +268,8 @@ async function subjectLinksFromBody(
 poznamkyRoutes.get('/poznamky/novy', async (c) => {
   const person = c.get('person')!;
   const t = person.tenant_id;
-  const kind = c.req.query('kind') === 'person' ? 'person' : 'client';
+  const kindQ = c.req.query('kind');
+  const kind: 'client' | 'person' | 'service' = kindQ === 'person' ? 'person' : kindQ === 'service' ? 'service' : 'client';
   const id = c.req.query('id') ?? '';
   const companies = kind === 'person' && id ? (await clientsOfPerson(t, id)).map((x) => ({ id: x.id, name: x.name })) : [];
   return c.html(<NoteEditorModal note={null} subjectKind={kind} subjectId={id} back={safeBack(c.req.query('back'))} companies={companies} checkedClientIds={[]} />);
@@ -282,8 +284,9 @@ poznamkyRoutes.get('/poznamky/:id/upravit', async (c) => {
   if (!canEditNote(person, note)) return c.redirect(back);
   // subjekt = navázaná osoba (má-li ji), jinak navázaná firma
   const personLink = note.links.find((l) => l.kind === 'person');
-  const subjectKind: 'client' | 'person' = personLink ? 'person' : 'client';
-  const subjectId = personLink ? personLink.id : note.links.find((l) => l.kind === 'client')?.id ?? '';
+  const serviceLink = note.links.find((l) => l.kind === 'service');
+  const subjectKind: 'client' | 'person' | 'service' = personLink ? 'person' : serviceLink ? 'service' : 'client';
+  const subjectId = personLink?.id ?? serviceLink?.id ?? note.links.find((l) => l.kind === 'client')?.id ?? '';
   const companies = subjectKind === 'person' && subjectId ? (await clientsOfPerson(t, subjectId)).map((x) => ({ id: x.id, name: x.name })) : [];
   const checkedClientIds = note.links.filter((l) => l.kind === 'client').map((l) => l.id);
   return c.html(<NoteEditorModal note={note} subjectKind={subjectKind} subjectId={subjectId} back={back} companies={companies} checkedClientIds={checkedClientIds} />);

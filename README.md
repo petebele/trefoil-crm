@@ -42,7 +42,7 @@ dokumentu — pravidla viz [CLAUDE.md](CLAUDE.md) („Kdy aktualizovat dokumenta
 **Jazyk a specifikace**
 - [docs/SLOVNIK.md](docs/SLOVNIK.md) — jednotná terminologie (stejné slovo v UI i v kódu).
 - [docs/specs/](docs/specs/) — specifikace modulů (vznikají PŘED stavbou; šablona [_SABLONA.md](docs/specs/_SABLONA.md)):
-  [krok 2 — kostra](docs/specs/krok2-kostra.md) · [krok 3 — zákazníci](docs/specs/krok3-zakaznici.md) · [krok 4 — administrace](docs/specs/krok4-administrace.md) · [krok 5 — služby](docs/specs/krok5-sluzby-zakaznika.md) · [krok 6 — výkazy](docs/specs/krok6-vykazy-prace.md) · [Feed v1](docs/specs/feed-v1.md).
+  [krok 2 — kostra](docs/specs/krok2-kostra.md) · [krok 3 — zákazníci](docs/specs/krok3-zakaznici.md) · [krok 4 — administrace](docs/specs/krok4-administrace.md) · [krok 5 — služby](docs/specs/krok5-sluzby-zakaznika.md) · [krok 6 — výkazy](docs/specs/krok6-vykazy-prace.md) · [Feed v1](docs/specs/feed-v1.md) · [Detail služby v1](docs/specs/sluzba-detail-v1.md).
 
 **Kudy číst** (nový na projektu): CLAUDE.md → SUMMARY.md → ARCHITECTURE.md → podle úkolu buď UI
 ([UI-ZASADY](docs/UI-ZASADY.md) + [KOMPONENTY](docs/KOMPONENTY.md)), nebo data ([DATOVY-MODEL](docs/DATOVY-MODEL.md));
