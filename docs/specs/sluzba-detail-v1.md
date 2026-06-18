@@ -71,12 +71,13 @@ Slovní wireframe:
 - [ ] ⋯ akce (upravit/pozastavit/ukončit) fungují z detailu; realtime překreslení.
 - [ ] `pnpm typecheck` zelený; server odpovídá; UI dle zásad (chipy, prázdné stavy, mobil, aria).
 
-## 8. Co NENÍ ve v1 (záměrně)
-- **Plný „feed" míchající události + poznámky + výkazy** (jako Aktivity u firmy). Důvod: události
-  (`events`) nejsou dnes vázané na službu. v1 ukazuje **Výkazy** a **Poznámky** odděleně; sloučený
-  service-feed je další krok (přidat službě kontext do `logEvent`/`events`).
-- **Rozpočet služby + burn-up** (alokace z klientského paušálu, prahy 80 %) — samostatný větší krok
-  (viz [VIZE — Feed §7.5, Přečerpání](../VIZE-feed-a-prilezitosti.md)).
+## 8. Stav rozšíření
+- **Sloučený feed „Dění u služby" (HOTOVO 2026-06-18):** Výkazy + Poznámky jsou na detailu v **jednom
+  chronologickém proudu** (po měsících, přepínač), místo dvou oddělených boxů. Postaveno ze
+  `work_records` (service_id) + `notes` (service) — bez `events`. **Systémové události** (změny stavu
+  apod.) ve feedu zatím nejsou — vyžadovalo by vázat `events` na službu (další krok).
+- **Rozpočet služby + burn-up** (alokace z klientského paušálu, prahy 80 %) — viz [VIZE — Feed §7.5](../VIZE-feed-a-prilezitosti.md);
+  staví se jako navazující krok.
 
 ## 9. Otevřené otázky
 1. Zahrnout **Poznámky na službě** do v1 (doporučuju ano — je to jádro „jaká tam padla poznámka"),

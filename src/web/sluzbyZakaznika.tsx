@@ -523,6 +523,13 @@ function ServiceDetail(props: {
   const vykBack = `${detailBase}?mesic=${props.month}`;
   const totalMin = props.records.reduce((s, r) => s + r.minutes, 0);
   const novaPoznamkaUrl = `/poznamky/novy?kind=service&id=${sid}&back=${encodeURIComponent(detailBase)}`;
+  // sloučený proud „dění": výkazy (měsíc) + poznámky (měsíc) promíchané podle data, nejnovější nahoře
+  const monthNotes = props.notes.filter((n) => n.created_at.startsWith(props.month));
+  type FeedItem = { at: string; kind: 'work'; r: WorkRecord } | { at: string; kind: 'note'; n: NoteRow };
+  const feed: FeedItem[] = [
+    ...props.records.map((r): FeedItem => ({ at: r.performed_at, kind: 'work', r })),
+    ...monthNotes.map((n): FeedItem => ({ at: n.created_at, kind: 'note', n })),
+  ].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   return (
     <>
       <p style="margin:.2rem 0 .8rem">
@@ -560,36 +567,32 @@ function ServiceDetail(props: {
         {svc.description ? <p class="sub" style="margin:.3rem 0 0">{svc.description}</p> : null}
       </div>
 
-      {props.canVykaz ? (
-        <div class="card" style="margin-top:1rem">
-          <div class="card-head">
-            <h3>{tr('Vykázaná práce')}{props.records.length ? <> · <b>{fmtMinutes(totalMin)}</b></> : null}</h3>
-            <div style="display:flex;align-items:center;gap:.5rem">
-              <MonthNav month={props.month} hrefFor={(m) => `${detailBase}?mesic=${m}`} />
-              {svc.status === 'active' ? (
-                <button class="btn btn-sm" type="button" hx-get={`/vykazy/modal/novy?klient=${client.id}&sluzba=${sid}&back=${encodeURIComponent(vykBack)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
-              ) : null}
-            </div>
-          </div>
-          {props.records.length === 0 ? (
-            <EmptyState text={tr('U této služby zatím není vykázaná žádná práce.')} />
-          ) : (
-            <div>{props.records.map((r) => <WorkRecordRow r={r} person={props.person} ownerId={client.owner_id} back={vykBack} showAmount={!hasActivePausal} />)}</div>
-          )}
-        </div>
-      ) : null}
-
+      {/* Dění u služby — sloučený proud výkazů a poznámek (po měsících) */}
       <div class="card" style="margin-top:1rem">
         <div class="card-head">
-          <h3>{tr('Poznámky')}</h3>
-          <button class="btn btn-sm" type="button" hx-get={novaPoznamkaUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
+          <h3>{tr('Dění u služby')}{props.canVykaz && totalMin ? <> · <b>{fmtMinutes(totalMin)}</b></> : null}</h3>
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+            <MonthNav month={props.month} hrefFor={(m) => `${detailBase}?mesic=${m}`} />
+            {props.canVykaz && svc.status === 'active' ? (
+              <button class="btn btn-sm" type="button" hx-get={`/vykazy/modal/novy?klient=${client.id}&sluzba=${sid}&back=${encodeURIComponent(vykBack)}`} hx-target="#modal" hx-swap="innerHTML">{tr('Vykázat práci')}</button>
+            ) : null}
+            <button class="btn btn-sm" type="button" hx-get={novaPoznamkaUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
+          </div>
         </div>
-        {props.notes.length === 0 ? (
-          <EmptyState text={tr('Zatím žádná poznámka k této službě.')}>
+        {feed.length === 0 ? (
+          <EmptyState text={tr('V tomto měsíci se u služby nic nedělo.')}>
             <button class="btn btn-sm btn-primary" type="button" hx-get={novaPoznamkaUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Napsat poznámku')}</button>
           </EmptyState>
         ) : (
-          <div>{props.notes.map((n) => <NoteCard n={n} person={props.person} back={detailBase} feedKind="service" subjectId={sid} canTask={props.canTask} layout="list" />)}</div>
+          <div>
+            {feed.map((it) =>
+              it.kind === 'work' ? (
+                <WorkRecordRow r={it.r} person={props.person} ownerId={client.owner_id} back={vykBack} showAmount={!hasActivePausal} />
+              ) : (
+                <NoteCard n={it.n} person={props.person} back={detailBase} feedKind="service" subjectId={sid} canTask={props.canTask} layout="list" />
+              ),
+            )}
+          </div>
         )}
       </div>
     </>
