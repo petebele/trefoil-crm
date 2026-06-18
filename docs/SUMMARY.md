@@ -24,8 +24,8 @@
 > do *aktivní* (status route uvolněna pro ended→active, log „znovu aktivována"). **(3) Karta poznámky —
 > nový pattern:** nadpis nahoře + **⋯ vždy vpravo nahoře** (ne hover), 2. řádek autor·datum (`relOrDate`:
 > do 2 dnů relativně, starší absolutně), pak text. **(4) Poznámky = VŽDY karty** (Seznam = 1 sloupec,
-> Mozaika = 2; `.notes-grid` přešla z CSS columns na **grid**), karta má **pevnou výšku náhledu** (14rem,
-> tělo ~2×) **+ rozbalení** (subtilní řádek na střed „zobrazit více/méně", šipka; JS detekuje ořez) a jde
+> Mozaika = 2; `.notes-grid` přešla z CSS columns na **grid**), karta má **fluidní výšku náhledu** (tělo
+> roste mezi min 2,75rem a max 11rem) **+ rozbalení** (subtilní řádek na střed „zobrazit více/méně", šipka; JS detekuje ořez) a jde
 > **řadit drag/drop** v obou pohledech → `POST /poznamky/poradi`
 > → `note_links.sort_order` (**sdílené pro tým**, idempotentní migrace). `NoteCard.layout` = `card`/`feed`
 > (feed = řádek ve „Dění u služby"). `ASSET_V`=45; KOMPONENTY §25/§26, mockup §16/§17, DATOVÝ-MODEL,

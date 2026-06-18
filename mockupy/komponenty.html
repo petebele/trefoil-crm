@@ -512,15 +512,12 @@
 
   <section class="ks">
     <h2>17 · Poznámky — Seznam / Mozaika (Google Keep styl)</h2>
-    <p class="kd">Poznámky jsou <b>vždy karty</b> — pohledy se liší jen počtem sloupců: <b>Seznam = 1</b>, <b>Mozaika = 2</b> (<code>.notes-grid</code> = CSS grid, na mobilu vždy 1). Karta má <b>pevnou výšku náhledu</b>; je-li text delší, ukáže se <b>↓ rozbalit</b>. Pořadí jde měnit <b>drag/drop</b> (sdílené pro tým). Volba pohledu se <b>pamatuje per uživatel</b>. Katalog §26.</p>
+    <p class="kd">Poznámky jsou <b>vždy karty</b> — pohledy se liší jen počtem sloupců: <b>Seznam = 1</b>, <b>Mozaika = 2</b> (<code>.notes-grid</code> = CSS grid, na mobilu vždy 1). Karta má <b>fluidní výšku náhledu</b> (roste s obsahem mezi min a max); je-li text delší, ořízne se a ukáže <b>↓ zobrazit více</b>. Pořadí jde měnit <b>drag/drop</b> (sdílené pro tým). Volba pohledu se <b>pamatuje per uživatel</b>. Katalog §26.</p>
 
     <div class="kbox" style="max-width:680px">
       <div class="card-head" style="margin-bottom:.5rem">
         <h3 style="margin:0;font-size:.95rem;font-weight:650">Poznámky</h3>
-        <nav class="tabs" style="margin:0" aria-label="Zobrazení poznámek">
-          <a class="tab" href="#">Seznam</a>
-          <a class="tab active" href="#">Mozaika</a>
-        </nav>
+        <a class="icon-btn" href="#" aria-label="Zobrazit jako seznam (jeden sloupec)" title="Jeden sloupec"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></a>
       </div>
       <div class="notes-grid">
         <div class="card note-card has-more">

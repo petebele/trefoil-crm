@@ -18,7 +18,7 @@ import {
 } from '../domain/notes';
 import type { PersonsTable, NotesTable } from '../db/schema';
 import { tr, relOrDate } from '../i18n';
-import { IconChevron } from './icons';
+import { IconChevron, IconRows3, IconLayoutDashboard } from './icons';
 
 export const poznamkyRoutes = new Hono<AppEnv>();
 
@@ -245,10 +245,16 @@ export function NotesTab(props: {
         <h3>{tr('Poznámky')}</h3>
         <div style="display:flex;align-items:center;gap:.6rem">
           {props.notes.length > 0 ? (
-            <nav class="tabs" style="margin:0" aria-label={tr('Zobrazení poznámek')}>
-              <a class={`tab ${!isGrid ? 'active' : ''}`} href={`${props.base}?tab=poznamky&pview=seznam`}>{tr('Seznam')}</a>
-              <a class={`tab ${isGrid ? 'active' : ''}`} href={`${props.base}?tab=poznamky&pview=mozaika`}>{tr('Mozaika')}</a>
-            </nav>
+            // jeden přepínač s proměnlivou ikonou: ukazuje cílové zobrazení (to, do kterého přepne)
+            isGrid ? (
+              <a class="icon-btn" href={`${props.base}?tab=poznamky&pview=seznam`} aria-label={tr('Zobrazit jako seznam (jeden sloupec)')} data-tip={tr('Jeden sloupec')}>
+                <IconRows3 size={18} />
+              </a>
+            ) : (
+              <a class="icon-btn" href={`${props.base}?tab=poznamky&pview=mozaika`} aria-label={tr('Zobrazit jako mozaiku (dlaždice)')} data-tip={tr('Dlaždice')}>
+                <IconLayoutDashboard size={18} />
+              </a>
+            )
           ) : null}
           <button class="btn btn-sm" type="button" hx-get={novyUrl} hx-target="#modal" hx-swap="innerHTML">{tr('Nová poznámka')}</button>
         </div>

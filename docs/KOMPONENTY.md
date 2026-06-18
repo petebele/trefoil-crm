@@ -606,11 +606,12 @@ Poznámka má **volitelný nadpis** (`title`, prostý text) + formátované těl
   + štítky (Soukromá / „u osoby X" / firma); 3) **samotný text**. **Bez nadpisu** se ukáže šedý zástupný
   text **„Poznámka bez nadpisu"** (`.note-title--empty`), ⋯ zůstává vpravo. (`NoteCard` má prop `layout`:
   **`card`** = tahle karta, **`feed`** = jednoduchý řádek pro feed „Dění u služby" — neřadí se, není karta.)
-- **Pevná výška náhledu + rozbalení:** karta má v mřížce pevnou výšku (`height: 14rem`, tělo `flex`
-  s `overflow:hidden`). Je-li text oříznutý, JS (`markClamped`) přidá `.has-more` a ukáže **subtilní
+- **Fluidní výška náhledu + rozbalení:** tělo (`.note-content`) **roste s obsahem** mezi `min-height`
+  (2,75rem) a `max-height` (11rem); krátké poznámky = nízká karta, dlouhé se na `max` ořežou
+  (`overflow:hidden`). Je-li text oříznutý, JS (`markClamped`) přidá `.has-more` a ukáže **subtilní
   rozbalovací řádek na střed** `.note-expand` (šipka `IconChevron` + text **„zobrazit více"** / po
-  rozbalení **„zobrazit méně"**); klik přepne `.expanded` (výška auto, šipka se otočí). Labely se
-  přepínají přes CSS (`.lbl-more`/`.lbl-less`).
+  rozbalení **„zobrazit méně"**); klik přepne `.expanded` (`max-height` zmizí, šipka se otočí). Labely
+  se přepínají přes CSS (`.lbl-more`/`.lbl-less`).
 - **Mřížka:** `.notes-grid` = CSS **grid** (pořadí v DOM = vizuální pořadí), `--one` = 1 sloupec (Seznam),
   jinak 2 sloupce (Mozaika); na mobilu vždy 1. *(Pozn.: nahradilo dřívější `columns` masonry — to
   neumožňovalo přehledný drag/drop.)*
@@ -619,8 +620,10 @@ Poznámka má **volitelný nadpis** (`title`, prostý text) + formátované těl
   čárkou oddělená id) → `reorderNotes` zapíše `note_links.sort_order`. **Pořadí je sdílené pro tým**
   (poznámky = společná báze), drží přes `notes` řazené `sort_order` ASC, pak `created_at` DESC (nové
   nahoře, dokud se nepřesunou). Kontejner nese `data-reorder` + `data-reorder-url`.
-- **Přepínač** `.tabs` (Seznam/Mozaika) v hlavičce karty; odkazy `?tab=poznamky&pview=seznam|mozaika`.
-  Volba se uloží do `person_prefs` a drží i po realtime překreslení živé zóny.
+- **Přepínač zobrazení = jedno tlačítko s proměnlivou ikonou** (`.icon-btn`): ukazuje **cílové**
+  zobrazení — v Seznamu ikonu mozaiky (`IconLayoutDashboard`, přepne na Mozaiku), v Mozaice ikonu
+  seznamu (`IconRows3`, přepne na Seznam). Odkaz `?tab=poznamky&pview=seznam|mozaika`; volba se uloží
+  do `person_prefs` a drží i po realtime překreslení živé zóny.
 - **CSS** `.note-title`, `.notes-grid`(`--one`), `.note-card`(`.dragging`/`.expanded`/`.has-more`),
   `.note-expand` v `public/theme.css` **i** `mockupy/styl.css`.
 - Akce (⋯: Upravit / Vytvořit úkol / viditelnost / Smazat) a chipy „Soukromá" / „u osoby X" fungují v obou pohledech.

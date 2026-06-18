@@ -226,6 +226,24 @@ export const IconMessage = (p: IconProps = {}) => (
   </Svg>
 );
 
+// přepínač zobrazení poznámek (Lucide): rows-3 = jednosloupcový design, layout-dashboard = víc sloupců
+export const IconRows3 = (p: IconProps = {}) => (
+  <Svg size={p.size ?? 18}>
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="3" y1="9" x2="21" y2="9" />
+    <line x1="3" y1="15" x2="21" y2="15" />
+  </Svg>
+);
+
+export const IconLayoutDashboard = (p: IconProps = {}) => (
+  <Svg size={p.size ?? 18}>
+    <rect x="3" y="3" width="7" height="9" rx="1" />
+    <rect x="14" y="3" width="7" height="5" rx="1" />
+    <rect x="14" y="12" width="7" height="9" rx="1" />
+    <rect x="3" y="16" width="7" height="5" rx="1" />
+  </Svg>
+);
+
 /** Ikona modulu podle klíče z registru. */
 export function moduleIcon(icon: 'users' | 'check' | 'briefcase' | 'trend' | 'layers' | 'clock') {
   switch (icon) {

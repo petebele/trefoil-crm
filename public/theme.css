@@ -624,18 +624,17 @@ textarea.input[data-autogrow] { resize: none; overflow-y: hidden; min-height: 0;
 
 /* Poznámky — nadpis + mozaika (Google Keep styl: karty ve sloupcích) */
 .note-title { font-weight: 650; font-size: .92rem; margin: .1rem 0 .15rem; }
-.note-title--empty { font-weight: 500; color: var(--muted); } /* zástupný text „Poznámka bez nadpisu" */
+.note-title--empty { font-weight: 500; color: var(--muted); opacity: .62; } /* zástupný text „Poznámka bez nadpisu" — tlumené = chybějící údaj */
 /* Poznámky = vždy karty; Seznam = 1 sloupec (.notes-grid--one), Mozaika = 2 sloupce.
    Zarovnaná mřížka (pořadí v DOM = vizuální pořadí) kvůli přehlednému drag/drop. */
 .notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; align-items: start; }
 .notes-grid--one { grid-template-columns: 1fr; }
 @media (max-width: 720px) { .notes-grid { grid-template-columns: 1fr; } }
-/* karta s pevnou výškou náhledu: tělo se ořízne (flex), řádek „zobrazit více" zůstává dole */
-.notes-grid .note-card { margin: 0; padding: .8rem .9rem; display: flex; flex-direction: column; height: 14rem; cursor: grab; }
+/* fluidní výška náhledu: tělo roste s obsahem mezi min a max; přes max se ořízne a nabídne „zobrazit více" */
+.notes-grid .note-card { margin: 0; padding: .8rem .9rem; display: flex; flex-direction: column; cursor: grab; }
 .notes-grid .note-card.dragging { opacity: .5; cursor: grabbing; }
-.notes-grid .note-card .note-content { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-.notes-grid .note-card.expanded { height: auto; }
-.notes-grid .note-card.expanded .note-content { overflow: visible; }
+.notes-grid .note-card .note-content { flex: 0 1 auto; min-height: 2.75rem; max-height: 11rem; overflow: hidden; }
+.notes-grid .note-card.expanded .note-content { max-height: none; overflow: visible; }
 /* subtilní rozbalovací řádek na střed: ikona + text „zobrazit více/méně" */
 .note-expand { display: none; align-self: center; flex: none; align-items: center; gap: .3rem; margin-top: .35rem; padding: .1rem .4rem; background: none; border: none; cursor: pointer; color: var(--muted); font-size: .74rem; }
 .note-expand:hover { color: var(--ink); }
