@@ -76,8 +76,12 @@ Slovní wireframe:
   chronologickém proudu** (po měsících, přepínač), místo dvou oddělených boxů. Postaveno ze
   `work_records` (service_id) + `notes` (service) — bez `events`. **Systémové události** (změny stavu
   apod.) ve feedu zatím nejsou — vyžadovalo by vázat `events` na službu (další krok).
-- **Rozpočet služby + burn-up** (alokace z klientského paušálu, prahy 80 %) — viz [VIZE — Feed §7.5](../VIZE-feed-a-prilezitosti.md);
-  staví se jako navazující krok.
+- **Rozpočet služby + burn-up (HOTOVO 2026-06-18):** služba (retainer) má **alokaci hodin z klientského
+  paušálu** (`budget_hours`), **checkbox „povolit přečerpání"** (`allow_overage`) a **práh upozornění**
+  (`alert_pct`, default 80). Detail ukazuje **burn-up** (vyčerpáno z X h, %, lišta `.progress`, chip
+  „blíží se limitu"/„přečerpáno") + řádek **„z paušálu klienta alokováno celkem A z B h"**. Čerpání =
+  vykázané hodiny „z paušálu" v měsíci. **Soft** (neblokuje zápis, jen upozorňuje — viz
+  [VIZE §7.5 + Přečerpání](../VIZE-feed-a-prilezitosti.md)); cross-service „borrow" a schvalování = v2.
 
 ## 9. Otevřené otázky
 1. Zahrnout **Poznámky na službě** do v1 (doporučuju ano — je to jádro „jaká tam padla poznámka"),

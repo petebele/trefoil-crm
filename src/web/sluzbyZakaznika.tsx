@@ -8,6 +8,7 @@ import { getCatalogService, listCatalog, isServiceMode, SERVICE_MODE_LABELS, typ
 import type { CatalogService } from '../domain/services';
 import {
   getClientService,
+  listClientServices,
   assignService,
   updateClientService,
   setClientServiceStatus,
@@ -93,6 +94,15 @@ function ServiceModal(props: {
         <div class={`field ${mode === 'subscription' ? '' : 'hidden'}`} data-depends-on="mode" data-depends-value="subscription">
           <label>{tr('Částka předplatného')} ({tr('Kč/měs')})</label>
           <input class="input" type="number" name="monthly_amount" min="0" step="1" value={s?.monthly_amount ?? ''} />
+        </div>
+        <div class={`field ${mode === 'retainer' ? '' : 'hidden'}`} data-depends-on="mode" data-depends-value="retainer">
+          <label>{tr('Rozpočet z paušálu')} ({tr('h/měs')})</label>
+          <input class="input" type="number" name="budget_hours" min="0" step="0.5" value={s?.budget_hours ?? ''} placeholder={tr('např. 6 (z celkového paušálu klienta)')} />
+          <label style="display:flex;align-items:center;gap:.45rem;font-size:.84rem;margin:.4rem 0 0">
+            <input type="checkbox" name="allow_overage" value="1" checked={s?.allow_overage === 1} /> {tr('Povolit přečerpání (čerpat z rozpočtu jiných služeb)')}
+          </label>
+          <label style="display:block;font-size:.8rem;color:var(--muted);margin:.5rem 0 .15rem">{tr('Upozornit při vyčerpání (%)')}</label>
+          <input class="input" type="number" name="alert_pct" min="1" max="100" step="1" value={s?.alert_pct ?? ''} placeholder="80" />
         </div>
         <div class="field">
           <label>{tr('Popis služby')}</label>
@@ -511,6 +521,7 @@ function ServiceDetail(props: {
   svc: ClientService;
   isAdmin: boolean;
   canVykaz: boolean;
+  allocatedTotal: number;
   month: string;
   records: WorkRecord[];
   notes: NoteRow[];
@@ -522,6 +533,13 @@ function ServiceDetail(props: {
   const hasActivePausal = (client.hours_budget_monthly ?? 0) > 0;
   const vykBack = `${detailBase}?mesic=${props.month}`;
   const totalMin = props.records.reduce((s, r) => s + r.minutes, 0);
+  // rozpočet služby (alokace z paušálu) — čerpání = vykázané hodiny „z paušálu" v měsíci
+  const budgetH = svc.budget_hours;
+  const spentMin = props.records.filter((r) => r.billing === 'retainer_hours').reduce((s, r) => s + r.minutes, 0);
+  const budgetPct = budgetH && budgetH > 0 ? Math.round((spentMin / 60 / budgetH) * 100) : 0;
+  const alertPct = svc.alert_pct ?? 80;
+  const over = budgetH != null && budgetH > 0 && spentMin / 60 > budgetH;
+  const alertHit = budgetH != null && budgetH > 0 && budgetPct >= alertPct;
   const novaPoznamkaUrl = `/poznamky/novy?kind=service&id=${sid}&back=${encodeURIComponent(detailBase)}`;
   // sloučený proud „dění": výkazy (měsíc) + poznámky (měsíc) promíchané podle data, nejnovější nahoře
   const monthNotes = props.notes.filter((n) => n.created_at.startsWith(props.month));
@@ -565,6 +583,28 @@ function ServiceDetail(props: {
           {serviceMoneyLine(svc)} · {svc.owner_name ? tr('odpovídá {name}', { name: svc.owner_name }) : tr('bez odpovědné osoby')}
         </p>
         {svc.description ? <p class="sub" style="margin:.3rem 0 0">{svc.description}</p> : null}
+        {budgetH != null ? (
+          <div style="margin-top:.7rem">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;margin-bottom:.25rem">
+              <span class="sub">{tr('Rozpočet z paušálu')}: <b>{fmtMinutes(spentMin)}</b> {tr('z')} {budgetH} {tr('h')}</span>
+              <span style={over ? 'color:var(--red);font-weight:600' : 'font-weight:600'}>{budgetPct} %</span>
+            </div>
+            <div class="progress"><i style={`width:${Math.min(100, budgetPct)}%${over ? ';background:var(--red)' : ''}`}></i></div>
+            <div style="margin-top:.35rem;display:flex;gap:.35rem;flex-wrap:wrap">
+              {over ? (
+                <span class="chip chip-soft-orange">{svc.allow_overage === 1 ? tr('Přečerpáno (povoleno)') : tr('Přečerpáno bez povolení')}</span>
+              ) : alertHit ? (
+                <span class="chip chip-soft-orange">{tr('Blíží se limitu ({pct} %)', { pct: String(alertPct) })}</span>
+              ) : null}
+              {svc.allow_overage === 1 && !over ? <span class="chip chip-soft-gray">{tr('přečerpání povoleno')}</span> : null}
+            </div>
+          </div>
+        ) : null}
+        {hasActivePausal ? (
+          <p class="sub" style="margin:.5rem 0 0;font-size:.78rem">
+            {tr('Z paušálu klienta alokováno celkem {a} z {b} h', { a: String(props.allocatedTotal), b: String(client.hours_budget_monthly) })}
+          </p>
+        ) : null}
       </div>
 
       {/* Dění u služby — sloučený proud výkazů a poznámek (po měsících) */}
@@ -656,10 +696,12 @@ sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/:sid', async (c) => {
   const canVykaz = c.get('modules').has('vykazy');
   const rawMonth = c.req.query('mesic') ?? '';
   const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(rawMonth) ? rawMonth : monthKey(new Date());
-  const [records, notes] = await Promise.all([
+  const [records, notes, allServices] = await Promise.all([
     canVykaz ? listForService(t, sid, month) : Promise.resolve([] as WorkRecord[]),
     notesForEntity(t, 'service', sid, person.id),
+    listClientServices(t, clientId),
   ]);
+  const allocatedTotal = allServices.filter((x) => x.status !== 'ended').reduce((sum, x) => sum + (x.budget_hours ?? 0), 0);
   return c.html(
     <Layout title={svc.label} person={person} modules={c.get('modules')} active="zakaznici">
       <ServiceDetail
@@ -669,6 +711,7 @@ sluzbyZakaznikaRoutes.get('/firmy/:id/sluzby/:sid', async (c) => {
         svc={svc}
         isAdmin={person.is_admin === 1}
         canVykaz={canVykaz}
+        allocatedTotal={allocatedTotal}
         month={month}
         records={records}
         notes={notes}
@@ -690,6 +733,9 @@ function serviceInputFromBody(body: Record<string, unknown>, fallbackMode: Servi
     mode: isServiceMode(rawMode) ? rawMode : fallbackMode,
     rate: num(body.rate),
     monthlyAmount: num(body.monthly_amount),
+    budgetHours: num(body.budget_hours),
+    allowOverage: String(body.allow_overage ?? '') === '1',
+    alertPct: num(body.alert_pct),
     ownerId: String(body.owner_id ?? '') || null,
   };
 }
@@ -741,6 +787,9 @@ sluzbyZakaznikaRoutes.post('/firmy/:id/sluzby/:sid', async (c) => {
     svc.mode === input.mode &&
     (svc.rate ?? null) === input.rate &&
     (svc.monthly_amount ?? null) === effMonthly &&
+    (svc.budget_hours ?? null) === input.budgetHours &&
+    (svc.allow_overage === 1) === input.allowOverage &&
+    (svc.alert_pct ?? null) === input.alertPct &&
     (svc.owner_id ?? null) === input.ownerId;
   if (!unchanged) {
     await updateClientService(g.t, svc.id, input);

@@ -116,6 +116,10 @@ export async function migrate(): Promise<void> {
   // starší DB bez sloupců detail/description (idempotentně)
   await sql`ALTER TABLE services ADD COLUMN detail text`.execute(db).catch(() => {});
   await sql`ALTER TABLE services ADD COLUMN description text`.execute(db).catch(() => {});
+  // rozpočet služby (alokace z klientského paušálu) — idempotentně
+  await sql`ALTER TABLE services ADD COLUMN budget_hours real`.execute(db).catch(() => {});
+  await sql`ALTER TABLE services ADD COLUMN allow_overage integer NOT NULL DEFAULT 0`.execute(db).catch(() => {});
+  await sql`ALTER TABLE services ADD COLUMN alert_pct real`.execute(db).catch(() => {});
 
   // --- modul Výkazy práce (Krok 6) ---
   await db.schema

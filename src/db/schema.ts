@@ -96,6 +96,9 @@ export interface ServicesTable {
   mode: 'subscription' | 'retainer' | 'payg';
   rate: number | null; // hodinová sazba Kč/h (override katalogu)
   monthly_amount: number | null; // částka předplatného Kč/měs (jen subscription)
+  budget_hours: number | null; // alokované hodiny z klientského paušálu (h/měs); null = bez alokace
+  allow_overage: number; // 0/1 — smí přečerpat svou alokaci (čerpá z jiných služeb do stropu klienta)
+  alert_pct: number | null; // práh upozornění na čerpání v % (null = výchozí 80)
   owner_id: string | null; // odpovědná osoba za službu u TOHOTO klienta
   status: 'active' | 'paused' | 'ended';
   created_at: string;

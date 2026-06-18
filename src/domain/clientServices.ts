@@ -55,6 +55,9 @@ export interface ClientServiceInput {
   mode: ServiceMode;
   rate: number | null;
   monthlyAmount: number | null;
+  budgetHours: number | null;
+  allowOverage: boolean;
+  alertPct: number | null;
   ownerId: string | null;
 }
 
@@ -77,6 +80,9 @@ export async function assignService(
       mode: data.mode,
       rate: data.rate,
       monthly_amount: data.mode === 'subscription' ? data.monthlyAmount : null,
+      budget_hours: data.budgetHours,
+      allow_overage: data.allowOverage ? 1 : 0,
+      alert_pct: data.alertPct,
       owner_id: data.ownerId,
       status: 'active',
       created_at: now(),
@@ -94,6 +100,9 @@ export async function updateClientService(tenantId: string, id: string, data: Cl
       mode: data.mode,
       rate: data.rate,
       monthly_amount: data.mode === 'subscription' ? data.monthlyAmount : null,
+      budget_hours: data.budgetHours,
+      allow_overage: data.allowOverage ? 1 : 0,
+      alert_pct: data.alertPct,
       owner_id: data.ownerId,
     })
     .where('tenant_id', '=', tenantId)

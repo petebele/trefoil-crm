@@ -45,7 +45,7 @@ Výpočet: sjednocení práv ze všech rolí ∪/∖ override. Helper `effective
 | Tabulka | Účel |
 |---|---|
 | `sessions` | Cookie session (httpOnly token, expirace). Hesla scrypt (Node crypto). |
-| `services` | Aktivní služba u klienta: `catalog_item_id` (položka Seznamu), stav active/paused/ended, od/do, **`monthly_spend` (orientační měsíční spend Kč)**, `owner_id`. Součet spendů = celkový orientační spend zákazníka. |
+| `services` | Služba u klienta: `catalog_item_id` (položka Seznamu), `detail`/`description`, `mode` (retainer/subscription/payg), `rate` (Kč/h) / `monthly_amount` (předplatné), `owner_id`, stav active/paused/ended. **Rozpočet z paušálu** (jen retainer): `budget_hours` (alokované h/měs), `allow_overage` (0/1 — smí přečerpat z jiných služeb do stropu klienta), `alert_pct` (práh upozornění %, null=80). Čerpání = vykázané hodiny „z paušálu" v měsíci; detail služby ukazuje burn-up. |
 | `work_records` | **Výkaz práce**: `client_id`, volitelně `service_id`, **volitelně `task_id`** (úkol, z něhož se vykazovalo — vazba viz `tasks`), `worker_id` (kdo pracoval), `description` (úkon), `note` (detail, volitelně), `minutes`, `performed_at`, **`status` pending/approved**, `approved_by_id`, `approved_at`. Každý záznam má dohledatelné ID. Při založení se automaticky vytvoří úkol pro odpovědnou osobu zákazníka (schválení). |
 | `engagements` | Zakázka: klient, název, cíl, stav (ze Seznamu — kanban), odpovědný, termíny. |
 | `milestones` | Milníky zakázky: název, termín, hotovo, pořadí. |

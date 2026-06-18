@@ -14,6 +14,16 @@
 
 ## 0) Rychlý stav k 2026-06-17 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka G — NASAZENO):** detail služby rozšířen o
+> **(1) sloučený feed „Dění u služby"** (výkazy + poznámky v jednom chronologickém proudu po měsících,
+> místo dvou boxů) a **(2) rozpočet na službě** — služba (retainer) má **alokaci hodin z paušálu**
+> (`services.budget_hours`), **checkbox „povolit přečerpání"** (`allow_overage`), **práh upozornění**
+> (`alert_pct`, default 80). Detail ukazuje **burn-up** (vyčerpáno/%/lišta `.progress` + chip „blíží se
+> limitu"/„přečerpáno") a řádek „z paušálu klienta alokováno A z B h". Čerpání = vykázané hodiny
+> „z paušálu" v měsíci; **soft** (neblokuje zápis). Migrace idempotentní; pole v ServiceModal jen pro
+> retainer. **Mimo v1:** systémové události ve feedu, cross-service borrow + schvalování víceprací (v2).
+> **Další na řadě:** ověřit v prohlížeči; pak globální Nástěnka/Inbox, příležitosti, nebo Vyúčtování v2.
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka F — NASAZENO):** **Detail / dashboard služby v1.**
 > Nová stránka **`/firmy/:id/sluzby/:sid`** (klik na název služby v záložce Služby): hlavička (název, firma,
 > chip režim/stav, sazba, odpovědná, detail/popis + admin ⋯ Upravit/Pozastavit/Ukončit), **Vykázaná práce**
