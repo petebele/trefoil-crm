@@ -7,6 +7,7 @@ import { listCustomerPersons, getCustomerPerson } from '../domain/people';
 import { itemsByKey, tagsForEntities, listEntityTags } from '../domain/lists';
 import { primaryContactsFor, listContacts } from '../domain/contacts';
 import { initials, avColor, StatusChip, EmptyState } from './components';
+import { IconX } from './icons';
 import { tr } from '../i18n';
 
 export const zakazniciRoutes = new Hono<AppEnv>();
@@ -347,11 +348,11 @@ function QuickView(props: {
         <span class={`av av-lg ${avColor(props.name)}`}>{initials(props.name)}</span>
         <button
           type="button"
-          class="btn btn-sm"
+          class="icon-btn"
           aria-label={tr('Zavřít náhled')}
           onclick="document.getElementById('quickview').replaceChildren()"
         >
-          ✕
+          <IconX />
         </button>
       </div>
       <h2 class="record-name">{props.name}</h2>

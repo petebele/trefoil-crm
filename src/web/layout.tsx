@@ -5,6 +5,8 @@ import { SKINS } from './skins';
 import { HeadAssets, ASSET_V } from './head';
 import { IconHome, IconSliders, IconSearch, IconPlus, IconChevron, moduleIcon } from './icons';
 import { initials } from './components';
+import { NotifBell } from './notifikace';
+import { getImpersonator } from '../auth/impersonation';
 import { tr, getLocale, LOCALES } from '../i18n';
 
 /**
@@ -22,6 +24,7 @@ export function Layout(props: {
   const enabled = props.modules ?? new Set<string>();
   const active = props.active ?? '';
   const locale = getLocale();
+  const impersonator = getImpersonator(); // skutečný admin, prohlíží‑li „jako někdo jiný"
 
   return (
     <html lang={locale}>
@@ -107,6 +110,7 @@ export function Layout(props: {
                   </button>
                 )}
               </div>
+              <NotifBell />
               <div class="menu align-right" id="userMenu">
                 <div class="user" data-menu-toggle="userMenu" role="button" tabindex={0} aria-haspopup="true">
                   <span class="av av-i">{initials(person.name)}</span>
@@ -148,6 +152,11 @@ export function Layout(props: {
                       ))}
                     </div>
                   </div>
+                  {person.is_admin === 1 ? (
+                    <button class="menu-item" type="button" role="menuitem" hx-get="/impersonace" hx-target="#modal" hx-swap="innerHTML">
+                      {tr('Zobrazit jako…')}
+                    </button>
+                  ) : null}
                   <div class="menu-sep"></div>
                   <form method="post" action="/logout" class="m0">
                     <button class="menu-item" type="submit" role="menuitem">
@@ -158,6 +167,16 @@ export function Layout(props: {
               </div>
             </div>
           </header>
+        ) : null}
+        {impersonator ? (
+          <div class="imp-banner" role="status">
+            <span class="imp-banner-txt">
+              {tr('Prohlížíš jako {name}', { name: person?.name ?? '' })}
+            </span>
+            <form method="post" action="/impersonace/konec" class="m0">
+              <button class="imp-banner-btn" type="submit">{tr('Zpět na sebe')}</button>
+            </form>
+          </div>
         ) : null}
         <main class="page">{children}</main>
         <div id="modal"></div>

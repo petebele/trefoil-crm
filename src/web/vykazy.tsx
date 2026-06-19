@@ -3,8 +3,10 @@ import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from '../types';
 import { Layout } from './layout';
 import { ModalShell, EmptyState, KebabMenu } from './components';
-import { IconCheckPlain } from './icons';
+import { IconCheckPlain, IconChevronLeft, IconChevronRight } from './icons';
+import { flash } from './flash';
 import { logEvent } from '../domain/events';
+import { notify, notifyPendingApproval } from '../domain/notifications';
 import { createApprovalTask, closeSourceTasks, getTask } from '../domain/tasks';
 import { getClient, listClients } from '../domain/clients';
 import { listClientServices, type ClientService } from '../domain/clientServices';
@@ -20,6 +22,7 @@ import {
   updateWorkRecord,
   deleteWorkRecord,
   approveWorkRecord,
+  returnWorkRecord,
   rejectWorkRecord,
   resubmitWorkRecord,
   monthKey,
@@ -49,8 +52,8 @@ const fmtDay = (iso: string) => fmtDate(iso);
 // ---------- práva ----------
 
 export function canEditRecord(person: PersonsTable, r: WorkRecord): boolean {
-  // autor smí upravovat dokud výkaz není schválený (čeká i vrácený k přepracování); admin vždy
-  return person.is_admin === 1 || (r.worker_id === person.id && r.status !== 'approved');
+  // autor smí upravovat, dokud výkaz čeká nebo byl vrácen k přepracování (ne schválený, ne zamítnutý); admin vždy
+  return person.is_admin === 1 || (r.worker_id === person.id && (r.status === 'pending' || r.status === 'returned'));
 }
 
 export function canApproveFor(person: PersonsTable, clientOwnerId: string | null): boolean {
@@ -73,6 +76,7 @@ export function WorkRecordModal(props: {
   const r = props.record;
   const editable = props.canEdit !== false; // pole jdou měnit; u čistého schvalovatele jsou jen ke čtení
   const showDecision = !!r && !!props.canApprove && r.status === 'pending';
+  const isReturned = !!r && r.status === 'returned';
   const isRejected = !!r && r.status === 'rejected';
   const today = new Date().toISOString().slice(0, 10);
   const running = props.services.filter((s) => s.status !== 'ended');
@@ -121,32 +125,55 @@ export function WorkRecordModal(props: {
             </select>
           </div>
         )}
+        {isReturned ? (
+          <div style="background:var(--chip-orange-bg);border:1px solid var(--chip-orange-ink);border-radius:8px;padding:.6rem .75rem;margin:0 0 1rem">
+            <p style="margin:0;font-weight:600;color:var(--chip-orange-ink)">{tr('Výkaz byl vrácen k přepracování')}</p>
+            {r!.rejection_reason ? <p style="margin:.35rem 0 0">{tr('Instrukce')}: {r!.rejection_reason}</p> : null}
+            {editable ? <p class="sub" style="margin:.35rem 0 0">{tr('Uprav výkaz a ulož — znovu se odešle ke schválení.')}</p> : null}
+          </div>
+        ) : null}
         {isRejected ? (
           <div style="background:var(--red-soft);border:1px solid var(--red);border-radius:8px;padding:.6rem .75rem;margin:0 0 1rem">
-            <p style="margin:0;font-weight:600;color:var(--red)">{tr('Výkaz byl vrácen k přepracování')}</p>
-            {r!.rejection_reason ? <p style="margin:.35rem 0 0">{tr('Důvod')}: {r!.rejection_reason}</p> : null}
-            {editable ? <p class="sub" style="margin:.35rem 0 0">{tr('Uprav výkaz a ulož — znovu se odešle ke schválení.')}</p> : null}
+            <p style="margin:0;font-weight:600;color:var(--red)">{tr('Výkaz byl zamítnut')}</p>
+            {r!.rejection_reason ? <p style="margin:.35rem 0 0">{tr('Důvod zamítnutí')}: {r!.rejection_reason}</p> : null}
           </div>
         ) : null}
         {showDecision ? (
           <div style="background:var(--teal-soft);border:1px solid var(--teal);border-radius:8px;padding:.6rem .75rem;margin:0 0 1rem">
-            <p style="margin:0 0 .5rem;font-weight:600;color:var(--teal-ink)">{tr('Tento výkaz čeká na tvé rozhodnutí')}</p>
+            <p style="margin:0 0 .5rem;font-weight:600;color:var(--teal-ink)">{tr('Tento výkaz čeká na tvé schválení')}</p>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-              <button class="btn btn-success-solid" type="submit" formaction={`/vykazy/${r!.id}/schvalit`} formmethod="post">
-                {tr('Schválit')}
+              {/* schválení uloží i aktuální stav formuláře (manažer může před schválením doladit) */}
+              <button class="btn btn-success-solid" type="submit" formaction={editable ? `/vykazy/${r!.id}/ulozit-schvalit` : `/vykazy/${r!.id}/schvalit`} formmethod="post">
+                {editable ? tr('Uložit a schválit') : tr('Schválit')}
+              </button>
+              <button class="btn" type="button" data-reveal={`ret-${r!.id}`} aria-controls={`ret-${r!.id}`}>
+                {tr('Vrátit k přepracování')}
               </button>
               <button class="btn btn-danger" type="button" data-reveal={`rej-${r!.id}`} aria-controls={`rej-${r!.id}`}>
-                {tr('Zamítnout…')}
+                {tr('Zamítnout')}
               </button>
             </div>
+            {/* Vrátit k přepracování → instrukce; výkaz se vrátí pracovníkovi k opravě (v původní podobě) */}
+            <div id={`ret-${r!.id}`} class="hidden" style="margin-top:.6rem">
+              <label style="display:block;font-size:.8rem;margin-bottom:.25rem">
+                {tr('Instrukce')} <span class="sub">({tr('uvidí je pracovník')})</span>
+              </label>
+              <textarea class="input" name="instructions" rows={2} placeholder={tr('Co je potřeba opravit?')}></textarea>
+              <div style="margin-top:.45rem">
+                <button class="btn btn-primary" type="submit" formaction={`/vykazy/${r!.id}/vratit`} formmethod="post">
+                  {tr('Vrátit k přepracování')}
+                </button>
+              </div>
+            </div>
+            {/* Zamítnout → důvod; výkaz zůstane (zamítnuto), do času ani peněz nevstupuje */}
             <div id={`rej-${r!.id}`} class="hidden" style="margin-top:.6rem">
               <label style="display:block;font-size:.8rem;margin-bottom:.25rem">
-                {tr('Důvod vrácení')} <span class="sub">({tr('uvidí ho pracovník')})</span>
+                {tr('Důvod zamítnutí')} <span class="sub">({tr('uvidí ho pracovník')})</span>
               </label>
-              <textarea class="input" name="reason" rows={2} placeholder={tr('Co je potřeba opravit?')}></textarea>
+              <textarea class="input" name="reason" rows={2} placeholder={tr('Proč výkaz zamítáš?')}></textarea>
               <div style="margin-top:.45rem">
                 <button class="btn btn-danger-solid" type="submit" formaction={`/vykazy/${r!.id}/zamitnout`} formmethod="post">
-                  {tr('Vrátit k přepracování')}
+                  {tr('Zamítnout výkaz')}
                 </button>
               </div>
             </div>
@@ -174,11 +201,14 @@ export function WorkRecordModal(props: {
               {running.length === 0 ? <span class="help">{tr('Zákazník nemá žádnou běžící službu — nejdřív mu ji přidělte (detail → Služby).')}</span> : null}
             </div>
             <div class="field">
-              <label>{tr('Popis úkonu')} <span class="req">*</span></label>
+              <label>
+                {tr('Popis úkonu')} <span class="req">*</span>{' '}
+                <span class="sub" style="font-weight:400">({tr('zobrazí se jako titulek u výkazu')})</span>
+              </label>
               <input class="input" name="description" value={r?.description ?? ''} required />
             </div>
             <div class="field">
-              <label>{tr('Poznámka')}</label>
+              <label>{tr('Detaily úkonu / Poznámka')}</label>
               <textarea class="input" name="note" rows={2}>{r?.note ?? ''}</textarea>
             </div>
             <div class="field">
@@ -205,7 +235,7 @@ export function WorkRecordModal(props: {
             </div>
             </fieldset>
             <div class="form-actions">
-              {editable ? <button class="btn btn-primary" type="submit">{isRejected ? tr('Uložit a znovu odeslat') : r ? tr('Uložit změny') : tr('Vykázat')}</button> : null}
+              {editable && !showDecision ? <button class="btn btn-primary" type="submit">{isReturned ? tr('Uložit a znovu odeslat') : r ? tr('Uložit změny') : tr('Vykázat')}</button> : null}
               <button class="btn btn-ghost" type="button" data-modal-close>{tr('Zavřít')}</button>
             </div>
           </>
@@ -242,7 +272,7 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
               hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`}
               hx-target="#modal"
               hx-swap="innerHTML"
-              title={canEdit ? tr('Upravit výkaz') : tr('Otevřít výkaz')}
+              title={canApprove ? tr('Zkontrolovat') : canEdit ? tr('Upravit výkaz') : tr('Otevřít výkaz')}
             >
               {r.description}
             </span>
@@ -255,23 +285,26 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
             {r.service_detail ? ` · ${r.service_detail}` : ''} · {r.worker_name}
             {r.note ? <span style="display:block;font-size:.78rem">{r.note}</span> : null}
           </span>
-          {r.status === 'rejected' && r.rejection_reason ? (
-            <span class="sub" style="display:block;color:var(--red)">{tr('Vráceno')}: {r.rejection_reason}</span>
+          {r.status === 'returned' && r.rejection_reason ? (
+            <span class="sub" style="display:block;color:var(--chip-orange-ink)">{tr('Instrukce')}: {r.rejection_reason}</span>
+          ) : r.status === 'rejected' && r.rejection_reason ? (
+            <span class="sub" style="display:block;color:var(--red)">{tr('Důvod zamítnutí')}: {r.rejection_reason}</span>
           ) : null}
-          {/* badges — způsob účtování, stav, projekt (placeholder do modulu Projekty) */}
+          {/* badges — způsob účtování, stav, (úkol). Projekt: chip se ukáže, AŽ bude výkaz na projekt navázaný (modul Projekty) — „bez projektu" se nezobrazuje. */}
           <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center;margin-top:.3rem">
             <span class={`chip ${r.billing === 'retainer_hours' ? 'chip-soft-teal' : r.billing === 'billed' ? 'chip-soft-orange' : 'chip-soft-gray'}`}>
               {tr(BILLING_LABELS[r.billing])}
             </span>
             {r.status === 'pending' ? (
               <span class="chip chip-soft-gray">{tr('Čeká')}</span>
+            ) : r.status === 'returned' ? (
+              <span class="chip chip-soft-orange">{tr('Vráceno k přepracování')}</span>
             ) : r.status === 'rejected' ? (
-              <span class="chip chip-soft-red">{tr('Vráceno k přepracování')}</span>
+              <span class="chip chip-soft-red">{tr('Zamítnuto')}</span>
             ) : (
               <span class="chip chip-soft-teal" title={r.approved_by_name ? tr('Schválil(a) {name}', { name: r.approved_by_name }) : ''}>{tr('Schváleno')}</span>
             )}
             {r.task_title ? <span class="chip chip-soft-gray">{tr('úkol')}: {r.task_title}</span> : null}
-            <span class="chip chip-soft-gray">{tr('bez projektu')}</span>
           </div>
         </div>
         {props.showAmount && amount !== null ? (
@@ -284,8 +317,8 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
         {canApprove ? (
           <form method="post" action={`/vykazy/${r.id}/schvalit`} class="m0" style="display:inline-flex">
             <input type="hidden" name="back" value={back} />
-            <button class="icon-btn" type="submit" style="color:var(--teal)" title={tr('Schválit')} aria-label={tr('Schválit výkaz')}>
-              <IconCheckPlain size={18} />
+            <button class="icon-btn icon-btn--ok" type="submit" title={tr('Schválit')} aria-label={tr('Schválit výkaz')}>
+              <IconCheckPlain />
             </button>
           </form>
         ) : null}
@@ -293,12 +326,15 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
           <span class="row-actions">
             <KebabMenu id={`wkRow-${r.id}`} label={tr('Možnosti výkazu')}>
               <button class="opt" type="button" hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
-                {tr('Upravit')}
+                {canApprove ? tr('Zkontrolovat') : tr('Upravit')}
               </button>
-              <form method="post" action={`/vykazy/${r.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tento výkaz?')}')`}>
-                <input type="hidden" name="back" value={back} />
-                <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
-              </form>
+              {/* mazat smí jen administrátor (princip „nic se nemaže"); ostatní řeší stavem (vrácení k přepracování) */}
+              {person.is_admin === 1 ? (
+                <form method="post" action={`/vykazy/${r.id}/smazat`} class="m0" onsubmit={`return confirm('${tr('Smazat tento výkaz?')}')`}>
+                  <input type="hidden" name="back" value={back} />
+                  <button class="opt" type="submit" style="color:var(--red)">{tr('Smazat')}</button>
+                </form>
+              ) : null}
             </KebabMenu>
           </span>
         ) : null}
@@ -307,13 +343,62 @@ export function WorkRecordRow(props: { r: WorkRecord; person: PersonsTable; owne
   );
 }
 
+/**
+ * Řádek výkazu pro manažerský Inbox „Vyžaduje moji pozornost" — víc kontextu pro ROZHODNUTÍ
+ * (co se dělalo · kdy · kolik · poznámka pracovníka). Jméno vykonavatele a zákazník jsou
+ * v záhlaví skupiny, tady se neopakují. Akce Zkontrolovat + Schválit jsou rovnou viditelné.
+ */
+export function ApprovalRow(props: { r: WorkRecord; person: PersonsTable; ownerId: string | null; back: string }) {
+  const { r, person, back } = props;
+  const canApprove = r.status === 'pending' && canApproveFor(person, props.ownerId);
+  return (
+    <div class="hover-row" style="display:flex;gap:.7rem;align-items:flex-start;padding:.5rem 0;border-top:1px solid var(--line);font-size:.86rem">
+      <div style="flex:1;min-width:0">
+        <span
+          role="button"
+          tabindex={0}
+          data-activate
+          style="font-weight:600;cursor:pointer"
+          hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`}
+          hx-target="#modal"
+          hx-swap="innerHTML"
+          title={tr('Zkontrolovat')}
+        >
+          {r.description}
+        </span>
+        <span class="sub" style="display:block">
+          {r.service_label}
+          {r.service_detail ? ` · ${r.service_detail}` : ''} · {fmtDay(r.performed_at)} · {fmtMinutes(r.minutes)}
+        </span>
+        {r.note ? <span class="sub" style="display:block;font-style:italic">„{r.note}"</span> : null}
+        <div style="margin-top:.3rem">
+          <span class={`chip ${r.billing === 'retainer_hours' ? 'chip-soft-teal' : r.billing === 'billed' ? 'chip-soft-orange' : 'chip-soft-gray'}`}>
+            {tr(BILLING_LABELS[r.billing])}
+          </span>
+        </div>
+      </div>
+      {canApprove ? (
+        <div style="display:flex;gap:.3rem;align-items:center;white-space:nowrap">
+          <button class="btn btn-sm" type="button" hx-get={`/vykazy/${r.id}/modal?back=${encodeURIComponent(back)}`} hx-target="#modal" hx-swap="innerHTML">
+            {tr('Zkontrolovat')}
+          </button>
+          <form method="post" action={`/vykazy/${r.id}/schvalit`} class="m0" style="display:inline-flex">
+            <input type="hidden" name="back" value={back} />
+            <button class="btn btn-sm btn-success-solid" type="submit">{tr('Schválit')}</button>
+          </form>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Přepínač měsíce — šipky jako ikonová tlačítka, název měsíce mezi nimi. */
 export function MonthNav(props: { month: string; hrefFor: (m: string) => string }) {
   return (
     <span style="display:inline-flex;align-items:center;gap:.15rem;border:1px solid var(--line);border-radius:999px;padding:.1rem .35rem;background:var(--card)">
-      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, -1))} aria-label={tr('Předchozí měsíc')}>‹</a>
+      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, -1))} aria-label={tr('Předchozí měsíc')}><IconChevronLeft /></a>
       <span style="min-width:8.5rem;text-align:center;text-transform:capitalize;font-weight:600;font-size:.85rem">{monthLabel(props.month)}</span>
-      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, 1))} aria-label={tr('Další měsíc')}>›</a>
+      <a class="icon-btn" style="text-decoration:none" href={props.hrefFor(shiftMonth(props.month, 1))} aria-label={tr('Další měsíc')}><IconChevronRight /></a>
     </span>
   );
 }
@@ -334,14 +419,31 @@ vykazyRoutes.get('/vykazy', async (c) => {
   const isAdmin = person.is_admin === 1;
   const tab = TABS.some((x) => x.key === rawTab && (x.key !== 'prehled' || isAdmin)) ? rawTab : 'muj';
 
-  const [mine, pending, overview] = await Promise.all([
+  // Filtry (odkazovatelné přes URL): stav výkazu (tab „muj") a vykonavatel (tab „schvalovani", jen admin)
+  const STAV_KEYS = ['pending', 'approved', 'returned', 'rejected'] as const;
+  const stav = (STAV_KEYS as readonly string[]).includes(c.req.query('stav') ?? '') ? c.req.query('stav')! : '';
+  const kdo = (isAdmin && c.req.query('kdo')) || '';
+
+  const [mineAll, pendingAll, overview] = await Promise.all([
     tab === 'muj' ? listForWorkerMonth(t, person.id, month) : Promise.resolve([]),
     tab === 'schvalovani' ? listPendingForApprover(t, person.id, isAdmin) : Promise.resolve([]),
     tab === 'prehled' && isAdmin ? overviewByWorker(t, month) : Promise.resolve([]),
   ]);
-  const back = `/vykazy?tab=${tab}&mesic=${month}`;
-  const hrefFor = (m: string) => `/vykazy?tab=${tab}&mesic=${m}`;
+  const mine = stav ? mineAll.filter((r) => r.status === stav) : mineAll;
+  const pending = kdo ? pendingAll.filter((r) => r.worker_id === kdo) : pendingAll;
+  // sestavení URL se zachováním aktivních filtrů (filtr-pilulky i MonthNav i živá zóna)
+  const buildUrl = (over: Record<string, string>) => {
+    const p = new URLSearchParams({ tab, mesic: month });
+    if (stav) p.set('stav', stav);
+    if (kdo) p.set('kdo', kdo);
+    for (const [k, v] of Object.entries(over)) v === '' ? p.delete(k) : p.set(k, v);
+    return `/vykazy?${p.toString()}`;
+  };
+  const back = buildUrl({});
+  const hrefFor = (m: string) => buildUrl({ mesic: m });
   const myTotal = mine.reduce((s, r) => s + r.minutes, 0);
+  // odlišní vykonavatelé v čekajících (pro pilulky filtru na tabu Schvalování)
+  const pendingWorkers = [...new Map(pendingAll.map((r) => [r.worker_id, r.worker_name])).entries()];
 
   return c.html(
     <Layout title={tr('Výkazy práce')} person={person} modules={c.get('modules')} active="vykazy">
@@ -380,8 +482,17 @@ vykazyRoutes.get('/vykazy', async (c) => {
               <h3>{tr('Můj výkaz')}</h3>
               <b>{fmtMinutes(myTotal)}</b>
             </div>
-            {mine.length === 0 ? (
+            <div class="fpill-row">
+              <a class={`fpill ${!stav ? 'active' : ''}`} href={buildUrl({ stav: '' })}>{tr('Vše')}</a>
+              <a class={`fpill ${stav === 'pending' ? 'active' : ''}`} href={buildUrl({ stav: 'pending' })}>{tr('Čeká')}</a>
+              <a class={`fpill ${stav === 'approved' ? 'active' : ''}`} href={buildUrl({ stav: 'approved' })}>{tr('Schváleno')}</a>
+              <a class={`fpill ${stav === 'returned' ? 'active' : ''}`} href={buildUrl({ stav: 'returned' })}>{tr('Vráceno')}</a>
+              <a class={`fpill ${stav === 'rejected' ? 'active' : ''}`} href={buildUrl({ stav: 'rejected' })}>{tr('Zamítnuto')}</a>
+            </div>
+            {mineAll.length === 0 ? (
               <EmptyState text={tr('Zatím jsi v tomto měsíci nevykázal žádnou práci.')} />
+            ) : mine.length === 0 ? (
+              <EmptyState text={tr('Žádné výkazy neodpovídají filtru.')} />
             ) : (
               <div>{mine.map((r) => <WorkRecordRow r={r} person={person} ownerId={null} back={back} showClient />)}</div>
             )}
@@ -391,8 +502,18 @@ vykazyRoutes.get('/vykazy', async (c) => {
         {tab === 'schvalovani' ? (
           <div class="card">
             <div class="card-head"><h3>{tr('Čeká na schválení')}</h3></div>
-            {pending.length === 0 ? (
+            {isAdmin && pendingWorkers.length > 1 ? (
+              <div class="fpill-row">
+                <a class={`fpill ${!kdo ? 'active' : ''}`} href={buildUrl({ kdo: '' })}>{tr('Všichni')}</a>
+                {pendingWorkers.map(([id, name]) => (
+                  <a class={`fpill ${kdo === id ? 'active' : ''}`} href={buildUrl({ kdo: id })}>{name}</a>
+                ))}
+              </div>
+            ) : null}
+            {pendingAll.length === 0 ? (
               <EmptyState text={tr('Nic nečeká na schválení. 🎉')} />
+            ) : pending.length === 0 ? (
+              <EmptyState text={tr('Žádné výkazy neodpovídají filtru.')} />
             ) : (
               <div>{pending.map((r) => <WorkRecordRow r={r} person={person} ownerId={isAdmin ? person.id : person.id} back={back} showClient />)}</div>
             )}
@@ -540,14 +661,24 @@ vykazyRoutes.post('/vykazy', async (c) => {
   const autoApprove = canApproveFor(person, client.owner_id ?? null);
   if (autoApprove) {
     await approveWorkRecord(t, id, person.id);
-  } else if (c.get('modules').has('ukoly')) {
-    // jinak: auto‑úkol „schválit výkaz" pro odpovědnou osobu zákazníka
-    await createApprovalTask(t, {
-      clientId: client.id,
-      assigneeId: client.owner_id ?? null,
-      recordId: id,
-      title: `${tr('Schválit výkaz')}: ${input.description} (${fmtMinutes(input.minutes)})`,
-      createdById: person.id,
+  } else {
+    if (c.get('modules').has('ukoly')) {
+      // auto‑úkol „schválit výkaz" pro odpovědnou osobu zákazníka
+      await createApprovalTask(t, {
+        clientId: client.id,
+        assigneeId: client.owner_id ?? null,
+        recordId: id,
+        title: `${tr('Schválit výkaz')}: ${input.description} (${fmtMinutes(input.minutes)})`,
+        createdById: person.id,
+      });
+    }
+    // upozorni schvalovatele (vlastník klienta + admini), že přibyl výkaz ke schválení
+    await notifyPendingApproval(t, {
+      clientOwnerId: client.owner_id ?? null,
+      actorId: person.id,
+      body: `${input.description} (${fmtMinutes(input.minutes)})`,
+      entityId: id,
+      link: '/vykazy?tab=schvalovani',
     });
   }
   await logEvent(
@@ -557,6 +688,7 @@ vykazyRoutes.post('/vykazy', async (c) => {
     person.id,
     `Vykázána práce: ${input.description} (${svc.label}${svc.detail ? ` · ${svc.detail}` : ''}, ${fmtMinutes(input.minutes)}, ${BILLING_LABELS[input.billing]}${autoApprove ? ', schváleno' : ''}) #${id.slice(0, 8)}`,
   );
+  flash(c, autoApprove ? tr('Práce byla vykázána a schválena.') : tr('Práce byla vykázána.'));
   return c.redirect(back);
 });
 
@@ -576,13 +708,14 @@ vykazyRoutes.post('/vykazy/:id', async (c) => {
 
   await updateWorkRecord(t, record.id, input);
 
-  if (record.status === 'rejected') {
+  if (record.status === 'returned') {
     // úprava vráceného výkazu = znovuodeslání ke schválení (auto‑schválení, pokud editor sám schvaluje)
     const client = await getClient(t, record.client_id);
     if (canApproveFor(person, client?.owner_id ?? null)) {
       await approveWorkRecord(t, record.id, person.id);
       await closeSourceTasks(t, 'work_record', record.id);
       await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} upraven a schválen: ${input.description} (${fmtMinutes(input.minutes)})`);
+      flash(c, tr('Výkaz byl uložen a schválen.'));
     } else {
       await resubmitWorkRecord(t, record.id);
       if (c.get('modules').has('ukoly') && client) {
@@ -594,10 +727,19 @@ vykazyRoutes.post('/vykazy/:id', async (c) => {
           createdById: person.id,
         });
       }
+      await notifyPendingApproval(t, {
+        clientOwnerId: client?.owner_id ?? null,
+        actorId: person.id,
+        body: `${input.description} (${fmtMinutes(input.minutes)})`,
+        entityId: record.id,
+        link: '/vykazy?tab=schvalovani',
+      });
       await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} opraven a znovu odeslán ke schválení: ${input.description} (${fmtMinutes(input.minutes)})`);
+      flash(c, tr('Výkaz byl upraven a znovu odeslán ke schválení.'));
     }
   } else {
     await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} upraven: ${input.description} (${fmtMinutes(input.minutes)}, ${BILLING_LABELS[input.billing]})`);
+    flash(c, tr('Výkaz byl upraven.'));
   }
   return c.redirect(back);
 });
@@ -609,11 +751,12 @@ vykazyRoutes.post('/vykazy/:id/smazat', async (c) => {
   if (!record) return c.notFound();
   const body = await c.req.parseBody();
   const back = safeBack(body.back);
-  if (!canEditRecord(person, record)) return c.redirect(back);
+  if (person.is_admin !== 1) return c.redirect(back); // mazat smí jen administrátor (princip „nic se nemaže")
 
   await deleteWorkRecord(t, record.id);
   await closeSourceTasks(t, 'work_record', record.id); // uzavři auto‑úkol „schválit výkaz"
   await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} smazán (${record.description}, ${fmtMinutes(record.minutes)})`);
+  flash(c, tr('Výkaz byl smazán.'));
   return c.redirect(back);
 });
 
@@ -630,7 +773,18 @@ vykazyRoutes.post('/vykazy/:id/schvalit', async (c) => {
 
   await approveWorkRecord(t, record.id, person.id);
   await closeSourceTasks(t, 'work_record', record.id); // uzavři auto‑úkol „schválit výkaz"
+  await notify(t, {
+    recipientId: record.worker_id,
+    actorId: person.id,
+    type: 'work_record_approved',
+    title: 'Výkaz byl schválen',
+    body: `${record.description} (${fmtMinutes(record.minutes)})`,
+    entityKind: 'work_record',
+    entityId: record.id,
+    link: '/vykazy?tab=muj&stav=approved',
+  });
   await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} schválen (${record.description}, ${fmtMinutes(record.minutes)})`);
+  flash(c, tr('Výkaz byl schválen.'));
   return c.redirect(back);
 });
 
@@ -648,6 +802,87 @@ vykazyRoutes.post('/vykazy/:id/zamitnout', async (c) => {
   const reason = String(body.reason ?? '').trim() || null;
   await rejectWorkRecord(t, record.id, reason);
   await closeSourceTasks(t, 'work_record', record.id); // schvalovatel rozhodl → auto‑úkol „schválit výkaz" zavřít
-  await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} vrácen k přepracování${reason ? `: ${reason}` : ''} (${record.description}, ${fmtMinutes(record.minutes)})`);
+  await notify(t, {
+    recipientId: record.worker_id,
+    actorId: person.id,
+    type: 'work_record_rejected',
+    title: 'Výkaz byl zamítnut',
+    body: reason ? `${record.description} — ${reason}` : record.description,
+    entityKind: 'work_record',
+    entityId: record.id,
+    link: '/vykazy?tab=muj&stav=rejected',
+  });
+  await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} zamítnut${reason ? `: ${reason}` : ''} (${record.description}, ${fmtMinutes(record.minutes)})`);
+  flash(c, tr('Výkaz byl zamítnut.'));
+  return c.redirect(back);
+});
+
+// Vrátit k přepracování: výkaz se vrátí pracovníkovi s instrukcemi; ten ho opraví a znovu pošle.
+vykazyRoutes.post('/vykazy/:id/vratit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const record = await getWorkRecord(t, c.req.param('id'));
+  if (!record) return c.notFound();
+  const body = await c.req.parseBody();
+  const back = safeBack(body.back);
+
+  const client = await getClient(t, record.client_id);
+  if (record.status !== 'pending' || !canApproveFor(person, client?.owner_id ?? null)) return c.redirect(back);
+
+  const instructions = String(body.instructions ?? '').trim() || null;
+  await returnWorkRecord(t, record.id, instructions);
+  await closeSourceTasks(t, 'work_record', record.id); // schvalovatel rozhodl → auto‑úkol „schválit výkaz" zavřít
+  await notify(t, {
+    recipientId: record.worker_id,
+    actorId: person.id,
+    type: 'work_record_returned',
+    title: 'Výkaz byl vrácen k přepracování',
+    body: instructions ? `${record.description} — ${instructions}` : record.description,
+    entityKind: 'work_record',
+    entityId: record.id,
+    link: '/vykazy?tab=muj&stav=returned',
+  });
+  await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} vrácen k přepracování${instructions ? `: ${instructions}` : ''} (${record.description}, ${fmtMinutes(record.minutes)})`);
+  flash(c, tr('Výkaz byl vrácen k přepracování.'));
+  return c.redirect(back);
+});
+
+// „Uložit a schválit" z review‑modálu: schvalovatel uloží aktuální stav formuláře a rovnou schválí.
+vykazyRoutes.post('/vykazy/:id/ulozit-schvalit', async (c) => {
+  const person = c.get('person')!;
+  const t = person.tenant_id;
+  const record = await getWorkRecord(t, c.req.param('id'));
+  if (!record) return c.notFound();
+  const body = await c.req.parseBody();
+  const back = safeBack(body.back);
+
+  const client = await getClient(t, record.client_id);
+  if (record.status !== 'pending' || !canApproveFor(person, client?.owner_id ?? null)) return c.redirect(back);
+
+  // uložit úpravy z formuláře (jsou‑li platné a služba sedí); pak schválit
+  const input = parseInput(body as Record<string, unknown>);
+  let edited = false;
+  if (input) {
+    const services = await listClientServices(t, record.client_id);
+    if (services.some((s) => s.id === input.serviceId)) {
+      await updateWorkRecord(t, record.id, input);
+      edited = true;
+    }
+  }
+  await approveWorkRecord(t, record.id, person.id);
+  await closeSourceTasks(t, 'work_record', record.id);
+  const what = edited && input ? `${input.description} (${fmtMinutes(input.minutes)})` : `${record.description} (${fmtMinutes(record.minutes)})`;
+  await notify(t, {
+    recipientId: record.worker_id,
+    actorId: person.id,
+    type: 'work_record_approved',
+    title: 'Výkaz byl schválen',
+    body: what,
+    entityKind: 'work_record',
+    entityId: record.id,
+    link: '/vykazy?tab=muj&stav=approved',
+  });
+  await logEvent(t, 'client', record.client_id, person.id, `Výkaz #${record.id.slice(0, 8)} schválen${edited ? ' (s úpravou)' : ''}: ${what}`);
+  flash(c, edited ? tr('Výkaz byl uložen a schválen.') : tr('Výkaz byl schválen.'));
   return c.redirect(back);
 });

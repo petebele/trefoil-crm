@@ -147,6 +147,9 @@ export const EN: Record<string, string> = {
   'Hotovo': 'Done',
   'Možnosti úkolu': 'Task options',
   'Smazat tento úkol?': 'Delete this task?',
+  'Úkol byl vytvořen.': 'Task created.',
+  'Úkol byl uložen.': 'Task saved.',
+  'Úkol byl smazán.': 'Task deleted.',
   'Filtr úkolů': 'Task filter',
   'Po termínu': 'Overdue',
   'Dnes': 'Today',
@@ -207,8 +210,8 @@ export const EN: Record<string, string> = {
   'Výkazy práce': 'Work records',
   'Záznamy odvedené práce s časem, schvalováním a podklady pro fakturaci.':
     'Records of work done with time, approval and billing basis.',
-  'Zakázky': 'Jobs',
-  'Delivery projekty s milníky a kanbanem stavů.': 'Delivery projects with milestones and a status kanban.',
+  'Projektové řízení': 'Project management',
+  'Vedení projektů: milníky, úkoly a kanban stavů, napojení na výkazy a vyúčtování.': 'Running projects: milestones, tasks and a status kanban, linked to work records and billing.',
   'Obchod': 'Sales',
   'Obchodní příležitosti v pipeline s hodnotami.': 'Sales opportunities in a pipeline with values.',
 
@@ -425,6 +428,8 @@ export const EN: Record<string, string> = {
   'Zákazník nemá žádnou běžící službu — nejdřív mu ji přidělte (detail → Služby).':
     'The customer has no running service — assign one first (detail → Services).',
   'Popis úkonu': 'Task description',
+  'zobrazí se jako titulek u výkazu': 'shown as the record title',
+  'Detaily úkonu / Poznámka': 'Task details / Note',
   'Čas': 'Time',
   'Hodiny': 'Hours',
   'min': 'min',
@@ -438,6 +443,16 @@ export const EN: Record<string, string> = {
   'Možnosti výkazu': 'Work record options',
   'Schválit': 'Approve',
   'Smazat tento výkaz?': 'Delete this work record?',
+  // hlášky (toasty) po akci s výkazem
+  'Práce byla vykázána.': 'Work logged.',
+  'Práce byla vykázána a schválena.': 'Work logged and approved.',
+  'Výkaz byl upraven.': 'Work record updated.',
+  'Výkaz byl upraven a znovu odeslán ke schválení.': 'Work record updated and resubmitted for approval.',
+  'Výkaz byl schválen.': 'Work record approved.',
+  'Výkaz byl uložen a schválen.': 'Work record saved and approved.',
+  'Výkaz byl vrácen k přepracování.': 'Work record returned for rework.',
+  'Výkaz byl zamítnut.': 'Work record rejected.',
+  'Výkaz byl smazán.': 'Work record deleted.',
   'Předchozí měsíc': 'Previous month',
   'Další měsíc': 'Next month',
   'Můj výkaz': 'My records',
@@ -577,4 +592,65 @@ export const EN: Record<string, string> = {
   '+ přidat kontakt': '+ add contact',
   'Odebrat řádek': 'Remove row',
   'Typ kontaktu': 'Contact type',
+
+  // --- úkoly: stav sloupce (přepínač) ---
+  'Stav vyřízeného úkolu': 'Done status',
+
+  // --- nástěnka: Inbox „Vyžaduje moji pozornost" ---
+  'Vyžaduje moji pozornost': 'Needs my attention',
+  'vykázal(a) práci ke schválení': 'logged work for approval',
+  'Vrácené k přepracování': 'Returned for rework',
+  'Ke schválení': 'For approval',
+  'Nic nečeká — máš čisto. 🎉': 'Nothing pending — all caught up. 🎉',
+  'Žádné úkoly po termínu, na dnešek ani na tento týden. 🎉': 'No overdue, today, or this-week tasks. 🎉',
+  'Systém': 'System',
+
+  // --- schvalování výkazů (manažerský review: schválit / vrátit / zamítnout) ---
+  'Zkontrolovat': 'Review',
+  'Otevřít výkaz': 'Open record',
+  'Tento výkaz čeká na tvé schválení': 'This record is awaiting your approval',
+  'Uložit a schválit': 'Save & approve',
+  'Vrátit k přepracování': 'Return for rework',
+  'Zamítnout': 'Reject',
+  'Zamítnout výkaz': 'Reject record',
+  'Instrukce': 'Instructions',
+  'uvidí je pracovník': 'the worker will see them',
+  'uvidí ho pracovník': 'the worker will see it',
+  'Co je potřeba opravit?': 'What needs fixing?',
+  'Důvod zamítnutí': 'Rejection reason',
+  'Proč výkaz zamítáš?': 'Why reject this record?',
+  'Výkaz byl vrácen k přepracování': 'This record was returned for rework',
+  'Výkaz byl zamítnut': 'This record was rejected',
+  'Uprav výkaz a ulož — znovu se odešle ke schválení.': 'Edit and save — it will be resubmitted for approval.',
+  'Uložit a znovu odeslat': 'Save & resubmit',
+  'Vráceno k přepracování': 'Returned for rework',
+  'Zamítnuto': 'Rejected',
+  // Notifikace (modul D)
+  'Oznámení': 'Notifications',
+  'Označit vše jako přečtené': 'Mark all as read',
+  'Zatím nemáš žádná oznámení.': 'You have no notifications yet.',
+  'Zobrazit vše': 'Show all',
+  '{n} nepřečtených': '{n} unread',
+  'Výkazy ke schválení': 'Work records to approve',
+  'Schválené výkazy': 'Approved work records',
+  'Zatím tu nic není. Až se objeví něco, co se tě týká, najdeš to tady.':
+    'Nothing here yet. Anything that concerns you will show up here.',
+  'Výkaz byl schválen': 'This record was approved',
+  'Nový výkaz ke schválení': 'New work record to approve',
+  'Byl ti přidělen úkol': 'A task was assigned to you',
+  // Přepínání uživatelů (admin „Zobrazit jako…")
+  'Zobrazit jako…': 'View as…',
+  'Zobrazit jako': 'View as',
+  'Prohlížíš jako {name}': 'Viewing as {name}',
+  'Zpět na sebe': 'Back to myself',
+  'Prohlédni si aplikaci očima jiného uživatele. Kdykoli se vrátíš zpět na sebe.':
+    'See the app through another user’s eyes. You can switch back anytime.',
+  'Žádní další uživatelé.': 'No other users.',
+  // Štítky úkolů
+  'Štítky se spravují v Administraci → Seznamy.': 'Labels are managed in Administration → Lists.',
+  // Filtry výpisů (výkazy / úkoly)
+  'Vráceno': 'Returned',
+  'Všichni': 'Everyone',
+  'Všechny štítky': 'All labels',
+  'Žádné výkazy neodpovídají filtru.': 'No records match the filter.',
 };

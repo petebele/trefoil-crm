@@ -1,7 +1,7 @@
 import { SKINS, skinBootScript } from './skins';
 
 /** Verze statických souborů — zvednout při změně theme.css / app.js / skinů (cache-busting). */
-export const ASSET_V = '49';
+export const ASSET_V = '58';
 
 /**
  * Společné prvky <head> pro všechny stránky (vč. login a založení):

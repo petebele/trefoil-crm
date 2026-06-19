@@ -30,7 +30,7 @@
     <a class="nico" href="#" title="Úkoly" aria-label="Úkoly">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 14v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     </a>
-    <a class="nico" href="#" title="Zakázky" aria-label="Zakázky">
+    <a class="nico" href="#" title="Projektové řízení (připravujeme)" aria-label="Projektové řízení (připravujeme)">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
     </a>
     <a class="nico" href="#" title="Obchod" aria-label="Obchod">
@@ -111,8 +111,10 @@
     <div class="krow">
       <span class="chips"><span class="chip">Štítek</span><span class="chip">E-shop</span><span class="chip">VIP</span></span>
       <span style="width:1.5rem"></span>
-      <span class="chip chip-soft-teal">Aktivní</span>
-      <span class="chip chip-soft-gray">Lead</span>
+      <span class="chip chip-soft-teal">Schváleno</span>
+      <span class="chip chip-soft-orange">Vráceno k přepracování</span>
+      <span class="chip chip-soft-red">Zamítnuto</span>
+      <span class="chip chip-soft-gray">Čeká</span>
       <span style="width:1.5rem"></span>
       <span class="cat cat-teal">Hovor</span>
       <span class="cat cat-pink">E-mail</span>
@@ -141,7 +143,7 @@
       <nav class="tabs" style="margin-top:0" aria-label="Ukázka tabů">
         <a class="tab active" href="#">Historie</a>
         <a class="tab" href="#">Soubory <span class="cnt">1</span></a>
-        <a class="tab" href="#">Zakázky <span class="cnt">2</span></a>
+        <a class="tab" href="#">Aktivity <span class="cnt">2</span></a>
       </nav>
       <div class="frow" style="margin-bottom:0">
         <span class="fpill">Uložené seznamy <span class="chev">▾</span></span>
@@ -299,16 +301,16 @@
         <div class="hover-row" style="display:flex;align-items:baseline;gap:.45rem">
           <span>+420 601 111 222</span><span class="meta-lbl">Práce</span>
           <span class="row-actions" style="margin-left:auto">
-            <button class="icon-btn" type="button" aria-label="Upravit">✎</button>
-            <button class="icon-btn" type="button" aria-label="Smazat">✕</button>
+            <button class="icon-btn" type="button" aria-label="Upravit" title="Upravit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="icon-btn icon-btn--danger" type="button" aria-label="Smazat" title="Smazat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </span>
         </div>
         <p class="sub" style="margin:.5rem 0 .25rem">↑ ikonky se ukážou až najetím · ↓ rychlé přidání kontaktů</p>
         <div class="quick-add">
-          <button class="icon-btn" type="button" aria-label="Přidat telefon">📞</button>
-          <button class="icon-btn" type="button" aria-label="Přidat e-mail">✉️</button>
-          <button class="icon-btn" type="button" aria-label="Přidat web">🌐</button>
-          <button class="icon-btn" type="button" aria-label="Přidat jiný kontakt">＋</button>
+          <button class="icon-btn" type="button" aria-label="Přidat telefon" title="Telefon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+          <button class="icon-btn" type="button" aria-label="Přidat e-mail" title="E-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+          <button class="icon-btn" type="button" aria-label="Přidat web" title="Web"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
+          <button class="icon-btn" type="button" aria-label="Přidat jiný kontakt" title="Přidat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         </div>
       </div>
     </div>
@@ -451,7 +453,7 @@
         <span class="feed-ico feed-ico--call" title="Hovor" aria-label="Hovor"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
         <div style="flex:1;min-width:0">
           <div class="tl-head" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b>Já</b> <span class="when">· po 10:00 (naplánováno)</span>
-            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit">✎</button><button class="icon-btn" type="button" aria-label="Více" title="Více">⋯</button></span></div>
+            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" type="button" aria-label="Více" title="Více"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></span></div>
           <div class="note-content tl-body"><p>Hovor — probrat rozpočet Q3, navýšení PPC.</p></div>
         </div>
       </div>
@@ -461,7 +463,7 @@
         <span class="feed-ico feed-ico--note" title="Poznámka" aria-label="Poznámka"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></span>
         <div style="flex:1;min-width:0">
           <div class="tl-head" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b>Petr Běloch</b> <span class="when">· dnes 9:14</span>
-            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit">✎</button><button class="icon-btn" type="button" aria-label="Více" title="Více">⋯</button></span></div>
+            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" type="button" aria-label="Více" title="Více"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></span></div>
           <div class="note-content tl-body"><p>Klient potvrdil rozpočet na Q3. <strong>Fakturace beze změny.</strong></p></div>
         </div>
       </div>
@@ -476,7 +478,7 @@
         <span class="feed-ico feed-ico--meet" title="Schůzka" aria-label="Schůzka"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
         <div style="flex:1;min-width:0">
           <div class="tl-head" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap"><b>Jana Nováková</b> <span class="when">· 3. 6.</span> <span class="chip chip-soft-gray">u osoby Jan Novák</span>
-            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit">✎</button><button class="icon-btn" type="button" aria-label="Více" title="Více">⋯</button></span></div>
+            <span class="feed-acts"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" type="button" aria-label="Více" title="Více"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></span></div>
           <div class="note-content tl-body"><p>Schůzka — kickoff PPC, odsouhlasen plán kampaní.</p></div>
         </div>
       </div>
@@ -521,25 +523,25 @@
       </div>
       <div class="notes-grid">
         <div class="card note-card has-more">
-          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title" style="flex:1;min-width:0;margin-top:0">Schůzka 16. 6.</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti">⋯</button></div>
+          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title" style="flex:1;min-width:0;margin-top:0">Schůzka 16. 6.</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></div>
           <div class="sub" style="font-size:.76rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.05rem">Petr Běloch · včera</div>
           <div class="note-content" style="margin-top:.45rem"><p>Domluveno: navýšit rozpočet, do pátku poslat návrh kampaně. Probrat ještě reporting a rozpad po kampaních, sledování konverzí a remarketing.</p></div>
           <button class="note-expand" type="button" aria-label="Rozbalit / sbalit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg><span class="lbl-more">zobrazit více</span><span class="lbl-less">zobrazit méně</span></button>
         </div>
         <div class="card note-card has-more">
-          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title" style="flex:1;min-width:0;margin-top:0">Přístupy</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti">⋯</button></div>
+          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title" style="flex:1;min-width:0;margin-top:0">Přístupy</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></div>
           <div class="sub" style="font-size:.76rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.05rem">Jana N. · po <span class="chip chip-soft-gray">Soukromá</span></div>
           <div class="note-content" style="margin-top:.45rem"><ul><li>GA4 — přidat servisní účet</li><li>Merchant Center — ověřit doménu</li></ul></div>
           <button class="note-expand" type="button" aria-label="Rozbalit / sbalit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg><span class="lbl-more">zobrazit více</span><span class="lbl-less">zobrazit méně</span></button>
         </div>
         <div class="card note-card has-more">
-          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title note-title--empty" style="flex:1;min-width:0;margin-top:0">Poznámka bez nadpisu</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti">⋯</button></div>
+          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title note-title--empty" style="flex:1;min-width:0;margin-top:0">Poznámka bez nadpisu</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></div>
           <div class="sub" style="font-size:.76rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.05rem">Petr Běloch · 3. 6. 2026</div>
           <div class="note-content" style="margin-top:.45rem"><p>Klient zvažuje další službu (optimalizace feedů). Sledovat při příští schůzce.</p></div>
           <button class="note-expand" type="button" aria-label="Rozbalit / sbalit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg><span class="lbl-more">zobrazit více</span><span class="lbl-less">zobrazit méně</span></button>
         </div>
         <div class="card note-card has-more">
-          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title" style="flex:1;min-width:0;margin-top:0">Tón komunikace</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti">⋯</button></div>
+          <div style="display:flex;align-items:flex-start;gap:.5rem"><div class="note-title" style="flex:1;min-width:0;margin-top:0">Tón komunikace</div><button class="icon-btn" type="button" aria-label="Možnosti poznámky" title="Možnosti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button></div>
           <div class="sub" style="font-size:.76rem;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.05rem">Jana N. · 1. 6. 2026</div>
           <div class="note-content" style="margin-top:.45rem"><p>Preferují stručné e-maily, telefonát jen u urgentních věcí.</p></div>
           <button class="note-expand" type="button" aria-label="Rozbalit / sbalit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg><span class="lbl-more">zobrazit více</span><span class="lbl-less">zobrazit méně</span></button>
@@ -547,6 +549,137 @@
       </div>
     </div>
     <p class="kd" style="margin-top:.7rem"><b>Jednotný pattern (Seznam i Mozaika):</b> nahoře <b>nadpis</b> + <b>⋯ vždy vpravo nahoře</b> (ne hover-only, ustálené místo), pod tím menším písmem <b>autor · datum</b> (do 2 dnů relativně, starší absolutně), pak <b>text</b>. Karta = <code>.card.note-card</code> (mozaika: <code>break-inside:avoid</code> + sloupce). Bez nadpisu se titulní řádek vynechá, ⋯ zůstává. Katalog §26.</p>
+  </section>
+
+  <section class="ks">
+    <h2>27 · Ikony a kontextová menu — jednotný systém</h2>
+    <p class="kd">Jeden zdroj SVG (<code>icons.tsx</code>), v <code>.icon-btn</code> vždy 18 px, barva přes <b>sémantickou třídu</b> (ne inline), kebab = meatball <code>IconMore</code>. Kebab nese jen sekundární akce — <b>primární zůstává viditelná</b>. Pravidla: docs/KOMPONENTY.md §27.</p>
+    <div class="kbox">
+      <div class="krow" style="gap:1.4rem">
+        <span style="display:flex;align-items:center;gap:.4rem"><button class="icon-btn" type="button" aria-label="Upravit" title="Upravit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><span class="sub"><code>.icon-btn</code> (muted→ink)</span></span>
+        <span style="display:flex;align-items:center;gap:.4rem"><button class="icon-btn icon-btn--ok" type="button" aria-label="Schválit" title="Schválit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button><span class="sub"><code>--ok</code> (schválit)</span></span>
+        <span style="display:flex;align-items:center;gap:.4rem"><button class="icon-btn icon-btn--danger" type="button" aria-label="Smazat" title="Smazat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button><span class="sub"><code>--danger</code> (smazat)</span></span>
+        <span style="display:flex;align-items:center;gap:.4rem"><button class="icon-btn" type="button" aria-label="Možnosti" title="Možnosti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button><span class="sub">⋯ kebab = <code>IconMore</code></span></span>
+      </div>
+      <p class="sub" style="margin:1rem 0 .2rem"><b>Vzor řádku:</b> viditelná primární akce + ⋯ přetečení (sekundární)</p>
+      <div class="hover-row" style="display:flex;align-items:center;gap:.5rem;border-top:1px solid var(--line);padding:.55rem 0;max-width:480px">
+        <span style="flex:1">Optimalizace kampaní · 1:30 h</span>
+        <button class="icon-btn icon-btn--ok" type="button" aria-label="Schválit" title="Schválit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+        <button class="icon-btn" type="button" aria-label="Možnosti výkazu" title="Možnosti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/><circle cx="5" cy="12" r="1.4"/></svg></button>
+      </div>
+      <p class="sub" style="margin:1rem 0 .3rem"><b>Přepínač v menu</b> (<code>.opt-switch</code>) — popisek vlevo, switch vpravo; po přepnutí menu zůstává otevřené (<code>data-keep-open</code>):</p>
+      <div class="menu-list panel" style="position:static;display:block;max-width:260px">
+        <button class="opt opt-switch" type="button" role="menuitemcheckbox" aria-checked="true"><span>Stav vyřízeného úkolu</span><span class="switch" aria-hidden="true"></span></button>
+        <button class="opt opt-switch" type="button" role="menuitemcheckbox" aria-checked="false"><span>Jiná volba (vypnuto)</span><span class="switch" aria-hidden="true"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>28 · Schvalování výkazu — manažerský review</h2>
+    <p class="kd">Inbox „Vyžaduje moji pozornost" je seskupený <b>vykonavatel → zákazník</b> s uvozující větou + kontextový <code>ApprovalRow</code> (co se dělalo · služba · datum · čas · poznámka pracovníka). Stav: čeká → schváleno / vráceno k přepracování / zamítnuto. Katalog §28.</p>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:flex-start">
+      <div class="card" style="margin:0;max-width:520px">
+        <div class="card-head"><h3>Vyžaduje moji pozornost</h3></div>
+        <p style="margin:.2rem 0 .35rem"><b>Jana Nováková</b> <span class="sub">vykázala práci ke schválení:</span></p>
+        <div style="margin:0 0 .35rem .25rem;padding-left:.6rem;border-left:2px solid var(--line)">
+          <p class="sub" style="margin:.1rem 0 0;font-weight:600"><a href="#">Acme s.r.o.</a></p>
+          <div class="hover-row" style="display:flex;gap:.7rem;align-items:flex-start;padding:.5rem 0;border-top:1px solid var(--line);font-size:.86rem">
+            <div style="flex:1;min-width:0">
+              <span style="font-weight:600">Optimalizace kampaní v Google Ads</span>
+              <span class="sub" style="display:block">Správa PPC · 17. 6. · 1:30 h</span>
+              <span class="sub" style="display:block;font-style:italic">„Přidáno lookalike publikum, úprava bidů."</span>
+              <div style="margin-top:.3rem"><span class="chip chip-soft-teal">Z paušálu hodin</span></div>
+            </div>
+            <div style="display:flex;gap:.3rem;align-items:center;white-space:nowrap">
+              <button class="btn btn-sm" type="button">Zkontrolovat</button>
+              <button class="btn btn-sm btn-success-solid" type="button">Schválit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="max-width:440px">
+        <p class="sub" style="margin:0 0 .35rem">Review modál — zelený box se 3 akcemi (dole už žádné „Uložit"):</p>
+        <div style="background:var(--teal-soft);border:1px solid var(--teal);border-radius:8px;padding:.6rem .75rem">
+          <p style="margin:0 0 .5rem;font-weight:600;color:var(--teal-ink)">Tento výkaz čeká na tvé schválení</p>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="btn btn-success-solid" type="button">Uložit a schválit</button>
+            <button class="btn" type="button">Vrátit k přepracování</button>
+            <button class="btn btn-danger" type="button">Zamítnout</button>
+          </div>
+          <p class="sub" style="margin:.55rem 0 0">Vrátit → pole <b>Instrukce</b> (rework, vráceno) · Zamítnout → pole <b>Důvod zamítnutí</b> (terminální). Mazat smí jen admin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ks">
+    <h2>29 · Hlášky / toasty (zpětná vazba po akci)</h2>
+    <p class="kd">Po „tiché" akci (schválení, vrácení, zamítnutí, smazání, uložení) vyskočí výrazná bublina <b>nahoře pod horním panelem</b>, sama zmizí ~4 s. Server <code>flash(c, '…', type)</code> → cookie → <code>app.js</code> ji zobrazí (i po htmx swapu). Katalog §29. <i>(Níže jen statická ukázka vzhledu — v aplikaci je plovoucí.)</i></p>
+    <div class="kbox">
+      <div style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-start">
+        <div class="toast toast--success in" role="status" style="position:static;transform:none">Výkaz byl schválen.</div>
+        <div class="toast toast--info in" role="status" style="position:static;transform:none">Výkaz byl vrácen k přepracování.</div>
+        <div class="toast toast--error in" role="status" style="position:static;transform:none">Výkaz byl zamítnut.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s30">
+    <h2>30 · Notifikace — zvonek + odznak + panel</h2>
+    <p class="kd">Zvonek vpravo nahoře (za „Přidat"). Odznak = počet nepřečtených, naskakuje <b>realtime</b>. Klik na řádek → přejde k věci + označí přečtené. Stejný typ bez detailu se <b>slučuje</b> („Výkazy ke schválení (6)"); detailní (vrácení/zamítnutí, přidělený úkol) zůstává jednotlivě. Katalog §30, spec <code>notifikace-v1</code>. <i>(Statická ukázka — panel je tu rozbalený natrvalo.)</i></p>
+    <div class="kbox">
+      <div style="display:flex;gap:2.5rem;align-items:flex-start;flex-wrap:wrap">
+        <div>
+          <p class="kd" style="margin-top:0">Zvonek s odznakem</p>
+          <button class="icon-btn notif-trigger" type="button" aria-label="Oznámení" style="border:1px solid var(--line)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-badge">7</span>
+          </button>
+        </div>
+        <div>
+          <p class="kd" style="margin-top:0">Rozbalený panel</p>
+          <div class="menu-list notif-panel" style="position:static;display:block">
+            <div class="notif-head">
+              <strong>Oznámení</strong>
+              <button class="notif-markall" type="button">Označit vše jako přečtené</button>
+            </div>
+            <div class="notif-scroll">
+              <button class="notif-item notif-item--pending is-unread" type="button">
+                <span class="notif-dot" aria-hidden="true"></span>
+                <span class="notif-text"><span class="notif-title">Výkazy ke schválení</span></span>
+                <span class="notif-count">6</span>
+              </button>
+              <button class="notif-item notif-item--returned is-unread" type="button">
+                <span class="notif-dot" aria-hidden="true"></span>
+                <span class="notif-text">
+                  <span class="notif-title">Výkaz byl vrácen k přepracování</span>
+                  <span class="notif-sub">A/B test reklamních textů — doplň varianty a výsledky</span>
+                  <span class="notif-time">Ivana Broklová · před 2 h</span>
+                </span>
+              </button>
+              <button class="notif-item notif-item--task is-unread" type="button">
+                <span class="notif-dot" aria-hidden="true"></span>
+                <span class="notif-text">
+                  <span class="notif-title">Byl ti přidělen úkol</span>
+                  <span class="notif-sub">Připravit podklady k fakturaci</span>
+                  <span class="notif-time">Adéla Brožová · před 5 h</span>
+                </span>
+              </button>
+              <button class="notif-item notif-item--approved" type="button">
+                <span class="notif-dot" aria-hidden="true"></span>
+                <span class="notif-text">
+                  <span class="notif-title">Výkaz byl schválen</span>
+                  <span class="notif-sub">Tvorba 3 článků na blog (3 h)</span>
+                  <span class="notif-time">Petr Běloch · včera</span>
+                </span>
+              </button>
+            </div>
+            <a class="notif-foot" href="#">Zobrazit vše</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
 </main>

@@ -12,8 +12,57 @@
 > průvodcem (žádný hardcoded „conviu" login). Slovo „Conviu" zůstává už jen ve **firemním**
 > kontextu (agentura, doména `conviu.cz`) a v historických pasážích níže.
 
-## 0) Rychlý stav k 2026-06-18 (aktualizováno průběžně)
+## 0) Rychlý stav k 2026-06-19 (aktualizováno průběžně)
 
+> **Kde jsme naposledy v chatu skončili (2026-06-19, dávka O — ŠTÍTKY úkolů + FILTRACE výpisů (URL)):**
+> - **Úkoly: kategorie → ŠTÍTKY.** Úkol může mít **víc štítků** (nebo žádný — „úkol" jako kategorie byl nesmysl). Reuse štítkového systému: `entity_list_items` rozšířeno o `entity_kind='task'`, Seznam **`task_labels`** (Hovor/E‑mail/Schůzka/Follow‑up; „Úkol" zrušen). Migrace je samoopravná (přejmenuje `task_categories`→`task_labels`, převede přiřazení, ukliď osiřelý Seznam — FK je zapnuté). `TaskRow.labels`, doména `setEntityTags`/`tagsForEntities('task')`. V modálu úkolu **multi‑výběr** (`.label-picker`/`.chip-toggle`, `parseBody({all:true})`); na kartách řada chipů (`TaskLabels`). `tasks.category_item_id` zůstává legacy/nevyužitý.
+> - **Filtrace výpisů s URL (odkazovatelná).** Výkazy: **stav** (čeká/schváleno/vráceno/zamítnuto) na tabu „Můj výkaz" + **vykonavatel** (jen admin) na „Schvalování". Úkoly: **štítek**. Filtr = pilulky `.fpill` v `.fpill-row`, stav v query paramu; živá zóna `#stred` filtr zachová. **Notifikace deep‑linkují na filtr** (rejected → `/vykazy?tab=muj&stav=rejected`, pending skupina → `/vykazy?tab=schvalovani`). Katalog **KOMPONENTY §31**.
+> - ASSET_V **58**. Ověřeno přes app.request (filtry + deep‑link + multi‑label). `demo-reset.ts` reseeduje štítky i notifikace s deep‑linky.
+> - **Titulní / přihlašovací stránka (hotovo, základ):** vystředěná brandovaná karta na jemném gradientu (`--accent-soft`→`--bg`), **logo Trefoil = trojlístek** (inline SVG, 3 lístky v accentu) + wordmark, pod tím login formulář. Bez marketingových textů (Petrova volba). `auth.tsx` `LoginPage`, CSS `.login-*` (theme+mockupy). **Architektura cíl:** appka na subdoméně, veřejný web + login na doméně — zatím jako jedna stránka `/login`.
+>
+> **Kde jsme naposledy v chatu skončili (2026-06-19, dávka N — PŘEPÍNÁNÍ UŽIVATELŮ (A, admin „Zobrazit jako…")):**
+> - **Plná impersonace** pro adminy. Uživatelské menu → **„Zobrazit jako…"** → modál se seznamem aktivních členů → admin se stane cílovým uživatelem (vidí i jedná jako on — Nástěnka, úkoly, výkazy, **zvonek/notifikace**, oprávnění). Trvalý **akcentový banner** „Prohlížíš jako {jméno} · Zpět na sebe" přes celou šířku pod horní lištou.
+> - **Bez nové tabulky:** stav nese krátká httpOnly cookie `imp` = id cíle. **Autorizaci hlídá server** podle SKUTEČNÉ session (cookie `sid`) — podvrhnutá `imp` se bez admin session ignoruje. Efektivní osobu řeší middleware v `server.ts` (`c.set('person', cíl)` + `c.set('impersonator', admin)`); banner čte `getImpersonator()` přes request‑scoped `AsyncLocalStorage` (vzor jako jazyk), takže `Layout` ho vykreslí bez protahování. Odhlášení i „Zpět na sebe" cookii ruší.
+> - Soubory: `src/auth/impersonation.ts`, `src/web/impersonace.tsx` (`GET /impersonace` modál, `POST /impersonace/start|konec`), úpravy `layout.tsx`/`server.ts`/`types.ts`/`auth.tsx`. Spec `docs/specs/prepinani-uzivatelu-v1.md`. CSS `.imp-banner`/`.imp-*` (theme + mockupy). i18n EN doplněno. **ASSET_V 55.**
+> - **Skvělé na testování D:** přepni se na Ivanu/Adélu a uvidíš JEJICH zvonek/Nástěnku. **Pozn.:** akce při impersonaci se zatím evidují pod cílem (audit „provedl admin jako X" = fáze 2). **Další na řadě:** dle Petra (Příležitosti/obchod, Vyúčtování v2, Komentáře, nebo nastavení notifikací).
+> - **Ověřit v prohlížeči** (F5 kvůli v55): jako admin „Zobrazit jako…", banner, „Zpět na sebe".
+>
+> **Kde jsme naposledy v chatu skončili (2026-06-19, dávka M — fix toastů, modály na střed, reset demo dat, NOTIFIKACE (D)):**
+> - **Oprava toastů + UI:** hláška se nezobrazovala kvůli **dvojímu URL‑enkódování cookie** (`flash()` enkódoval ručně a `setCookie` ještě jednou → `JSON.parse` na klientu spadl). Opraveno — posílá se syrový JSON. Toast přesunut **nahoru pod panel**, větší a výraznější (proužek + podbarvení dle typu). Velké **modály vystředěné svisle** (`align-items:center`, `max-height:92vh` — rostou nahoru i dolů, pak scroll uvnitř).
+> - **Reset demo dat:** `scripts/demo-reset.ts` (vyčistí úkoly+výkazy+jejich události a nasází čerstvá data pro **všech 5 uživatelů** — úkoly napříč termíny, výkazy ve všech 4 stavech, paušál Conviu úmyslně přečerpán).
+> - **NOTIFIKACE (D) — POSTAVENO.** Spec `docs/specs/notifikace-v1.md`. **Zvonek vpravo nahoře** (mezi „Přidat" a uživatelem) s **živým odznakem** počtu nepřečtených (SSE `live-update` → naskočí bez obnovy). Panel: hlavička + „Označit vše jako přečtené" + seznam + „Zobrazit vše" (`/notifikace`). **Není to modul** (jako Nástěnka — trvalá výbava pro všechny). Nová tabulka `notifications`, doména `src/domain/notifications.ts`, UI `src/web/notifikace.tsx`. **Princip „nic se nemaže":** přečtení = měkký `read_at`; **nikdy neupozorňuje sám sebe**. **Producenti:** rozhodnutí o výkazu → autorovi; nový výkaz ke schválení → vlastník klienta + admini; přidělení úkolu → nabytému. **Seskupování** (přání Petra): `work_record_pending`/`_approved` se při ≥2 nepřečtených slučí do řádku s počtem („Výkazy ke schválení (6)"); detailní typy jednotlivě. Katalog **KOMPONENTY §30** + mockup; i18n EN doplněno.
+> - ASSET_V **54**. **Další na řadě: A) přepínání uživatelů (admin impersonate).**
+> - **Pozn.:** zvonek + realtime + seskupování jsou interaktivní → **ověřit v prohlížeči** (F5 kvůli CSS/JS v54; ideálně 2 okna pro realtime).
+>
+> **Kde jsme naposledy v chatu skončili (2026-06-18, dávka L — schvalování v2, princip „nic se nemaže", sjednocení ikon):**
+> Velká dávka napříč schvalováním + UI systémem (čeká na Petrův commit + push):
+> - **Schvalování výkazu = 3 fáze / 2 stavy.** Nové stavy `returned` (**vráceno k přepracování** — rework smyčka:
+>   vrátí se s *instrukcemi*, pracovník opraví → „Uložit a znovu odeslat" → znovu *pending*) a `rejected`
+>   (**zamítnuto** — terminální, záznam zůstává, ale **nepočítá** se do času/peněz). Sloupec `rejection_reason`
+>   (instrukce/důvod). Do peněz/času vstupují **jen pending + approved** (`clientMonthMoney`, burn‑up).
+> - **Manažerský review:** Inbox „Vyžaduje moji pozornost" je **seskupený vykonavatel → zákazník** s uvozující
+>   větou + kontextový `ApprovalRow`. Review modál (Zkontrolovat): zelený box se 3 akcemi **Uložit a schválit /
+>   Vrátit k přepracování (Instrukce) / Zamítnout (Důvod zamítnutí)**, dole žádné „Uložit". V řádku „Zkontrolovat"
+>   místo „Upravit". **Mazat výkaz smí jen admin** (i na serveru). Pracovníkův Inbox má sekci „Vrácené k přepracování".
+> - **Princip „nic se nemaže"** zapsán do [CLAUDE.md](../CLAUDE.md): tvrdé mazání jen admin; ostatní = deaktivovat/
+>   skrýt/„neplatný". Plán **Komentářů** (návrh `docs/specs/komentare-v1.md`) — reakce u prvků/událostí (závisí na notifikacích + @zmínkách).
+> - **Sjednocení ikon a kontextových menu (E):** jeden zdroj SVG (`icons.tsx`), `.icon-btn svg`=18, sémantické
+>   barvy `--ok/--danger/--accent` (ne inline), kebab = `IconMore`, ≥44px hit‑area na dotyku. Emoji/textové glyfy
+>   nahrazeny SVG (kebab ⋯, modal ✕, MonthNav ‹›, ＋ sloupec, … editace). Katalog: KOMPONENTY §27/§28/§11c + `chip-soft-red`.
+> - **Drobnosti:** hotové úkoly se nepřeškrtávají · zmizela ikona 📥 výchozího sloupce · „Stav vyřízeného úkolu" =
+>   **switch** v menu (`data-keep-open` → po přepnutí zůstane otevřené) · **i18n**: všechny nové texty mají EN překlad
+>   (`en.ts`) — od teď pravidlo u každé změny textů.
+> - **Projekty (zatím neplánujeme):** záložka „Projekty" v detailu firmy/osoby **skrytá**; modul „Zakázky" v registru
+>   přejmenován na **„Projektové řízení"** (key `projekty`, `built:false`) — v Administraci se ukazuje jako **vypnutý**
+>   s chipem „připravujeme". Placeholder badge „bez projektu" u výkazů odstraněn (projektový chip až s reálnou vazbou).
+> - **Hlášky / toasty (B — hotovo):** unifikovaný systém zpětné vazby po akci. Server `flash(c, '…', type)`
+>   (`src/web/flash.ts`) uloží jednorázovou cookii, `app.js` ji po načtení **i po htmx swapu** přečte → bublina
+>   (`#toast-root`/`.toast`) → smaže. Funguje pro plné navigace (schvalování) i htmx (úkoly). Napojeno na všechny
+>   mutace **výkazů** (vykázáno/upraveno/schváleno/vráceno/zamítnuto/smazáno) a **úkolů** (vytvořen/uložen/smazán);
+>   do dalších modulů (poznámky, klienti, služby, admin) = jednořádkové `flash()`. Katalog §29.
+> - ASSET_V **52**. Pořadí dalších kroků (Petrova volba): **B hotové** → zbývá **D) notifikace (zvonek, spec) → A) přepínání uživatelů (admin)**.
+> - **Pozn.:** schvalování/vrácení/zamítnutí, switch i ikony jsou interaktivní → **ověřit v prohlížeči** (F5 kvůli novému CSS/JS).
+>
 > **Kde jsme naposledy v chatu skončili (2026-06-18, dávka K — osobní Nástěnka: Inbox „Vyžaduje moji pozornost"):**
 > Úvodní stránka (`/`) přestavěna na **osobní velín** (spec `nastenka-inbox-v1.md`, Krok 4 roadmapy):
 > nahoře **Inbox „Vyžaduje moji pozornost"** = **Ke schválení** (čekající výkazy, kde jsem odpovědná osoba

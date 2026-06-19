@@ -321,4 +321,50 @@ export async function migrate(): Promise<void> {
     .on('events')
     .columns(['entity_kind', 'entity_id', 'created_at'])
     .execute();
+
+  // --- Notifikace (modul D) — adresná schránka oznámení pro příjemce ---
+  await db.schema
+    .createTable('notifications')
+    .ifNotExists()
+    .addColumn('id', 'text', (c) => c.primaryKey())
+    .addColumn('tenant_id', 'text', (c) => c.notNull().references('tenants.id'))
+    .addColumn('recipient_id', 'text', (c) => c.notNull().references('persons.id'))
+    .addColumn('actor_id', 'text', (c) => c.references('persons.id'))
+    .addColumn('type', 'text', (c) => c.notNull())
+    .addColumn('title', 'text', (c) => c.notNull())
+    .addColumn('body', 'text')
+    .addColumn('entity_kind', 'text', (c) => c.notNull())
+    .addColumn('entity_id', 'text', (c) => c.notNull())
+    .addColumn('link', 'text', (c) => c.notNull())
+    .addColumn('read_at', 'text')
+    .addColumn('created_at', 'text', (c) => c.notNull())
+    .execute();
+  await db.schema
+    .createIndex('notifications_recipient')
+    .ifNotExists()
+    .on('notifications')
+    .columns(['tenant_id', 'recipient_id', 'read_at', 'created_at'])
+    .execute();
+
+  // --- Úkoly: kategorie → ŠTÍTKY (víc na úkol). Samoopravné a idempotentní. ---
+  // 1) přejmenuj Seznam, ale jen když task_labels ještě není (jinak by spadl na unique index)
+  await sql`UPDATE lists SET key='task_labels', label='Štítky úkolů'
+    WHERE key='task_categories' AND tenant_id NOT IN (SELECT tenant_id FROM lists WHERE key='task_labels')`.execute(db).catch(() => {});
+  // 2) převeď stávající kategorie úkolů na štítky (entity_list_items), kromě generické „Úkol"
+  await sql`INSERT OR IGNORE INTO entity_list_items (tenant_id, entity_kind, entity_id, list_item_id)
+    SELECT t.tenant_id, 'task', t.id, t.category_item_id
+    FROM tasks t
+    JOIN list_items li ON li.id = t.category_item_id
+    JOIN lists l ON l.id = li.list_id AND l.key = 'task_labels'
+    WHERE t.category_item_id IS NOT NULL AND li.value <> 'ukol'`.execute(db).catch(() => {});
+  // 3) ukliď osiřelý starý Seznam task_categories (vznikne, když task_labels už existoval).
+  //    Nejdřív odpoj reference (FK je zapnuté): tasks.category_item_id i případné staré štítky.
+  await sql`UPDATE tasks SET category_item_id = NULL WHERE category_item_id IN
+    (SELECT id FROM list_items WHERE list_id IN (SELECT id FROM lists WHERE key='task_categories'))`.execute(db).catch(() => {});
+  await sql`DELETE FROM entity_list_items WHERE list_item_id IN
+    (SELECT id FROM list_items WHERE list_id IN (SELECT id FROM lists WHERE key='task_categories'))`.execute(db).catch(() => {});
+  await sql`DELETE FROM list_items WHERE list_id IN (SELECT id FROM lists WHERE key='task_categories')`.execute(db).catch(() => {});
+  await sql`DELETE FROM lists WHERE key='task_categories'`.execute(db).catch(() => {});
+  // 4) zruš generickou „Úkol" ve štítcích
+  await sql`UPDATE list_items SET active=0 WHERE value='ukol' AND list_id IN (SELECT id FROM lists WHERE key='task_labels')`.execute(db).catch(() => {});
 }

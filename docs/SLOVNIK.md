@@ -23,9 +23,9 @@
 | **Milník** | Dílčí cíl zakázky s termínem a odškrtnutím. | |
 | **Příležitost** | Potenciální obchod (deal) ve fázích pipeline, s hodnotou. | Sekce **Obchod**. |
 | **Aktivita** | Záznam komunikace v timeline: 📝 poznámka, ✉️ e-mail, 📞 hovor, 👥 schůzka. | Vždy u zákazníka; autor + čas. |
-| **Úkol** | Co je potřeba udělat; má **kategorii** (barevný chip), termín, přiřazeného kolegu. | Kategorie: Hovor, E-mail, Schůzka, Follow-up… (konfigurovatelný Seznam). |
-| **Štítek** | Segmentační nálepka na Firmě/Osobě (malý šedý chip). | Konfigurovatelný Seznam. |
-| **Seznam** | Konfigurovatelný číselník (Katalog služeb, Štítky, Stavy, Kategorie úkolů, Fáze obchodu…). | Spravuje se v Administraci. |
+| **Úkol** | Co je potřeba udělat; má **štítky** (i víc, barevné chipy), termín, přiřazeného kolegu. | Štítky: Hovor, E-mail, Schůzka, Follow-up… (Seznam `task_labels`). Úkol nemusí mít žádný štítek (běžné to-do). |
+| **Štítek** | Segmentační nálepka na Firmě/Osobě (šedý chip) i na **Úkolu** (barevný chip; víc na úkol). | Konfigurovatelný Seznam (`client_tags`, resp. `task_labels`). |
+| **Seznam** | Konfigurovatelný číselník (Katalog služeb, Štítky zákazníků, Stavy, Štítky úkolů, Fáze obchodu…). | Spravuje se v Administraci. |
 | **Role** | Pojmenovaná sada práv (Admin, Moderátor, Člen, Zákazník). | Osoba může mít víc rolí. |
 | **Nástěnka** | Úvodní stránka po přihlášení: pozdrav, naposledy zobrazené, aktivita, úkoly (Po termínu / Dnes), kalendář. | Nahrazuje v1 stránku „Dnes". Není modul — je vždy. |
 | **Organizace** | Společnost, která CRM používá (prostor, ve kterém pracuje tým — pro nás Trefoil). Zakládá ji první uživatel (stává se adminem), kolegové se do ní zvou. | **Nezaměňovat s Firmou** (= zákazník). |
@@ -50,7 +50,8 @@
 | Zakázky / Milníky | engagements / milestones |
 | Obchod / Příležitosti | deals |
 | Komunikace / Aktivita | activities |
-| Úkoly / Kategorie | tasks (+ list task_categories) |
-| Štítky | entity_list_items (list client_tags) |
+| Úkoly | tasks |
+| Štítky úkolu | entity_list_items (entity_kind='task', list task_labels) |
+| Štítky firem/osob | entity_list_items (entity_kind='client'/'person', list client_tags) |
 | Seznamy | lists / list_items |
 | Role / Práva | roles / permissions |

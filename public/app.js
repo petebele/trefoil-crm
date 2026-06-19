@@ -68,6 +68,32 @@ if (document.querySelector('.topbar')) {
     /* starý prohlížeč bez SSE — aplikace funguje dál bez živých aktualizací */
   }
 }
+
+// Hlášky (toasty): server po akci nastaví cookie `flash`; po načtení stránky i po htmx swapu ji
+// přečteme, ukážeme bublinu (sama zmizí ~4 s, klik ji zavře) a cookie smažeme. Funguje pro plné
+// navigace (form POST → redirect, např. schválení výkazu) i pro htmx fragmenty.
+function showToast(msg, type) {
+  var root = document.getElementById('toast-root');
+  if (!root) { root = document.createElement('div'); root.id = 'toast-root'; document.body.appendChild(root); }
+  var el = document.createElement('div');
+  el.className = 'toast toast--' + (type || 'success');
+  el.setAttribute('role', 'status');
+  el.textContent = msg;
+  root.appendChild(el);
+  requestAnimationFrame(function () { el.classList.add('in'); });
+  var kill = function () { el.classList.remove('in'); setTimeout(function () { if (el.parentNode) el.remove(); }, 250); };
+  var t = setTimeout(kill, 4000);
+  el.addEventListener('click', function () { clearTimeout(t); kill(); });
+}
+function readFlash() {
+  var m = document.cookie.match(/(?:^|; )flash=([^;]*)/);
+  if (!m) return;
+  document.cookie = 'flash=; Max-Age=0; path=/'; // jednorázová — hned smazat
+  try { var f = JSON.parse(decodeURIComponent(m[1])); if (f && f.m) showToast(f.m, f.t); } catch (e) {}
+}
+readFlash();
+document.body.addEventListener('htmx:afterSettle', readFlash);
+
 // Rozbalovací menu/panel: klik na [data-menu-toggle] přepne .open, klik mimo zavře.
 // Klik DOVNITŘ otevřeného panelu (pole, našeptávač…) ho nechává otevřený.
 document.addEventListener('click', function (e) {
@@ -152,10 +178,11 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
-// Po úspěšné akci spuštěné zevnitř panelu panel zavři.
+// Po úspěšné akci spuštěné zevnitř panelu panel zavři — kromě prvků s [data-keep-open]
+// (přepínače, které mají po akci zůstat otevřené, ať je vidět změna stavu).
 document.body.addEventListener('htmx:afterRequest', function (e) {
   var src = e.detail && e.detail.elt;
-  if (src && src.closest) {
+  if (src && src.closest && !src.closest('[data-keep-open]')) {
     var menu = src.closest('.menu.open');
     if (menu) { menu.classList.remove('open'); menu.classList.remove('up'); }
   }

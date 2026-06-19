@@ -43,7 +43,7 @@ import { tr, relTime, fmtNum, currency } from '../i18n';
 import { tasksForClient, TaskItemRow } from './ukoly';
 import { NotesTab } from './poznamky';
 import { notesForEntity } from '../domain/notes';
-import { IconPhone, IconMail, IconUsers } from './icons';
+import { IconPhone, IconMail, IconUsers, IconPencil } from './icons';
 import { SluzbyZakaznikaTab } from './sluzbyZakaznika';
 import { listClientServices } from '../domain/clientServices';
 import { listCatalog } from '../domain/services';
@@ -394,7 +394,7 @@ function personAddPicker(base: string, persons: Array<{ id: string; name: string
         <div class="quick-add" style="margin:.15rem 0 .5rem">
           <button type="button" class="icon-btn" data-reveal="personAddPhone" aria-label={tr('Přidat pole telefonu')} title={tr('Telefon')}><IconPhone /></button>
           <button type="button" class="icon-btn" data-reveal="personAddEmail" aria-label={tr('Přidat pole e-mailu')} title={tr('E-mail')}><IconMail /></button>
-          <button type="button" class="icon-btn" aria-label={tr('Kompletní editace osoby')} title={tr('Kompletní editace')} hx-get={`${base}/osoba/modal`} hx-target="#modal" hx-swap="innerHTML">…</button>
+          <button type="button" class="icon-btn" aria-label={tr('Kompletní editace osoby')} title={tr('Kompletní editace')} hx-get={`${base}/osoba/modal`} hx-target="#modal" hx-swap="innerHTML"><IconPencil /></button>
         </div>
         <button class="btn btn-sm btn-primary" type="submit" style="width:100%;justify-content:center">{tr('Přidat')}</button>
       </form>
@@ -452,7 +452,7 @@ firmyRoutes.get('/firmy/:id', async (c) => {
   }
 
   // Statistické dlaždice na Nástěnce firmy (počítáme jen pro tento pohled).
-  const isNastenka = tab !== 'sluzby' && tab !== 'vykazy' && tab !== 'poznamky' && tab !== 'projekty' && tab !== 'aktivity';
+  const isNastenka = tab !== 'sluzby' && tab !== 'vykazy' && tab !== 'poznamky' && tab !== 'aktivity';
   let nast: { running: number; workMinutes: number; workMoney: number; expected: number } | null = null;
   if (isNastenka) {
     const money = await clientMonthMoney(t, client, month);
@@ -540,8 +540,6 @@ firmyRoutes.get('/firmy/:id', async (c) => {
             />
           ) : tab === 'poznamky' ? (
             <NotesTab base={base} kind="client" entityId={client.id} notes={notes} person={person} canTask={modules.has('ukoly')} view={poznView} />
-          ) : tab === 'projekty' ? (
-            <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'aktivity' ? (
             <ActivityFeed events={events} base={base} active={atyp} />
           ) : (

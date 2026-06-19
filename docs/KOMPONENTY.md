@@ -36,9 +36,11 @@
 <!-- a) Štítek (tag) — tlumený, malý, NIKDY nekřičí -->
 <span class="chip">E-shop</span>
 
-<!-- b) Stav — měkké barevné pozadí -->
-<span class="chip chip-soft-teal">Aktivní</span>
-<span class="chip chip-soft-gray">Lead</span>
+<!-- b) Stav — měkké barevné pozadí (teal=ok, orange=pozor, red=negativní, gray=neutrální, dark) -->
+<span class="chip chip-soft-teal">Schváleno</span>
+<span class="chip chip-soft-orange">Vráceno k přepracování</span>
+<span class="chip chip-soft-red">Zamítnuto</span>
+<span class="chip chip-soft-gray">Čeká</span>
 
 <!-- c) Kategorie úkolu — plná barva, bílý text (jediný „hlasitý" chip) -->
 <span class="cat cat-teal">Hovor</span>
@@ -627,6 +629,62 @@ Poznámka má **volitelný nadpis** (`title`, prostý text) + formátované těl
 - **CSS** `.note-title`, `.notes-grid`(`--one`), `.note-card`(`.dragging`/`.expanded`/`.has-more`),
   `.note-expand` v `public/theme.css` **i** `mockupy/styl.css`.
 - Akce (⋯: Upravit / Vytvořit úkol / viditelnost / Smazat) a chipy „Soukromá" / „u osoby X" fungují v obou pohledech.
+
+---
+
+## 27. Ikony a kontextová menu — jednotný systém
+
+Závazná pravidla pro ikony a kontextové akce (vychází z [NN/g — Contextual Menus](https://www.nngroup.com/articles/contextual-menus-guidelines/) a běžných icon‑best‑practices). Cíl: jeden styl, předvídatelnost, přístupnost.
+
+- **Jeden zdroj, jeden styl.** Všechny ikony jsou inline SVG z `src/web/icons.tsx` (Feather/Lucide, viewBox 24, stroke 2, `currentColor`). **Žádné emoji ani textové glyfy** v UI chrome (ne `⋯`, `✕`, `‹ ›`, `＋`, `…`) — místo nich `IconMore`, `IconX`, `IconChevronLeft/Right`, `IconPlus`, `IconPencil`, `IconCheckPlain`.
+- **Velikost: jednotně 18 px uvnitř `.icon-btn`** (vynuceno CSS `.icon-btn svg{18}` — nezáleží na výchozí velikosti ikony). Mimo `.icon-btn` drž 16 (v textu) / 20 (záhlaví/nav).
+- **Barva = sémantická třída, ne inline `style`.** `.icon-btn` (muted→ink), **`.icon-btn--ok`** (teal, schválit/potvrdit), **`.icon-btn--danger`** (red, mazání), `.icon-btn--accent`. (CSS v `theme.css` **i** `mockupy/styl.css`.)
+- **Přístupnost + dotyk.** Ikonové tlačítko **vždy `aria-label`** + `title`/`data-tip` (stejný text); SVG je `aria-hidden` (řeší komponenta `Svg`). Na dotyku `≥44px` hit‑area (`@media (pointer:coarse)`).
+- **Kebab `⋯` = `IconMore`** (komponenta `KebabMenu` → `Picker` trigger). Kebab nese **jen sekundární** akce; **primární/častou akci nech viditelnou** vedle něj (vzor `[viditelná akce] [⋯]`, např. Schválit + ⋯ u výkazu). **Jednu akci do kebabu neschovávej** — ukaž ji rovnou. Destruktivní akce **dole, červeně** (`--danger`). Viz i §20.
+
+## 28. Schvalování výkazu — manažerský review (schválit / vrátit / zamítnout)
+
+Řádek čekajícího výkazu (`WorkRecordRow`, `ApprovalRow`) i modál (`WorkRecordModal`) v `vykazy.tsx`. Stav výkazu: **čeká → schváleno / vráceno k přepracování / zamítnuto** (viz [DATOVY-MODEL](DATOVY-MODEL.md)).
+
+- **Inbox „Vyžaduje moji pozornost" (Nástěnka):** schvalování **seskupené dvouúrovňově vykonavatel → zákazník** s uvozující větou „**Jméno** vykázal(a) práci ke schválení:". Kontextový řádek `ApprovalRow` (co se dělalo · služba · datum · čas · poznámka pracovníka kurzívou · štítek účtování) + viditelné **Zkontrolovat** a **Schválit**. (Ne řádek ze služby u zákazníka — manažer potřebuje víc kontextu.)
+- **Review modál (Zkontrolovat):** nahoře zelený box „**Tento výkaz čeká na tvé schválení**" se **třemi** akcemi — **Uložit a schválit** (uloží i úpravy a schválí) · **Vrátit k přepracování** (rozbalí pole *Instrukce*) · **Zamítnout** (rozbalí pole *Důvod zamítnutí*). **Dole žádné „Uložit"** (schvaluje se shora).
+- **Vráceno k přepracování** (`chip-soft-orange`): rework smyčka — vrátí se pracovníkovi s instrukcemi; ten opraví → **Uložit a znovu odeslat** → znovu *čeká*. Do času/peněz nevstupuje.
+- **Zamítnuto** (`chip-soft-red`): terminální — záznam **zůstává** (princip „nic se nemaže"), ale **nepočítá** se do času ani peněz.
+- **Rychlá zelená fajfka Schválit** (`.icon-btn--ok`, `IconCheckPlain`) je vždy viditelná před `⋯`. **Mazat výkaz smí jen administrátor.** *(Notifikace pracovníka o vrácení/zamítnutí přijde s modulem Notifikace — v kódu `TODO(notifikace D)`.)*
+
+## 11c. Přepínač (switch) jako položka menu `.opt-switch`
+
+Položka rozbalovacího menu, která **přepíná stav** (např. „Stav vyřízeného úkolu" u kanban sloupce). Popisek vlevo, **switch vpravo** (`.opt-switch` flex space‑between; `.switch` = kolejnice + knoflík, `aria-checked` překlápí barvu/posun). **Po přepnutí menu zůstává otevřené** — prvek nese `data-keep-open` (app.js handler `htmx:afterRequest` ho proto nezavře) a překresluje **jen sebe** (`hx-target="this"`); zavře se až klikem mimo. CSS v `theme.css` **i** `mockupy/styl.css`.
+
+## 29. Hlášky / toasty (zpětná vazba po akci)
+
+Po akci, která jinak proběhne „potichu" (záznam zmizí / přesune se — schválení, vrácení, zamítnutí, smazání, uložení), ukaž **toast**. Jednotný mechanismus přes cookii — funguje pro **plné navigace i htmx**.
+
+- **Server:** `flash(c, 'Výkaz byl schválen.', 'success' | 'error' | 'info')` (`src/web/flash.ts`) **před** `c.redirect(...)`. Uloží jednorázovou cookii `flash` (JSON `{m,t}`, `maxAge` 30 s). **Pozor:** `setCookie` hodnotu URL‑enkóduje sám — ve `flash()` se **ručně neenkóduje** (jinak dvojité enkódování → `JSON.parse` na klientu spadne a hláška se tiše zahodí).
+- **Klient:** `app.js` po načtení stránky **i po `htmx:afterSettle`** cookii přečte (`decodeURIComponent` → `JSON.parse`), zobrazí bublinu (`#toast-root` › `.toast.toast--<type>`) a cookii smaže. Bublina **nahoře pod horním panelem**, výrazná (barevný proužek + jemné podbarvení dle typu), sama zmizí ~4 s, klik ji zavře.
+- **Kdy:** akce bez jiné vizuální odezvy. **NE** u věcí s vlastní odezvou (zaškrtnutí checkboxu úkolu, drag/drop) — tam by toast jen rušil.
+- **Texty** přes `tr()` (mají EN překlad). CSS `.toast` v `public/theme.css` **i** `mockupy/styl.css`.
+
+---
+
+## 30. Notifikace — zvonek + odznak + panel
+
+Adresná oznámení „co se týká tebe" (na rozdíl od neadresného feedu „Aktivity" §25). Žije jako **zvonek vpravo nahoře**, mezi „Přidat" a uživatelským menu. Není to zapínatelný modul — je to trvalá výbava pro každého přihlášeného (jako Nástěnka). Spec `docs/specs/notifikace-v1.md`, UI `src/web/notifikace.tsx`, data `notifications`.
+
+- **Zvonek** = `.icon-btn.notif-trigger` s `IconBell`; **odznak** `.notif-badge` (akcentová bublina s počtem; prázdný `:empty` se skryje, přes 99 → „99+").
+- **Živost:** skořápka `#notifBell` (v `layout.tsx`) má `hx-get="/notifikace/zvonek" hx-trigger="load, live-update from:body"` — odznak i panel se dotahují po načtení a **samy obnoví při každé realtime události** (zvonek se rozsvítí bez obnovy stránky). Wrapper má `data-keep-open`, aby ho realtime swap nezavíral.
+- **Panel** `.notif-panel` (rozbalovací `.menu-list`): hlavička „Oznámení" + **„Označit vše jako přečtené"** (`hx-post`, vrací obnovený zvonek), scroll se seznamem, patička „Zobrazit vše" → `/notifikace` (plná historie).
+- **Řádek** `.notif-item` (= tlačítko ve formuláři; klik = `POST …/otevrit` → označí přečtené + přejde k věci). Barva dle typu přes `--nc` (`--approved/returned/rejected/pending/task`): tečka `.notif-dot`, titulek (`tr()` — klíč je česky), detail `.notif-sub`, řádek `.notif-time` s původcem. **Nepřečtené** = `.is-unread` (podbarvení + plná tečka + tučný titulek).
+- **Seskupování:** typy bez detailu (`work_record_pending`, `work_record_approved`) se při ≥2 nepřečtených slučují do jednoho `.notif-item` s `.notif-count` (např. „Výkazy ke schválení (6)") vedoucího na společnou stránku (`POST …/skupina/:type/otevrit`). Detailní typy (vrácení/zamítnutí, přidělený úkol) zůstávají jednotlivě.
+- CSS `.notif-*` v `public/theme.css` **i** `mockupy/styl.css`. Texty přes `tr()`.
+
+---
+
+## 31. Filtrace výpisů (URL) + multi‑výběr štítků
+
+**Filtrace = řada pilulek `.fpill` v `.fpill-row`, stav drží URL** (query param). Odkazovatelné: dá se na konkrétní filtr odkázat (např. z notifikace „zamítnuto" na `/vykazy?tab=muj&stav=rejected`). Aktivní pilulka má `.active`. URL se skládá tak, aby zachovala ostatní filtry (měsíc, tým…). Použito ve **Výkazech** (stav: čeká/schváleno/vráceno/zamítnuto; vykonavatel — jen admin) a **Úkolech** (štítek). Živá zóna `#stred` se znovu‑načítá se stejnou URL, takže filtr přežije realtime překreslení.
+
+**Multi‑výběr štítků (`.label-picker` + `.chip-toggle`)** — v modálu úkolu: štítky jako přepínací chipy se skrytým checkboxem (`name="label_ids"`, víc naráz). Zapnutý = plná barva (`.cat-<barva>`), vypnutý = obrys. Server čte pole přes `parseBody({ all: true })`. Štítky úkolu se ukládají do `entity_list_items` (entity_kind=`task`, Seznam `task_labels`) — viz datový model; na kartách/řádcích se zobrazují jako řada barevných chipů (`TaskLabels`). **Kategorie úkolů byly nahrazeny štítky** (úkol může mít víc štítků, nebo žádný).
 
 ---
 

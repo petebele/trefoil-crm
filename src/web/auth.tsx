@@ -4,23 +4,44 @@ import type { AppEnv } from '../types';
 import { db } from '../db';
 import { verifyPassword } from '../auth/password';
 import { createSession, destroySession, setSessionCookie, clearSessionCookie } from '../auth/session';
+import { clearImpersonationCookie } from '../auth/impersonation';
 import { readForm } from '../lib/util';
 import { isLocale, tr, getLocale } from '../i18n';
 import { HeadAssets } from './head';
 
 export const authRoutes = new Hono<AppEnv>();
 
+/** Značka Trefoil — trojlístek (tři lístky) v barvě akcentu. */
+function TrefoilMark() {
+  return (
+    <svg class="login-logo" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
+      <circle cx="16" cy="9.6" r="6.3" />
+      <circle cx="9.8" cy="20" r="6.3" />
+      <circle cx="22.2" cy="20" r="6.3" />
+    </svg>
+  );
+}
+
+/**
+ * Titulní/přihlašovací stránka: vystředěná brandovaná karta s logem a přihlášením.
+ * (Aplikace poběží na subdoméně; veřejný web + login na doméně. Zatím základ + formulář.)
+ */
 function LoginPage(props: { orgName: string; email?: string; error?: string }) {
   return (
     <html lang={getLocale()}>
       <head>
         <HeadAssets title={`${tr('Přihlášení')} · Trefoil CRM`} />
       </head>
-      <body>
-        <main class="page" style="max-width:420px">
-          <div class="card" style="padding:1.6rem;margin-top:4rem">
-            <h1 style="font-size:1.3rem">Trefoil CRM</h1>
-            <p class="sub" style="margin:.2rem 0 1.2rem">{tr('Přihlášení do organizace {org}', { org: props.orgName })}</p>
+      <body class="login-body">
+        <main class="login-wrap">
+          <div class="login-card">
+            <div class="login-brand">
+              <TrefoilMark />
+              <span class="login-wm">Trefoil <small>CRM</small></span>
+            </div>
+            <p class="login-sub">
+              {props.orgName ? tr('Přihlášení do organizace {org}', { org: props.orgName }) : tr('Přihlášení')}
+            </p>
             {props.error ? <div class="form-error">{tr(props.error)}</div> : null}
             <form method="post" action="/login">
               <div class="field">
@@ -31,11 +52,12 @@ function LoginPage(props: { orgName: string; email?: string; error?: string }) {
                 <label>{tr('Heslo')}</label>
                 <input class="input" type="password" name="password" required />
               </div>
-              <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">
+              <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;margin-top:.4rem">
                 {tr('Přihlásit se')}
               </button>
             </form>
           </div>
+          <p class="login-foot">Trefoil CRM</p>
         </main>
       </body>
     </html>
@@ -72,6 +94,7 @@ authRoutes.post('/login', async (c) => {
 authRoutes.post('/logout', async (c) => {
   await destroySession(getCookie(c, 'sid'));
   clearSessionCookie(c);
+  clearImpersonationCookie(c); // odhlášení ukončí i případnou impersonaci
   return c.redirect('/login');
 });
 

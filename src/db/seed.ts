@@ -43,14 +43,13 @@ const DEFAULT_LISTS: Array<{
     ],
   },
   {
-    key: 'task_categories',
-    label: 'Kategorie úkolů',
+    key: 'task_labels',
+    label: 'Štítky úkolů',
     items: [
       { value: 'hovor', label: 'Hovor', color: 'teal' },
       { value: 'email', label: 'E-mail', color: 'pink' },
       { value: 'schuzka', label: 'Schůzka', color: 'red' },
       { value: 'follow_up', label: 'Follow-up', color: 'orange' },
-      { value: 'ukol', label: 'Úkol', color: 'indigo' },
     ],
   },
 ];

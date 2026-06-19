@@ -312,8 +312,6 @@ osobyRoutes.get('/osoby/:id', async (c) => {
             </div>
           ) : tab === 'poznamky' ? (
             <NotesTab base={base} kind="person" entityId={p.id} notes={notes} person={person} canTask={modules.has('ukoly')} view={poznView} />
-          ) : tab === 'projekty' ? (
-            <div class="card"><EmptyState text={tr('Funkčnost projektů teprve promyslíme.')} /></div>
           ) : tab === 'aktivity' ? (
             <ActivityFeed events={events} base={base} active={atyp} />
           ) : (

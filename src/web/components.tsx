@@ -1,7 +1,7 @@
 import type { Child } from 'hono/jsx';
 import { CONTACT_TYPE_LABELS } from '../domain/contacts';
 import type { PersonContactsTable } from '../db/schema';
-import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil, IconChevron } from './icons';
+import { IconPhone, IconMail, IconGlobe, IconPlus, IconPencil, IconChevron, IconMore, IconX } from './icons';
 import { tr, fmtDateTime } from '../i18n';
 
 /** Sdílené komponenty modulů (skládají jen prvky z katalogu). */
@@ -70,7 +70,7 @@ export function Picker(props: { id: string; trigger: Child; triggerClass?: strin
  */
 export function KebabMenu(props: { id: string; label: string; children?: Child }) {
   return (
-    <Picker id={props.id} trigger="⋯" triggerClass="icon-btn" triggerLabel={props.label} alignRight>
+    <Picker id={props.id} trigger={<IconMore />} triggerClass="icon-btn" triggerLabel={props.label} alignRight>
       {props.children}
     </Picker>
   );
@@ -85,7 +85,7 @@ export function ModalShell(props: { title: string; children?: Child }) {
       <div class="modal-card">
         <div class="modal-head">
           <h3>{props.title}</h3>
-          <button type="button" class="icon-btn" data-modal-close aria-label={tr('Zavřít')}>✕</button>
+          <button type="button" class="icon-btn" data-modal-close aria-label={tr('Zavřít')}><IconX /></button>
         </div>
         {props.children}
       </div>
@@ -362,7 +362,7 @@ export function ContactRowsField(props: { contacts: PersonContactsTable[]; label
       </select>
       <input class="input cval" name="c_value" value={c?.value ?? ''} placeholder={tr('Hodnota')} autocomplete="off" aria-label={tr('Hodnota kontaktu')} />
       <input class="input clab" name="c_label" value={c?.label ?? ''} list="contactLabelsModal" placeholder={tr('Štítek')} autocomplete="off" aria-label={tr('Štítek kontaktu')} />
-      <button type="button" class="icon-btn" data-remove-row aria-label={tr('Odebrat řádek')}>✕</button>
+      <button type="button" class="icon-btn" data-remove-row aria-label={tr('Odebrat řádek')}><IconX /></button>
     </div>
   );
   return (
@@ -556,7 +556,7 @@ export function DetailTabs(props: { base: string; active: string; sluzbyLabel?: 
       {tab('poznamky', tr('Poznámky'))}
       {tab('sluzby', props.sluzbyLabel ?? tr('Služby'))}
       {props.showVykazy ? tab('vykazy', tr('Výkazy a vyúčtování')) : null}
-      {tab('projekty', tr('Projekty'))}
+      {/* Záložka „Projekty" skrytá — projektové řízení zatím neplánujeme (modul je v Administraci „Připravujeme"). */}
       {tab('aktivity', tr('Aktivity'))}
     </nav>
   );

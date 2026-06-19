@@ -48,11 +48,11 @@ export const MODULES: ModuleDef[] = [
     built: true,
   },
   {
-    key: 'zakazky',
-    label: 'Zakázky',
-    desc: 'Delivery projekty s milníky a kanbanem stavů.',
+    key: 'projekty',
+    label: 'Projektové řízení',
+    desc: 'Vedení projektů: milníky, úkoly a kanban stavů, napojení na výkazy a vyúčtování.',
     icon: 'briefcase',
-    path: '/zakazky',
+    path: '/projekty',
     built: false,
   },
   {

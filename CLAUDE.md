@@ -46,6 +46,7 @@ terminologie → [docs/SLOVNIK.md](docs/SLOVNIK.md); konkrétní modul → jeho 
 - **Barvy = tokeny** — nikdy barvu natvrdo. Vždy `var(--token)`. Tokeny definuje aktivní skin (`public/skins/<id>.css`), struktura je v `public/theme.css`.
 - **Realtime** — každý zápis, který je „událost" (založení, změna, přiřazení), volá `logEvent()`. Živé zóny (`hx-trigger="live-update from:body"`) se překreslují samy. Nové moduly vznikají rovnou s živými zónami.
 - **Vrstvy** — `web/` nesmí psát SQL, volá funkce z `domain/`. `domain/` neví o HTTP ani HTML. `db/` je jediný přístupový bod k databázi.
+- **Nic se nemaže (data mají kontext a historii)** — záznamy nevznikají „jen tak"; mají vazby a tvoří historii, kterou vždy potřebujeme dohledat. **Tvrdé smazání je výhradně pro administrátora.** Ostatní akce nikdy nemažou — záznam se *deaktivuje / skryje / označí jako „neplatný"* (např. výkaz „Vrácen k přepracování" místo smazání). Zpětná vazba a stopa zůstávají vždy. Nové akce navrhuj v tomto duchu (soft‑stav, ne `DELETE`).
 - **Terminologie** — viz `docs/SLOVNIK.md`. Stejné slovo v UI i v kódu.
 
 ---

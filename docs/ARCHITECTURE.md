@@ -210,6 +210,12 @@ web/ (Hono routy + JSX)  →  domain/ (logika nad Kysely)  →  db/ (Kysely inst
 - Session: serverová (tabulka `sessions`), token = 32 náhodných bajtů, uložený
   v httpOnly cookie „sid", platnost 30 dní; po vypršení se maže. Deaktivace osoby
   (`is_active=0`) zneplatní přihlášení. (`src/auth/session.ts`)
+- **Přepínání uživatelů (admin „Zobrazit jako…", plná impersonace):** krátká httpOnly cookie
+  `imp` = id cílové osoby. Middleware v `server.ts` ji uzná **jen** je‑li skutečná osoba ze session
+  admin → efektivní `c.get('person')` = cíl, `c.get('impersonator')` = admin (banner). Skutečného
+  admina nese request‑scoped `AsyncLocalStorage` (`getImpersonator()`), aby ho `Layout` ukázal v banneru.
+  Bez nové tabulky; akce se (v1) evidují pod cílem. (`src/auth/impersonation.ts`,
+  `src/web/impersonace.tsx`, spec `docs/specs/prepinani-uzivatelu-v1.md`)
 
 ## 9) Moduly (zapínatelné části)
 

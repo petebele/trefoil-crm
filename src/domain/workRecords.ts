@@ -201,7 +201,23 @@ export async function approveWorkRecord(tenantId: string, id: string, approverId
     .execute();
 }
 
-/** Vrácení výkazu k přepracování (zamítnutí) — uloží důvod, pracovník ho uvidí a může opravit. */
+/**
+ * Vrácení výkazu k PŘEPRACOVÁNÍ — uloží instrukce; pracovník výkaz opraví a znovu pošle ke schválení.
+ * Dočasný stav v rework smyčce (do peněz/času nevstupuje, dokud není schválen).
+ */
+export async function returnWorkRecord(tenantId: string, id: string, instructions: string | null): Promise<void> {
+  await db
+    .updateTable('work_records')
+    .set({ status: 'returned', rejection_reason: instructions, approved_by_id: null, approved_at: null })
+    .where('tenant_id', '=', tenantId)
+    .where('id', '=', id)
+    .execute();
+}
+
+/**
+ * ZAMÍTNUTÍ výkazu — uloží důvod. Záznam zůstává viditelný (princip „nic se nemaže"), ale je
+ * ve stavu „zamítnuto" a NEvstupuje do výpočtů času ani peněz. Terminální (není k přepracování).
+ */
 export async function rejectWorkRecord(tenantId: string, id: string, reason: string | null): Promise<void> {
   await db
     .updateTable('work_records')
@@ -211,7 +227,7 @@ export async function rejectWorkRecord(tenantId: string, id: string, reason: str
     .execute();
 }
 
-/** Znovuodeslání vráceného výkazu ke schválení (po opravě pracovníkem) — vyčistí důvod. */
+/** Znovuodeslání vráceného výkazu ke schválení (po opravě pracovníkem) — vyčistí instrukce. */
 export async function resubmitWorkRecord(tenantId: string, id: string): Promise<void> {
   await db
     .updateTable('work_records')
@@ -221,12 +237,12 @@ export async function resubmitWorkRecord(tenantId: string, id: string): Promise<
     .execute();
 }
 
-/** Výkazy pracovníka vrácené k přepracování (pro jeho Nástěnku „Vyžaduje moji pozornost"). */
-export async function listRejectedForWorker(tenantId: string, workerId: string): Promise<WorkRecord[]> {
+/** Výkazy pracovníka vrácené k PŘEPRACOVÁNÍ (pro jeho Nástěnku „Vyžaduje moji pozornost"). */
+export async function listReturnedForWorker(tenantId: string, workerId: string): Promise<WorkRecord[]> {
   const rows = await baseSelect()
     .where('work_records.tenant_id', '=', tenantId)
     .where('work_records.worker_id', '=', workerId)
-    .where('work_records.status', '=', 'rejected')
+    .where('work_records.status', '=', 'returned')
     .orderBy('work_records.performed_at', 'desc')
     .execute();
   return rows as WorkRecord[];
@@ -326,7 +342,8 @@ function workCosts(records: WorkRecord[], allowance: number, overageRate: number
  */
 export async function clientMonthMoney(tenantId: string, client: ClientsTable, month: string): Promise<MonthMoney> {
   const all = await listForClientMonth(tenantId, client.id, month);
-  const records = all.filter((r) => r.status !== 'rejected'); // vrácené k přepracování se nepočítají
+  // do času ani peněz vstupuje jen schválené (potvrzené) a čekající (očekávané); vrácené a zamítnuté ne
+  const records = all.filter((r) => r.status === 'pending' || r.status === 'approved');
   const approved = records.filter((r) => r.status === 'approved');
 
   const carryMinutes = await carryoverMinutes(tenantId, client, month);

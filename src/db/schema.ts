@@ -22,6 +22,7 @@ export interface Database {
   person_prefs: PersonPrefsTable;
   notes: NotesTable;
   note_links: NoteLinksTable;
+  notifications: NotificationsTable;
 }
 
 /** Organizace = společnost, která CRM používá (prostor týmu). */
@@ -150,7 +151,7 @@ export interface ListItemsTable {
 /** Nalepení položky Seznamu na záznam (štítky). */
 export interface EntityListItemsTable {
   tenant_id: string;
-  entity_kind: 'client' | 'person';
+  entity_kind: 'client' | 'person' | 'task'; // task = štítky úkolu (Seznam task_labels)
   entity_id: string;
   list_item_id: string;
 }
@@ -168,10 +169,11 @@ export interface WorkRecordsTable {
   minutes: number;
   performed_at: string; // den práce (YYYY-MM-DD)
   billing: 'retainer_hours' | 'billed' | 'free'; // z paušálu / účtovat zvlášť / neúčtovat
-  status: 'pending' | 'approved' | 'rejected'; // čeká / schváleno / vráceno k přepracování
+  status: 'pending' | 'approved' | 'returned' | 'rejected'; // čeká / schváleno / vráceno k přepracování / zamítnuto
   approved_by_id: string | null;
   approved_at: string | null;
-  rejection_reason: string | null; // důvod vrácení (uvidí ho pracovník); čistí se při znovuodeslání
+  // poznámka schvalovatele k rozhodnutí: instrukce (returned) nebo důvod zamítnutí (rejected). Uvidí ji pracovník.
+  rejection_reason: string | null;
   created_at: string;
 }
 
@@ -238,6 +240,25 @@ export interface NoteLinksTable {
   entity_kind: string; // 'client' | 'person' | …
   entity_id: string;
   sort_order: number; // ruční pořadí poznámek u entity (drag/drop v mozaice); menší = výš
+}
+
+/**
+ * Notifikace — adresná schránka „co se týká tebe" (na rozdíl od neadresného logu `events`).
+ * Přečtení je měkký stav (`read_at`); záznam se nemaže (princip „nic se nemaže").
+ */
+export interface NotificationsTable {
+  id: string;
+  tenant_id: string;
+  recipient_id: string; // komu je oznámení určeno
+  actor_id: string | null; // kdo akci vyvolal
+  type: string; // druh oznámení (NotificationType v domain/notifications.ts)
+  title: string; // lidský titulek
+  body: string | null; // krátký detail (název úkonu, výňatek instrukcí)
+  entity_kind: string; // k čemu se váže (work_record | task | client …)
+  entity_id: string;
+  link: string; // kam vede kliknutí
+  read_at: string | null; // čas přečtení; null = nepřečteno
+  created_at: string;
 }
 
 /**

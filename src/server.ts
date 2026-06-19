@@ -6,7 +6,9 @@ import { addClient, removeClient } from './realtime';
 import type { AppEnv } from './types';
 import { db } from './db';
 import { getSessionPerson } from './auth/session';
+import { runWithImpersonator, getImpersonationTarget, IMP_COOKIE } from './auth/impersonation';
 import { runWithLocale, isLocale, DEFAULT_LOCALE, type Locale } from './i18n';
+import type { PersonsTable } from './db/schema';
 import { setupRoutes } from './web/setup';
 import { authRoutes } from './web/auth';
 import { dashboardRoutes } from './web/dashboard';
@@ -18,6 +20,8 @@ import { sluzbyZakaznikaRoutes } from './web/sluzbyZakaznika';
 import { vykazyRoutes } from './web/vykazy';
 import { ukolyRoutes } from './web/ukoly';
 import { poznamkyRoutes } from './web/poznamky';
+import { notifikaceRoutes } from './web/notifikace';
+import { impersonaceRoutes } from './web/impersonace';
 
 export const app = new Hono<AppEnv>();
 
@@ -36,17 +40,31 @@ app.use('*', async (c, next) => {
   }
   c.set('modules', enabled);
 
-  const person = await getSessionPerson(getCookie(c, 'sid'));
-  c.set('person', person);
+  const realPerson = await getSessionPerson(getCookie(c, 'sid'));
 
-  // jazyk UI: volba uživatele (DB) > cookie (před přihlášením) > výchozí
+  // Přepínání uživatelů (admin „Zobrazit jako…"): je‑li cookie `imp` a SKUTEČNÁ osoba je admin,
+  // stává se efektivní osobou cíl (vidí i jedná jako on). Podvrhnutá cookie bez admin session = ignorováno.
+  let person = realPerson;
+  let impersonator: PersonsTable | null = null;
+  const impId = getCookie(c, IMP_COOKIE);
+  if (impId && realPerson && realPerson.is_admin === 1 && tenant && impId !== realPerson.id) {
+    const target = await getImpersonationTarget(tenant.id, impId);
+    if (target) {
+      person = target;
+      impersonator = realPerson;
+    }
+  }
+  c.set('person', person);
+  c.set('impersonator', impersonator);
+
+  // jazyk UI: volba EFEKTIVNÍ osoby (DB) > cookie (před přihlášením) > výchozí
   const userLang = person?.lang ?? undefined;
   const cookieLang = getCookie(c, 'lang');
   const locale: Locale = isLocale(userLang) ? userLang : isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE;
   c.set('locale', locale);
 
-  // zbytek požadavku (vč. vykreslení JSX) běží v kontextu jazyka → t()/formátovače
-  return runWithLocale(locale, next);
+  // zbytek požadavku (vč. vykreslení JSX) běží v kontextu jazyka i impersonace → t()/formátovače + banner
+  return runWithLocale(locale, () => runWithImpersonator(impersonator, next));
 });
 
 // Tok přístupu: prázdná DB → průvodce založením; bez přihlášení → login
@@ -96,5 +114,7 @@ app.route('/', sluzbyZakaznikaRoutes);
 app.route('/', vykazyRoutes);
 app.route('/', ukolyRoutes);
 app.route('/', poznamkyRoutes);
+app.route('/', notifikaceRoutes);
+app.route('/', impersonaceRoutes);
 app.route('/', firmyRoutes);
 app.route('/', osobyRoutes);

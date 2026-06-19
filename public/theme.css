@@ -121,6 +121,9 @@ h1 { font-size: 1.7rem; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .fpill .chev { color: var(--muted); }
 a.fpill { text-decoration: none; color: var(--ink); }
 .fpill.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+/* řádek filtračních pilulek nad výpisem (stav výkazu, vykonavatel, štítek úkolu) */
+.fpill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin: .1rem 0 .9rem; }
+.fpill-row .fpill { height: 30px; padding: 0 .8rem; font-size: .8rem; }
 
 /* ---------- Karty ---------- */
 .card {
@@ -154,6 +157,17 @@ a.fpill { text-decoration: none; color: var(--ink); }
 .cat-orange { background: var(--orange); }
 .cat-indigo { background: var(--accent); }
 .chips { display: flex; gap: .35rem; flex-wrap: wrap; }
+/* Multi‑výběr štítků (modál úkolu): chip = přepínač se skrytým checkboxem.
+   Zapnutý → plná barva (.cat-<barva>); vypnutý → obrys (vyšší specificita přebije .cat-*). */
+.label-picker { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chip-toggle {
+  display: inline-flex; align-items: center; cursor: pointer; user-select: none;
+  padding: .28rem .65rem; border-radius: 999px; font-size: .78rem; font-weight: 600; color: #fff; border: 1px solid transparent;
+}
+.chip-toggle input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.label-picker .chip-toggle:not(.is-on) { background: var(--card); color: var(--muted); border-color: var(--line); }
+.label-picker .chip-toggle:not(.is-on):hover { border-color: var(--accent); color: var(--ink); }
+.chip-toggle:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* ---------- Avatary ---------- */
 .av {
@@ -405,18 +419,126 @@ textarea.input { height: auto; min-height: 76px; padding: .55rem .8rem; resize: 
 .opt:hover { background: var(--bg); text-decoration: none; }
 .opt .tick { color: var(--accent); font-weight: 700; }
 /* přepínač (radio) v menu: fajfka jen u aktivní volby (např. výběr skinu) */
-.opt[role="menuitemradio"] .tick { visibility: hidden; }
+.opt[role="menuitemradio"] .tick, .opt[role="menuitemcheckbox"] .tick { visibility: hidden; }
 .opt[aria-checked="true"] .tick { visibility: visible; }
+/* přepínač (switch) jako položka menu: popisek vlevo, přepínač vpravo, mezera mezi nimi */
+.opt-switch { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.opt-switch .switch { flex: none; width: 30px; height: 18px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s ease; }
+.opt-switch .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 2px rgba(var(--shadow-color), .35); transition: transform .15s ease; }
+.opt-switch[aria-checked="true"] .switch { background: var(--accent); }
+.opt-switch[aria-checked="true"] .switch::after { transform: translateX(12px); }
 .opt-group { font-size: .68rem; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: .45rem .6rem .15rem; }
 .panel-actions { display: flex; justify-content: flex-end; gap: .9rem; align-items: center; padding-top: .55rem; margin-top: .35rem; border-top: 1px solid var(--line); }
 
-/* Ikonové tlačítko + akce zobrazené až při najetí na řádek */
+/* Ikonové tlačítko + akce zobrazené až při najetí na řádek.
+   Jednotný systém ikon: jeden zdroj SVG (icons.tsx), jedna velikost (18) uvnitř .icon-btn,
+   barva přes sémantickou třídu (ne inline), na dotyku ≥44px hit‑area. Viz docs/KOMPONENTY.md. */
 .icon-btn {
   display: inline-grid; place-items: center; width: 26px; height: 26px;
   border: none; background: none; border-radius: 6px; cursor: pointer;
   color: var(--muted); font-size: .8rem; padding: 0;
 }
 .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn svg { width: 18px; height: 18px; }
+/* sémantické varianty ikonového tlačítka (barva = stav akce, ne natvrdo inline) */
+.icon-btn--ok { color: var(--teal); }
+.icon-btn--ok:hover { background: var(--teal-soft); color: var(--teal-ink); }
+.icon-btn--danger { color: var(--red); }
+.icon-btn--danger:hover { background: var(--red-soft); color: var(--red); }
+.icon-btn--accent { color: var(--accent); }
+.icon-btn--accent:hover { background: var(--accent-soft); color: var(--accent); }
+/* dotyk: pohodlný tap‑terč i u malé ikony (WCAG 2.5.x) */
+@media (pointer: coarse) { .icon-btn { min-width: 44px; min-height: 44px; } }
+
+/* ---------- Notifikace (zvonek + odznak + panel) — KOMPONENTY §30 ---------- */
+.notif-trigger { position: relative; }
+/* odznak počtu nepřečtených; prázdný (count 0) se skryje */
+.notif-badge {
+  position: absolute; top: -3px; right: -3px; min-width: 17px; height: 17px; padding: 0 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff; border: 2px solid var(--card);
+  border-radius: 9px; font-size: .68rem; font-weight: 700; line-height: 1; box-sizing: border-box;
+}
+.notif-badge:empty { display: none; }
+/* panel */
+.notif-panel { min-width: 340px; max-width: calc(100vw - 24px); padding: 0; border-radius: 12px; box-shadow: 0 14px 40px rgba(var(--shadow-color), .16); }
+.notif-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .7rem .85rem; border-bottom: 1px solid var(--line); }
+.notif-head strong { font-size: .92rem; }
+.notif-markall { border: none; background: none; font: inherit; font-size: .78rem; color: var(--accent); cursor: pointer; padding: .15rem .25rem; border-radius: 6px; }
+.notif-markall:hover { background: var(--accent-soft); }
+.notif-scroll { max-height: min(60vh, 420px); overflow-y: auto; padding: .25rem; }
+.notif-empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 1.4rem .8rem; }
+/* řádek oznámení (klik = označit přečtené + přejít k věci) */
+.notif-item {
+  --nc: var(--accent);
+  display: flex; align-items: flex-start; gap: .6rem; width: 100%; text-align: left;
+  border: none; background: none; font: inherit; cursor: pointer; color: var(--ink);
+  padding: .6rem .7rem; border-radius: 8px;
+}
+.notif-item:hover { background: var(--bg); }
+.notif-item--approved { --nc: var(--teal); }
+.notif-item--returned { --nc: var(--orange); }
+.notif-item--rejected { --nc: var(--red); }
+.notif-item--pending { --nc: var(--accent); }
+.notif-item--task { --nc: var(--accent); }
+.notif-dot { flex: none; width: 8px; height: 8px; margin-top: .4rem; border-radius: 50%; background: var(--nc); opacity: .3; }
+.notif-item.is-unread { background: var(--accent-soft); }
+.notif-item.is-unread:hover { background: var(--accent-soft); filter: brightness(.98); }
+.notif-item.is-unread .notif-dot { opacity: 1; }
+.notif-item.is-unread .notif-title { font-weight: 650; }
+.notif-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .1rem; }
+.notif-title { font-size: .86rem; line-height: 1.25; }
+.notif-sub { font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.notif-time { font-size: .72rem; color: var(--muted); margin-top: .1rem; }
+.notif-count {
+  flex: none; align-self: center; min-width: 22px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--nc); color: #fff; border-radius: 10px; font-size: .74rem; font-weight: 700;
+}
+.notif-foot { display: block; text-align: center; padding: .6rem; border-top: 1px solid var(--line); font-size: .82rem; color: var(--accent); }
+.notif-foot:hover { background: var(--bg); }
+/* plná stránka oznámení — řádky pod sebou s oddělovačem */
+.notif-page-list { padding: .4rem; }
+.notif-page-list .notif-item + .notif-item { border-top: 1px solid var(--line); border-radius: 0; }
+
+/* ---------- Impersonace (admin „Zobrazit jako…") — banner + výběr ---------- */
+.imp-banner {
+  position: sticky; top: 60px; z-index: 49;
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+  background: var(--accent); color: #fff; padding: .5rem 1rem; font-size: .9rem; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(var(--shadow-color), .15);
+}
+.imp-banner-btn {
+  border: 1px solid rgba(255, 255, 255, .6); background: rgba(255, 255, 255, .15); color: #fff;
+  font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; padding: .25rem .7rem; border-radius: 7px;
+}
+.imp-banner-btn:hover { background: rgba(255, 255, 255, .28); }
+.imp-list { display: flex; flex-direction: column; gap: .35rem; }
+.imp-row { display: flex; align-items: center; gap: .7rem; padding: .5rem .6rem; border-radius: 10px; }
+.imp-row:hover { background: var(--bg); }
+.imp-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .05rem; }
+.imp-row-name { font-weight: 600; }
+
+/* ---------- Přihlašovací / titulní stránka (vystředěná karta na brandovaném pozadí) ---------- */
+.login-body { min-height: 100vh; margin: 0; background: linear-gradient(160deg, var(--accent-soft) 0%, var(--bg) 62%); }
+.login-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1.5rem; }
+.login-card { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 2rem 1.8rem; box-shadow: 0 24px 64px rgba(var(--shadow-color), .20); }
+.login-brand { display: flex; align-items: center; justify-content: center; gap: .55rem; margin-bottom: .25rem; }
+.login-logo { width: 30px; height: 30px; color: var(--accent); }
+.login-wm { font-size: 1.45rem; font-weight: 750; letter-spacing: -.01em; color: var(--ink); }
+.login-wm small { font-size: .8rem; font-weight: 600; color: var(--muted); margin-left: .15rem; }
+.login-sub { text-align: center; color: var(--muted); font-size: .85rem; margin: 0 0 1.3rem; }
+.login-foot { color: var(--muted); font-size: .75rem; opacity: .7; }
+
+/* Hlášky / toasty — bublina po akci (vlevo barevný proužek dle typu). Vykresluje app.js. */
+/* Hláška (toast) — vystředěná nahoře, kousek pod horním panelem (.topbar = 60px). Výrazná: tlustý
+   barevný proužek + jemné podbarvení podle typu + větší písmo a silnější stín. Animace shora dolů. */
+#toast-root { position: fixed; left: 50%; top: calc(60px + .9rem); transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: .6rem; align-items: center; pointer-events: none; }
+.toast { pointer-events: auto; min-width: 20rem; max-width: 92vw; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-left: 5px solid var(--teal); border-radius: 12px; box-shadow: 0 16px 44px rgba(var(--shadow-color), .26); padding: 1rem 1.3rem; font-size: 1.05rem; font-weight: 600; opacity: 0; transform: translateY(-12px); transition: opacity .22s ease, transform .22s ease; }
+.toast.in { opacity: 1; transform: translateY(0); }
+.toast--success { border-left-color: var(--teal); background: var(--teal-soft); }
+.toast--error { border-left-color: var(--red); background: var(--red-soft); }
+.toast--info { border-left-color: var(--accent); background: var(--accent-soft); }
 /* přepínač „rozbalit/sbalit vše" nad sloučenými aktivitami — šipka se při rozbalení otočí */
 .act-toggle svg { transition: transform .15s ease; }
 .act-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -455,13 +577,16 @@ summary.subtle-action::marker { content: ''; }
 .modal-card h3 { margin: 0 0 1.1rem; font-size: 1.05rem; font-weight: 650; }
 
 /* ---------- Velký modál (overlay na střed obrazovky) ---------- */
+/* Karta je vertikálně vystředěná (align-items:center) a roste symetricky nahoru i dolů.
+   `max-height` ji drží v rámci obrazovky, takže nikdy nepřeteče overlay (žádný ořez horní hrany);
+   když obsah přesáhne, scrolluje se uvnitř karty (posuvník jako dosud). */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: var(--overlay);
-  display: flex; align-items: flex-start; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   padding: 4vh 1rem; overflow-y: auto;
 }
-.modal-overlay .modal-card { width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+.modal-overlay .modal-card { width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .modal-head h3 { margin: 0; }
 

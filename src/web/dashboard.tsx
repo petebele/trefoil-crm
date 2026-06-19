@@ -3,9 +3,9 @@ import type { AppEnv } from '../types';
 import { Layout } from './layout';
 import { openTasksForPerson } from '../domain/tasks';
 import { listRecentEvents } from '../domain/events';
-import { listPendingForApprover, listRejectedForWorker } from '../domain/workRecords';
+import { listPendingForApprover, listReturnedForWorker, type WorkRecord } from '../domain/workRecords';
 import { TaskGroups } from './ukoly';
-import { WorkRecordRow } from './vykazy';
+import { WorkRecordRow, ApprovalRow } from './vykazy';
 import { EmptyState, ActIcon, activityKind } from './components';
 import { tr, getLocale, fmtDateLong, fmtDateTime } from '../i18n';
 
@@ -40,10 +40,10 @@ dashboardRoutes.get('/', async (c) => {
   const greetName = getLocale() === 'cs' ? vocative(firstName) : firstName;
   const today = new Date();
 
-  const [tasks, approvals, rejected, recent] = await Promise.all([
+  const [tasks, approvals, returned, recent] = await Promise.all([
     modules.has('ukoly') ? openTasksForPerson(t, person.id) : Promise.resolve([]),
     modules.has('vykazy') ? listPendingForApprover(t, person.id, isAdmin) : Promise.resolve([]),
-    modules.has('vykazy') ? listRejectedForWorker(t, person.id) : Promise.resolve([]),
+    modules.has('vykazy') ? listReturnedForWorker(t, person.id) : Promise.resolve([]),
     listRecentEvents(t, 12),
   ]);
 
@@ -53,6 +53,25 @@ dashboardRoutes.get('/', async (c) => {
   // Inbox „Vyžaduje moji pozornost" = jen věci k ROZHODNUTÍ (schválení). Úkoly po termínu patří
   // mezi ostatní úkoly (jediná „po termínu" položka jsou dnes úkoly), proto je má „Moje úkoly".
   const showInbox = modules.has('vykazy');
+
+  // Schvalování seskupené dvouúrovňově: vykonavatel → zákazník → jeho výkazy (manažerský pohled).
+  const approvalsByWorker: Array<{ worker: string; clients: Array<{ client: string; clientId: string; records: WorkRecord[] }> }> = [];
+  const wIdx = new Map<string, number>();
+  for (const r of approvals) {
+    let wi = wIdx.get(r.worker_id);
+    if (wi === undefined) {
+      wi = approvalsByWorker.length;
+      wIdx.set(r.worker_id, wi);
+      approvalsByWorker.push({ worker: r.worker_name, clients: [] });
+    }
+    const grp = approvalsByWorker[wi]!;
+    let ci = grp.clients.findIndex((c) => c.clientId === r.client_id);
+    if (ci === -1) {
+      ci = grp.clients.length;
+      grp.clients.push({ client: r.client_name, clientId: r.client_id, records: [] });
+    }
+    grp.clients[ci]!.records.push(r);
+  }
 
   return c.html(
     <Layout title={tr('Nástěnka')} person={person} modules={modules} active="nastenka">
@@ -75,22 +94,31 @@ dashboardRoutes.get('/', async (c) => {
         {showInbox ? (
           <div class="card" style="margin-top:1.25rem">
             <div class="card-head"><h3>{tr('Vyžaduje moji pozornost')}</h3></div>
-            {approvals.length === 0 && rejected.length === 0 ? (
+            {approvals.length === 0 && returned.length === 0 ? (
               <EmptyState text={tr('Nic nečeká — máš čisto. 🎉')} />
             ) : (
               <>
-                {approvals.length > 0 ? (
-                  <div>
-                    <p class="sub" style="margin:.2rem 0 .2rem;font-weight:600">{tr('Ke schválení')} ({approvals.length})</p>
-                    {approvals.map((r) => (
-                      <WorkRecordRow r={r} person={person} ownerId={person.id} back="/" showClient />
+                {approvalsByWorker.map((w) => (
+                  <div style="margin:0 0 .8rem">
+                    <p style="margin:.2rem 0 .35rem">
+                      <b>{w.worker}</b> <span class="sub">{tr('vykázal(a) práci ke schválení')}:</span>
+                    </p>
+                    {w.clients.map((cl) => (
+                      <div style="margin:0 0 .35rem .25rem;padding-left:.6rem;border-left:2px solid var(--line)">
+                        <p class="sub" style="margin:.1rem 0 0;font-weight:600">
+                          <a href={`/firmy/${cl.clientId}`}>{cl.client}</a>
+                        </p>
+                        {cl.records.map((r) => (
+                          <ApprovalRow r={r} person={person} ownerId={person.id} back="/" />
+                        ))}
+                      </div>
                     ))}
                   </div>
-                ) : null}
-                {rejected.length > 0 ? (
+                ))}
+                {returned.length > 0 ? (
                   <div style="margin-top:.7rem">
-                    <p class="sub" style="margin:.2rem 0 .2rem;font-weight:600;color:var(--red)">{tr('Vrácené k přepracování')} ({rejected.length})</p>
-                    {rejected.map((r) => (
+                    <p class="sub" style="margin:.2rem 0 .2rem;font-weight:600;color:var(--chip-orange-ink)">{tr('Vrácené k přepracování')} ({returned.length})</p>
+                    {returned.map((r) => (
                       <WorkRecordRow r={r} person={person} ownerId={null} back="/" showClient />
                     ))}
                   </div>

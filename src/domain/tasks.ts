@@ -2,6 +2,7 @@ import { sql } from 'kysely';
 import { db } from '../db';
 import { newId, now } from '../lib/util';
 import { getStatus, listStatuses, doneStatusId, firstNonDoneId } from './taskStatuses';
+import { tagsForEntities, setEntityTags, addEntityTag, type EntityTag } from './lists';
 
 /** Úkoly — osobní/týmové to‑do, volitelně navázané na zákazníka (Krok 7 + Kanban v2). */
 
@@ -15,8 +16,7 @@ export interface TaskRow {
   client_name: string | null;
   assignee_id: string | null;
   assignee_name: string | null;
-  category_label: string | null;
-  category_color: string | null;
+  labels: EntityTag[]; // štítky úkolu (Seznam task_labels) — víc na úkol
   source_kind: string | null;
   source_id: string | null;
   created_by_id: string | null;
@@ -28,7 +28,7 @@ export interface TaskRow {
 
 export interface TaskInput {
   title: string;
-  categoryItemId: string | null;
+  labelIds?: string[]; // štítky (list_items.id ze Seznamu task_labels)
   clientId: string | null;
   assigneeId: string | null;
   dueAt: string | null;
@@ -48,7 +48,6 @@ export function nextMonthKey(m: string): string {
 function baseQuery(tenantId: string) {
   return db
     .selectFrom('tasks')
-    .leftJoin('list_items', 'list_items.id', 'tasks.category_item_id')
     .leftJoin('clients', 'clients.id', 'tasks.client_id')
     .leftJoin('persons', 'persons.id', 'tasks.assignee_id')
     .where('tasks.tenant_id', '=', tenantId)
@@ -62,8 +61,6 @@ function baseQuery(tenantId: string) {
       'clients.name as client_name',
       'tasks.assignee_id as assignee_id',
       'persons.name as assignee_name',
-      'list_items.label as category_label',
-      'list_items.color as category_color',
       'tasks.source_kind as source_kind',
       'tasks.source_id as source_id',
       'tasks.created_by_id as created_by_id',
@@ -72,6 +69,12 @@ function baseQuery(tenantId: string) {
       'tasks.board_month as board_month',
       'tasks.sort_order as sort_order',
     ]);
+}
+
+/** Doplní k řádkům úkolů jejich štítky (batch dotaz nad entity_list_items). */
+async function withLabels(tenantId: string, rows: Omit<TaskRow, 'labels'>[]): Promise<TaskRow[]> {
+  const map = await tagsForEntities(tenantId, 'task', rows.map((r) => r.id));
+  return rows.map((r) => ({ ...r, labels: map.get(r.id) ?? [] }));
 }
 
 // otevřené nahoře, pak dle termínu (bez termínu naspod), nejnovější naposled
@@ -90,22 +93,22 @@ export async function listTasks(
   let q = baseQuery(tenantId).where('tasks.archived', '=', 0);
   if (opts.assigneeId) q = q.where('tasks.assignee_id', '=', opts.assigneeId);
   if (!opts.includeDone) q = q.where('tasks.done', '=', 0);
-  return orderTasks(q).execute();
+  return withLabels(tenantId, await orderTasks(q).execute());
 }
 
 /** Otevřené úkoly přiřazené osobě (pro Nástěnku). */
 export async function openTasksForPerson(tenantId: string, personId: string): Promise<TaskRow[]> {
-  return orderTasks(baseQuery(tenantId).where('tasks.assignee_id', '=', personId).where('tasks.done', '=', 0).where('tasks.archived', '=', 0)).execute();
+  return withLabels(tenantId, await orderTasks(baseQuery(tenantId).where('tasks.assignee_id', '=', personId).where('tasks.done', '=', 0).where('tasks.archived', '=', 0)).execute());
 }
 
 /** Úkoly navázané na zákazníka (pravý panel detailu) — otevřené nahoře. */
 export async function tasksForClient(tenantId: string, clientId: string): Promise<TaskRow[]> {
-  return orderTasks(baseQuery(tenantId).where('tasks.client_id', '=', clientId).where('tasks.archived', '=', 0)).execute();
+  return withLabels(tenantId, await orderTasks(baseQuery(tenantId).where('tasks.client_id', '=', clientId).where('tasks.archived', '=', 0)).execute());
 }
 
 export async function getTask(tenantId: string, id: string): Promise<TaskRow | null> {
   const r = await baseQuery(tenantId).where('tasks.id', '=', id).executeTakeFirst();
-  return r ?? null;
+  return r ? (await withLabels(tenantId, [r]))[0]! : null;
 }
 
 export async function createTask(tenantId: string, createdById: string, data: TaskInput): Promise<string> {
@@ -116,7 +119,7 @@ export async function createTask(tenantId: string, createdById: string, data: Ta
       id,
       tenant_id: tenantId,
       title: data.title,
-      category_item_id: data.categoryItemId,
+      category_item_id: null, // kategorie nahrazeny štítky (entity_list_items), sloupec zůstává nevyužitý
       client_id: data.clientId,
       assignee_id: data.assigneeId,
       due_at: data.dueAt,
@@ -133,6 +136,7 @@ export async function createTask(tenantId: string, createdById: string, data: Ta
       created_at: now(),
     })
     .execute();
+  if (data.labelIds) await setEntityTags(tenantId, 'task', id, data.labelIds);
   return id;
 }
 
@@ -141,7 +145,6 @@ export async function updateTask(tenantId: string, id: string, data: TaskInput):
     .updateTable('tasks')
     .set({
       title: data.title,
-      category_item_id: data.categoryItemId,
       client_id: data.clientId,
       assignee_id: data.assigneeId,
       due_at: data.dueAt,
@@ -149,6 +152,7 @@ export async function updateTask(tenantId: string, id: string, data: TaskInput):
     .where('tenant_id', '=', tenantId)
     .where('id', '=', id)
     .execute();
+  if (data.labelIds) await setEntityTags(tenantId, 'task', id, data.labelIds);
 }
 
 /**
@@ -214,12 +218,15 @@ export async function archiveDoneInBoard(tenantId: string, ownerId: string, mont
 
 /** Všechny aktivní (nearchivované) úkoly vlastníka napříč měsíci — pro kanban (Inbox je cross‑month). */
 export async function listOwnerActiveTasks(tenantId: string, ownerId: string): Promise<TaskRow[]> {
-  return baseQuery(tenantId)
-    .where('tasks.assignee_id', '=', ownerId)
-    .where('tasks.archived', '=', 0)
-    .orderBy('tasks.sort_order')
-    .orderBy('tasks.created_at', 'desc')
-    .execute();
+  return withLabels(
+    tenantId,
+    await baseQuery(tenantId)
+      .where('tasks.assignee_id', '=', ownerId)
+      .where('tasks.archived', '=', 0)
+      .orderBy('tasks.sort_order')
+      .orderBy('tasks.created_at', 'desc')
+      .execute(),
+  );
 }
 
 /** Úkoly boardu (osobní kanban): assignee = owner, měsíc, stav archivace. */
@@ -231,7 +238,7 @@ export async function listBoardTasks(
   let q = baseQuery(tenantId).where('tasks.assignee_id', '=', ownerId);
   q = (opts.archived ?? 'active') === 'archived' ? q.where('tasks.archived', '=', 1) : q.where('tasks.archived', '=', 0);
   q = opts.month === null ? q.where('tasks.board_month', 'is', null) : q.where('tasks.board_month', '=', opts.month);
-  return q.orderBy('tasks.sort_order').orderBy('tasks.created_at', 'desc').execute();
+  return withLabels(tenantId, await q.orderBy('tasks.sort_order').orderBy('tasks.created_at', 'desc').execute());
 }
 
 /** Uzavře měsíc boardu: nehotové → další měsíc (stav zůstává); volitelně hotové archivuje. */
@@ -278,18 +285,6 @@ export async function removeTask(tenantId: string, id: string): Promise<void> {
 }
 
 /** ID položky číselníku task_categories podle hodnoty (pro auto‑úkoly). */
-export async function taskCategoryByValue(tenantId: string, value: string): Promise<string | null> {
-  const row = await db
-    .selectFrom('list_items')
-    .innerJoin('lists', 'lists.id', 'list_items.list_id')
-    .where('lists.tenant_id', '=', tenantId)
-    .where('lists.key', '=', 'task_categories')
-    .where('list_items.value', '=', value)
-    .select('list_items.id as id')
-    .executeTakeFirst();
-  return row?.id ?? null;
-}
-
 /**
  * Auto‑úkol „schválit výkaz" pro odpovědnou osobu zákazníka. Bez odpovědné osoby
  * (assigneeId) se nevytváří. Idempotentní — neduplikuje pro stejný výkaz.
@@ -309,13 +304,14 @@ export async function createApprovalTask(
     .executeTakeFirst();
   if (existing) return;
 
+  const id = newId();
   await db
     .insertInto('tasks')
     .values({
-      id: newId(),
+      id,
       tenant_id: tenantId,
       title: data.title,
-      category_item_id: await taskCategoryByValue(tenantId, 'follow_up'),
+      category_item_id: null,
       client_id: data.clientId,
       assignee_id: data.assigneeId,
       due_at: today(),
@@ -332,6 +328,7 @@ export async function createApprovalTask(
       created_at: now(),
     })
     .execute();
+  await addEntityTag(tenantId, 'task', id, 'Follow-up'); // štítek „Follow-up" na schvalovací úkol
 }
 
 /** Uzavře (hotovo) všechny otevřené úkoly navázané na daný zdroj — např. schválený/smazaný výkaz. */
